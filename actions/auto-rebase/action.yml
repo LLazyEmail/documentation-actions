@@ -1,0 +1,80 @@
+name: Auto-rebase open PRs
+description: >
+  Attempt to update branches of open pull requests that are behind main.
+  Comments on success; warns when fork permissions block the update.
+
+branding:
+  icon: git-branch
+  color: blue
+
+inputs:
+  github-token:
+    description: Token with contents:write and pull-requests:write
+    required: false
+    default: ${{ github.token }}
+  success-message:
+    description: Comment when a branch was updated
+    required: false
+    default: '✅ Automatically updated this PR branch with the latest changes from main.'
+  fork-blocked-message:
+    description: Comment when updateBranch returns 403
+    required: false
+    default: >
+      ⚠️ This PR is out of date with main. Maintainers cannot update the branch
+      (fork permissions). Please enable "Allow edits from maintainers" or rebase/merge main yourself.
+
+runs:
+  using: composite
+  steps:
+    - name: Attempt to update branches of open PRs
+      uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7.0.1
+      env:
+        SUCCESS_MESSAGE: ${{ inputs.success-message }}
+        FORK_BLOCKED_MESSAGE: ${{ inputs.fork-blocked-message }}
+      with:
+        github-token: ${{ inputs.github-token }}
+        script: |
+          const successMessage = process.env.SUCCESS_MESSAGE;
+          const forkBlockedMessage = process.env.FORK_BLOCKED_MESSAGE;
+          const prs = await github.paginate(github.rest.pulls.list, {
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            state: 'open',
+            per_page: 100,
+          });
+
+          for (const pr of prs) {
+            if (
+              pr.mergeable_state === 'behind' ||
+              pr.mergeable_state === 'dirty' ||
+              pr.mergeable_state === 'unknown'
+            ) {
+              try {
+                await github.rest.pulls.updateBranch({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  pull_number: pr.number,
+                  expected_head_sha: pr.head.sha,
+                });
+                console.log(`Updated branch for PR #${pr.number}`);
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: pr.number,
+                  body: successMessage,
+                });
+              } catch (err) {
+                console.log(`Could not update PR #${pr.number}: ${err.message}`);
+                if (err.status === 403) {
+                  await github.rest.issues
+                    .createComment({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      issue_number: pr.number,
+                      body: forkBlockedMessage,
+                    })
+                    .catch(() => {});
+                }
+              }
+            }
+          }
