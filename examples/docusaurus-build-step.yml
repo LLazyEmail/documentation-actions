@@ -1,0 +1,13 @@
+# Use the composite action inside a custom job when you need extra steps.
+jobs:
+  test-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: LLazyEmail/documentation-actions/actions/docusaurus-build@main
+        with:
+          working-directory: website
+          cache-dependency-path: website/package-lock.json
+          prebuild-command: npm run lint:docs-links

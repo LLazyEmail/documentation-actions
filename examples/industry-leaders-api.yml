@@ -1,0 +1,27 @@
+name: Update industry-leaders articles API
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'website/docs/industry-leaders/**'
+      - 'website/scripts/generate-industry-leaders.mjs'
+      - '.github/workflows/industry-leaders-api.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  industry-leaders-api:
+    uses: LLazyEmail/documentation-actions/.github/workflows/reusable-catalog-api.yml@main
+    with:
+      working-directory: website
+      node-version: '20'
+      generate-command: npm run generate:industry-leaders
+      commit-paths: website/static/api/v1/industry-leaders.json
+      commit-message: 'chore(api): regenerate industry-leaders articles JSON'
+      install: false
+      concurrency-group: industry-leaders-api
+    secrets: inherit

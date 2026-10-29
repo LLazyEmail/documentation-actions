@@ -1,0 +1,19 @@
+name: Markdown lint
+description: Run markdownlint-cli2 on the given globs (awesome lists and docs).
+
+branding:
+  icon: check-circle
+  color: green
+
+inputs:
+  globs:
+    description: Multiline globs passed to markdownlint-cli2-action
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Lint markdown
+      uses: DavidAnson/markdownlint-cli2-action@05f32210e84442804257b2a6f20b273450ec8265 # v19.1.0
+      with:
+        globs: ${{ inputs.globs }}

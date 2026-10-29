@@ -1,0 +1,47 @@
+name: Reusable awesome-list checks
+
+on:
+  workflow_call:
+    inputs:
+      readme-path:
+        type: string
+        required: false
+        default: README.md
+      checks:
+        type: string
+        required: false
+        default: entry-format,duplicate-links,sorted-sections
+      duplicate-mode:
+        type: string
+        required: false
+        default: warn
+      sorted-mode:
+        type: string
+        required: false
+        default: warn
+      entry-format-mode:
+        type: string
+        required: false
+        default: fail
+      node-version:
+        type: string
+        required: false
+        default: '20'
+
+jobs:
+  awesome-checks:
+    name: awesome-list-checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: ${{ inputs.node-version }}
+      - name: Run checks
+        uses: LLazyEmail/documentation-actions/actions/awesome-list-checks@main
+        with:
+          readme-path: ${{ inputs.readme-path }}
+          checks: ${{ inputs.checks }}
+          duplicate-mode: ${{ inputs.duplicate-mode }}
+          sorted-mode: ${{ inputs.sorted-mode }}
+          entry-format-mode: ${{ inputs.entry-format-mode }}

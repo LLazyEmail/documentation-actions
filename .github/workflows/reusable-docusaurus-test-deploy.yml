@@ -1,0 +1,53 @@
+name: Reusable Docusaurus test-deploy
+
+on:
+  workflow_call:
+    inputs:
+      working-directory:
+        type: string
+        required: false
+        default: website
+      node-version:
+        type: string
+        required: false
+        default: ''
+      cache-dependency-path:
+        type: string
+        required: false
+        default: website/package-lock.json
+      install-command:
+        type: string
+        required: false
+        default: npm ci
+      build-command:
+        type: string
+        required: false
+        default: npm run build
+      prebuild-command:
+        type: string
+        required: false
+        default: ''
+      fetch-depth:
+        type: number
+        required: false
+        default: 0
+
+jobs:
+  test-deploy:
+    name: Test build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: ${{ inputs.fetch-depth }}
+
+      - name: Build Docusaurus
+        uses: LLazyEmail/documentation-actions/actions/docusaurus-build@main
+        with:
+          working-directory: ${{ inputs.working-directory }}
+          node-version: ${{ inputs.node-version }}
+          cache-dependency-path: ${{ inputs.cache-dependency-path }}
+          install-command: ${{ inputs.install-command }}
+          build-command: ${{ inputs.build-command }}
+          prebuild-command: ${{ inputs.prebuild-command }}
