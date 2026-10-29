@@ -1,0 +1,64 @@
+name: Docusaurus build
+description: >
+  Install dependencies and build a Docusaurus site. Optional pre-build script
+  (for example lint:docs-links). Does not deploy.
+
+branding:
+  icon: package
+  color: gray-dark
+
+inputs:
+  working-directory:
+    description: Directory that contains package.json (website or .)
+    required: false
+    default: website
+  node-version:
+    description: Node.js version (empty uses setup-node default / cache only)
+    required: false
+    default: ''
+  cache-dependency-path:
+    description: Lockfile path for setup-node cache
+    required: false
+    default: website/package-lock.json
+  install-command:
+    description: Install command
+    required: false
+    default: npm ci
+  build-command:
+    description: Build command
+    required: false
+    default: npm run build
+  prebuild-command:
+    description: Optional command before build (empty skips)
+    required: false
+    default: ''
+  package-manager-cache:
+    description: setup-node cache value (npm, yarn, pnpm) or empty to disable
+    required: false
+    default: npm
+
+runs:
+  using: composite
+  steps:
+    - name: Setup Node
+      uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+      with:
+        node-version: ${{ inputs.node-version != '' && inputs.node-version || '' }}
+        cache: ${{ inputs.package-manager-cache != '' && inputs.package-manager-cache || '' }}
+        cache-dependency-path: ${{ inputs.cache-dependency-path }}
+
+    - name: Install dependencies
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: ${{ inputs.install-command }}
+
+    - name: Pre-build
+      if: inputs.prebuild-command != ''
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: ${{ inputs.prebuild-command }}
+
+    - name: Build website
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: ${{ inputs.build-command }}
