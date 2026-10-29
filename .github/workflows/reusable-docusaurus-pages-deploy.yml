@@ -1,0 +1,116 @@
+name: Reusable Docusaurus GitHub Pages deploy
+
+on:
+  workflow_call:
+    inputs:
+      working-directory:
+        type: string
+        required: false
+        default: website
+      node-version:
+        type: string
+        required: false
+        default: ''
+      cache-dependency-path:
+        type: string
+        required: false
+        default: website/package-lock.json
+      install-command:
+        type: string
+        required: false
+        default: npm ci
+      build-command:
+        type: string
+        required: false
+        default: npm run build
+      artifact-path:
+        description: Path passed to upload-pages-artifact
+        type: string
+        required: false
+        default: website/build
+      # Legacy peaceiris path (documentation repo). When non-empty, uses peaceiris instead of Actions Pages.
+      peaceiris-publish-dir:
+        type: string
+        required: false
+        default: ''
+      peaceiris-cname:
+        type: string
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build Docusaurus
+    if: inputs.peaceiris-publish-dir == ''
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Build Docusaurus
+        uses: LLazyEmail/documentation-actions/actions/docusaurus-build@main
+        with:
+          working-directory: ${{ inputs.working-directory }}
+          node-version: ${{ inputs.node-version }}
+          cache-dependency-path: ${{ inputs.cache-dependency-path }}
+          install-command: ${{ inputs.install-command }}
+          build-command: ${{ inputs.build-command }}
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3.0.1
+        with:
+          path: ${{ inputs.artifact-path }}
+
+  deploy:
+    name: Deploy to GitHub Pages
+    if: inputs.peaceiris-publish-dir == ''
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4.0.5
+
+  # Legacy path for LLazyEmail/documentation (peaceiris + cname)
+  deploy-peaceiris:
+    name: Deploy via peaceiris
+    if: inputs.peaceiris-publish-dir != ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Build Docusaurus
+        uses: LLazyEmail/documentation-actions/actions/docusaurus-build@main
+        with:
+          working-directory: ${{ inputs.working-directory }}
+          node-version: ${{ inputs.node-version }}
+          cache-dependency-path: ${{ inputs.cache-dependency-path }}
+          install-command: ${{ inputs.install-command }}
+          build-command: ${{ inputs.build-command }}
+          package-manager-cache: npm
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@373f7f263a76c20808c831209c920827a82a2847 # v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ${{ inputs.peaceiris-publish-dir }}
+          cname: ${{ inputs.peaceiris-cname }}
+          user_name: github-actions[bot]
+          user_email: 41898282+github-actions[bot]@users.noreply.github.com

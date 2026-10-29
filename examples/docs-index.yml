@@ -1,0 +1,22 @@
+name: Update docs pages index
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'website/docs/**'
+      - '!website/docs/pages-index.md'
+      - 'website/scripts/generate-docs-index.mjs'
+      - '.github/workflows/docs-index.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  docs-index:
+    uses: LLazyEmail/documentation-actions/.github/workflows/reusable-docs-index.yml@main
+    with:
+      commit-paths: website/docs/pages-index.md website/static/api/v1/docs-pages.json
+    secrets: inherit

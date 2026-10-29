@@ -1,0 +1,21 @@
+# Replaces validate-entries.yml + check-duplicate-links.yml + check-sorted-sections.yml
+name: Awesome list checks
+
+on:
+  pull_request:
+    paths:
+      - 'README.md'
+      - '.github/workflows/awesome-list-checks.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'README.md'
+
+jobs:
+  checks:
+    uses: LLazyEmail/documentation-actions/.github/workflows/reusable-awesome-list-checks.yml@main
+    with:
+      checks: entry-format,duplicate-links,sorted-sections
+      duplicate-mode: warn
+      sorted-mode: warn
+      entry-format-mode: fail

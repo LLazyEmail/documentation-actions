@@ -1,0 +1,33 @@
+name: Reusable link check
+
+on:
+  workflow_call:
+    inputs:
+      args:
+        description: Lychee args including paths
+        type: string
+        required: true
+      create-issue:
+        description: Create/update issue from report
+        type: boolean
+        required: false
+        default: false
+      issue-title:
+        type: string
+        required: false
+        default: 'Link check report (lychee)'
+
+jobs:
+  lychee:
+    name: lychee
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Link check
+        uses: LLazyEmail/documentation-actions/actions/lychee-link-check@main
+        with:
+          args: ${{ inputs.args }}
+          create-issue: ${{ inputs.create-issue && 'true' || 'false' }}
+          issue-title: ${{ inputs.issue-title }}

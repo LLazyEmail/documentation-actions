@@ -1,0 +1,21 @@
+# LLazyEmail/documentation legacy deploy (gh-pages branch + CNAME)
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    uses: LLazyEmail/documentation-actions/.github/workflows/reusable-docusaurus-pages-deploy.yml@main
+    with:
+      working-directory: .
+      cache-dependency-path: package-lock.json
+      node-version: '16.x'
+      peaceiris-publish-dir: ./build
+      peaceiris-cname: docs.llazyemail.com
+    secrets: inherit

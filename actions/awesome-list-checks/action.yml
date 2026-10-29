@@ -1,0 +1,78 @@
+name: Awesome list checks
+description: >
+  Run entry-format, duplicate-link, and/or sorted-section checks against a
+  curated README (awesome-list style).
+
+branding:
+  icon: list
+  color: orange
+
+inputs:
+  readme-path:
+    description: Path to the curated markdown list
+    required: false
+    default: README.md
+  checks:
+    description: >
+      Comma-separated subset of entry-format, duplicate-links, sorted-sections.
+      Default runs all three.
+    required: false
+    default: entry-format,duplicate-links,sorted-sections
+  duplicate-mode:
+    description: 'fail or warn for duplicate-links (CI historically uses warn)'
+    required: false
+    default: warn
+  sorted-mode:
+    description: 'warn (default exit 0) or strict (exit 1 on disorder)'
+    required: false
+    default: warn
+  entry-format-mode:
+    description: 'fail or warn for entry-format hard errors'
+    required: false
+    default: fail
+
+runs:
+  using: composite
+  steps:
+    - name: Run awesome-list checks
+      shell: bash
+      env:
+        README_PATH: ${{ inputs.readme-path }}
+        CHECKS: ${{ inputs.checks }}
+        DUPLICATE_MODE: ${{ inputs.duplicate-mode }}
+        SORTED_MODE: ${{ inputs.sorted-mode }}
+        ENTRY_FORMAT_MODE: ${{ inputs.entry-format-mode }}
+      run: |
+        set -euo pipefail
+        SCRIPT_DIR="${{ github.action_path }}/scripts"
+        # Scripts read README.md from cwd; copy/symlink if needed
+        if [[ "$README_PATH" != "README.md" ]]; then
+          cp "$README_PATH" README.md
+        fi
+        status=0
+        IFS=',' read -ra PARTS <<< "$CHECKS"
+        for check in "${PARTS[@]}"; do
+          check="$(echo "$check" | xargs)"
+          case "$check" in
+            entry-format)
+              args=()
+              [[ "$ENTRY_FORMAT_MODE" == "warn" ]] && args+=(--warn)
+              node "$SCRIPT_DIR/validate-entry-format.mjs" "${args[@]}" || status=$?
+              ;;
+            duplicate-links)
+              args=()
+              [[ "$DUPLICATE_MODE" == "warn" ]] && args+=(--warn)
+              node "$SCRIPT_DIR/check-duplicate-links.mjs" "${args[@]}" || status=$?
+              ;;
+            sorted-sections)
+              args=()
+              [[ "$SORTED_MODE" == "strict" ]] && args+=(--strict)
+              node "$SCRIPT_DIR/check-sorted-sections.mjs" "${args[@]}" || status=$?
+              ;;
+            *)
+              echo "Unknown check: $check" >&2
+              exit 1
+              ;;
+          esac
+        done
+        exit "$status"

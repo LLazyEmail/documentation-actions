@@ -1,0 +1,83 @@
+name: Reusable changelog regenerate
+
+on:
+  workflow_call:
+    inputs:
+      working-directory:
+        type: string
+        required: false
+        default: website
+      node-version:
+        type: string
+        required: false
+        default: ''
+      cache-dependency-path:
+        type: string
+        required: false
+        default: website/package-lock.json
+      generate-command:
+        type: string
+        required: false
+        default: npm run changelog
+      commit-paths:
+        description: Paths to git add (space-separated)
+        type: string
+        required: false
+        default: CHANGELOG.md website/src/data/changelog.json
+      commit-message:
+        type: string
+        required: false
+        default: 'chore(changelog): regenerate after merged pull request'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: changelog
+  cancel-in-progress: false
+
+jobs:
+  changelog:
+    name: Regenerate changelog
+    # Skip the follow-up push this job creates.
+    if: github.event_name == 'workflow_dispatch' || github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          ref: main
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: ${{ inputs.node-version != '' && inputs.node-version || '' }}
+          cache: npm
+          cache-dependency-path: ${{ inputs.cache-dependency-path }}
+
+      - name: Install dependencies
+        working-directory: ${{ inputs.working-directory }}
+        run: npm ci
+
+      - name: Generate changelog
+        working-directory: ${{ inputs.working-directory }}
+        run: ${{ inputs.generate-command }}
+
+      - name: Commit and push changelog
+        env:
+          COMMIT_PATHS: ${{ inputs.commit-paths }}
+          COMMIT_MESSAGE: ${{ inputs.commit-message }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # shellcheck disable=SC2086
+          git add $COMMIT_PATHS
+          if git diff --staged --quiet; then
+            echo "Changelog already up to date."
+            exit 0
+          fi
+          git commit -m "$COMMIT_MESSAGE"
+          git push origin HEAD:main

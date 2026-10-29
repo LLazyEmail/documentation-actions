@@ -1,0 +1,78 @@
+name: Lychee link check
+description: >
+  Soft-fail lychee link check with a job summary. Optionally open/update an
+  issue from the report on schedule or workflow_dispatch.
+
+branding:
+  icon: link
+  color: purple
+
+inputs:
+  args:
+    description: Arguments passed to lychee (paths, flags)
+    required: true
+  fail:
+    description: Whether lychee-action should fail the step (default false = soft)
+    required: false
+    default: 'false'
+  output:
+    description: Markdown report path
+    required: false
+    default: lychee-out.md
+  create-issue:
+    description: 'If true, create/update an issue from the report (for schedule runs)'
+    required: false
+    default: 'false'
+  issue-title:
+    description: Issue title when create-issue is true
+    required: false
+    default: 'Link check report (lychee)'
+  issue-labels:
+    description: Comma-separated labels for the issue
+    required: false
+    default: 'maintenance, links'
+  github-token:
+    description: Token for lychee and optional issue creation
+    required: false
+    default: ${{ github.token }}
+
+runs:
+  using: composite
+  steps:
+    - name: Link check
+      id: lychee
+      uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2.6.1
+      with:
+        args: ${{ inputs.args }}
+        fail: ${{ inputs.fail }}
+        format: markdown
+        output: ${{ inputs.output }}
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+
+    - name: Write job summary
+      if: always()
+      shell: bash
+      env:
+        LYCHEE_OUTPUT: ${{ inputs.output }}
+      run: |
+        {
+          echo "## Lychee link check"
+          echo
+          if [ -f "$LYCHEE_OUTPUT" ]; then
+            cat "$LYCHEE_OUTPUT"
+          else
+            echo "_No lychee output file produced._"
+          fi
+        } >> "$GITHUB_STEP_SUMMARY"
+
+    - name: Create or update issue from report
+      if: always() && inputs.create-issue == 'true'
+      continue-on-error: true
+      uses: peter-evans/create-issue-from-file@e8ef132d6df98ed982188e460ebb3b5d4ef3a9cd # v5.0.0
+      with:
+        title: ${{ inputs.issue-title }}
+        content-filepath: ${{ inputs.output }}
+        labels: ${{ inputs.issue-labels }}
+        issue-number: ''
+        token: ${{ inputs.github-token }}

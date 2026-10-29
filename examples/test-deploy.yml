@@ -1,0 +1,18 @@
+name: Test deployment
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'website/**'
+      - '.github/workflows/**'
+
+jobs:
+  test-deploy:
+    uses: LLazyEmail/documentation-actions/.github/workflows/reusable-docusaurus-test-deploy.yml@main
+    with:
+      working-directory: website
+      cache-dependency-path: website/package-lock.json
+      # AEM only — omit for awesome-newsletters / documentation:
+      # prebuild-command: npm run lint:docs-links
