@@ -1,14 +1,97 @@
 # documentation-actions
 
-Reusable GitHub Actions and workflows for Docusaurus docs sites and awesome-list repositories in the [LLazyEmail](https://github.com/LLazyEmail) org.
+[![CI](https://github.com/LLazyEmail/documentation-actions/actions/workflows/ci.yml/badge.svg)](https://github.com/LLazyEmail/documentation-actions/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+[![GitHub release](https://img.shields.io/github/v/release/LLazyEmail/documentation-actions?include_prereleases&sort=semver)](https://github.com/LLazyEmail/documentation-actions/releases)
 
-Extracted from duplicated automation across `awesome-email-marketing`, `awesome-newsletters`, and `documentation`.
+Reusable **GitHub Actions** and **reusable workflows** for Docusaurus documentation sites and awesome-list repositories.
 
-> Work in progress — composite actions and reusable workflows land via stacked draft PRs. Pin `@v1` after the first release; until then consumers may use `@main` in draft adoption PRs.
+Extracted from duplicated automation across:
 
-## Actions
+- [`LLazyEmail/awesome-email-marketing`](https://github.com/LLazyEmail/awesome-email-marketing)
+- [`LLazyEmail/awesome-newsletters`](https://github.com/LLazyEmail/awesome-newsletters)
+- [`LLazyEmail/documentation`](https://github.com/LLazyEmail/documentation)
 
-The inventory table is **append-only** in [`docs/actions-index.md`](docs/actions-index.md) (one new row per action PR, no reordering). That keeps stacked PRs from conflicting on the README.
+Modeled on [`LLazyEmail/email-template-workflows`](https://github.com/LLazyEmail/email-template-workflows).
+
+Pin `LLazyEmail/documentation-actions@v1` after the first release. Until then, draft adoption PRs may use `@main`. For the strongest supply-chain guarantee, pin a full commit SHA and keep it current with Renovate.
+
+## Quick start
+
+```yaml
+# PR test build for a Docusaurus site under website/
+jobs:
+  test-deploy:
+    uses: LLazyEmail/documentation-actions/.github/workflows/reusable-docusaurus-test-deploy.yml@main
+    with:
+      working-directory: website
+      cache-dependency-path: website/package-lock.json
+```
+
+```yaml
+# Soft-fail lychee with a job summary
+jobs:
+  lychee:
+    uses: LLazyEmail/documentation-actions/.github/workflows/reusable-link-check.yml@main
+    with:
+      args: >-
+        --verbose --no-progress --accept 200,204,206,403,429
+        README.md 'website/docs/**/*.md'
+```
+
+More copy-paste callers live in [`examples/`](examples/).
+
+## Actions and workflows
+
+The inventory is **append-only** in [`docs/actions-index.md`](docs/actions-index.md): each action PR adds exactly one new table row at the end and never reorders or edits other rows. That keeps stacked PRs from conflicting on the README.
+
+Composite actions live only under `actions/<name>/` (plus their reusable workflow, example, and test). Do not scatter related files across shared directories in a way that forces every PR to touch the same lines.
+
+## Usage snippets
+
+### Star request
+
+```yaml
+on:
+  pull_request_target:
+    types: [opened]
+permissions:
+  pull-requests: write
+jobs:
+  comment:
+    uses: LLazyEmail/documentation-actions/.github/workflows/reusable-star-request.yml@main
+```
+
+### Awesome-list checks
+
+```yaml
+jobs:
+  checks:
+    uses: LLazyEmail/documentation-actions/.github/workflows/reusable-awesome-list-checks.yml@main
+    with:
+      checks: entry-format,duplicate-links,sorted-sections
+```
+
+### Auto-rebase (consumers)
+
+```yaml
+on:
+  schedule:
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+permissions:
+  contents: write
+  pull-requests: write
+jobs:
+  rebase:
+    uses: LLazyEmail/documentation-actions/.github/workflows/reusable-auto-rebase-prs.yml@main
+```
+
+This repository also ships an early in-repo `.github/workflows/auto-rebase-prs.yml` so the draft stack stays current before the composite action merges.
+
+## Adoption
+
+See [`docs/adoption.md`](docs/adoption.md) for consumer cut-over notes and [`docs/design.md`](docs/design.md) for layout conventions.
 
 ## License
 

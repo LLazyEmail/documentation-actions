@@ -1,0 +1,16 @@
+name: Reusable auto-rebase PRs
+
+on:
+  workflow_call:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  rebase:
+    name: auto-rebase
+    runs-on: ubuntu-latest
+    steps:
+      - name: Attempt to update branches of open PRs
+        uses: LLazyEmail/documentation-actions/actions/auto-rebase@main

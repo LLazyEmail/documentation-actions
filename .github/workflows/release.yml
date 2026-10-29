@@ -1,0 +1,36 @@
+# Moves the floating major tag (v1, v2, ...) to the release that was just published.
+# Publish a release with a tag like v1.2.3 and `v1` follows it.
+name: Move major tag
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  move-major-tag:
+    timeout-minutes: 5
+    if: ${{ !github.event.release.prerelease }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - name: Move floating major tag
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          set -euo pipefail
+          if ! [[ "$TAG" =~ ^v([0-9]+)\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Tag '$TAG' is not vMAJOR.MINOR.PATCH; nothing to move."
+            exit 0
+          fi
+          major="v${BASH_REMATCH[1]}"
+          sha=$(git rev-parse "$TAG^{commit}")
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -f "$major" "$sha"
+          git push -f origin "refs/tags/$major"
+          echo "Moved $major to $TAG ($sha)"

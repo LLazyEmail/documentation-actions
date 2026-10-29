@@ -10,3 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Repository scaffolding: CONTRIBUTING, AGENTS.md, CODEOWNERS, SECURITY, Renovate, yamllint, gitignore.
+- CI workflow (yamllint, actionlint, unit tests) and release workflow that moves the floating major tag (`v1`).
+- Early in-repo auto-rebase workflow for open PRs.
+- Thank contributors and ask for a star (`actions/star-request`).
+- Update behind open PR branches (`actions/auto-rebase`).
+- Polished README, adoption guide, design notes, and self-test workflow.
+
