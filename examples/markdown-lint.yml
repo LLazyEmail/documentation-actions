@@ -1,0 +1,28 @@
+name: Markdown lint
+
+on:
+  pull_request:
+    paths:
+      - 'README.md'
+      - 'CHANGELOG.md'
+      - 'website/docs/**'
+      - '.markdownlint.json'
+      - '.github/workflows/markdown-lint.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'README.md'
+      - 'CHANGELOG.md'
+      - 'website/docs/**'
+      - '.markdownlint.json'
+
+jobs:
+  markdownlint:
+    uses: LLazyEmail/documentation-actions/.github/workflows/reusable-markdownlint.yml@main
+    with:
+      globs: |
+        README.md
+        CHANGELOG.md
+        website/docs/**/*.md
+        !website/node_modules/**
+        !website/build/**
