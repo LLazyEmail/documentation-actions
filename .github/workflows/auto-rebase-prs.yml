@@ -50,7 +50,7 @@ jobs:
                       owner: context.repo.owner,
                       repo: context.repo.repo,
                       issue_number: pr.number,
-                      body: '⚠️ This PR is out of date with main. Maintainers cannot update the branch (fork permissions). Please enable "Allow edits from maintainers" or rebase/merge main yourself.'
+                      body: '⚠️ Out of date with main; enable Allow edits from maintainers or rebase.'
                     }).catch(() => {});
                   }
                 }
