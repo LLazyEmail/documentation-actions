@@ -1,0 +1,12 @@
+# Default owners for documentation-actions
+*       @atherdon
+
+# Actions and reusable workflows
+/actions/                 @atherdon
+/.github/workflows/       @atherdon
+/scripts/                 @atherdon
+
+# Docs and examples
+/README.md                @atherdon
+/examples/                @atherdon
+/docs/                    @atherdon

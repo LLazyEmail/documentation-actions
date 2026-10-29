@@ -1,0 +1,29 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+*~
+.idea/
+.vscode/
+*.code-workspace
+
+# Node / Docusaurus (optional docs site)
+node_modules/
+website/node_modules/
+website/build/
+website/.docusaurus/
+website/.cache-loader/
+npm-debug.log*
+yarn-error.log*
+.pnpm-store/
+
+# Test / CI artifacts
+lychee-out.md
+*.log
+coverage/
+.nyc_output/
+
+# Local env
+.env
+.env.*
+!.env.example

@@ -6,9 +6,9 @@ Extracted from duplicated automation across `awesome-email-marketing`, `awesome-
 
 > Work in progress — composite actions and reusable workflows land via stacked draft PRs. Pin `@v1` after the first release; until then consumers may use `@main` in draft adoption PRs.
 
-## Status
+## Actions
 
-See open pull requests for the action inventory. This stub exists so draft PRs have a merge base on `main`.
+The inventory table is **append-only** in [`docs/actions-index.md`](docs/actions-index.md) (one new row per action PR, no reordering). That keeps stacked PRs from conflicting on the README.
 
 ## License
 

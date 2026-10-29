@@ -1,0 +1,17 @@
+# documentation-actions
+
+> Reusable GitHub Actions and workflows for LLazyEmail Docusaurus docs and awesome-list repos.
+
+## Docs
+
+- README.md — inventory, badges, usage snippets
+- AGENTS.md — rules for AI agents
+- CONTRIBUTING.md — PR conventions
+- examples/ — thin caller workflows
+
+## Actions (paths)
+
+Composite actions live under actions/<name>/action.yml.
+Reusable workflows live under .github/workflows/reusable-*.yml.
+
+Pin LLazyEmail/documentation-actions@v1 after the first release.
