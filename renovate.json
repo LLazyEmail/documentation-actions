@@ -1,6 +1,25 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "config:recommended"
+    "config:recommended",
+    "helpers:pinGitHubActionDigestsToSemver",
+    "schedule:weekly"
+  ],
+  "timezone": "Europe/Kyiv",
+  "schedule": ["before 6am on Monday"],
+  "packageRules": [
+    {
+      "description": "Automerge GitHub Actions digests, pins, patches, minors",
+      "matchManagers": ["github-actions"],
+      "matchUpdateTypes": ["digest", "pin", "patch", "minor"],
+      "automerge": true,
+      "minimumReleaseAge": "3 days",
+      "groupName": "GitHub Actions (non-major)"
+    },
+    {
+      "description": "Major updates stay manual",
+      "matchUpdateTypes": ["major"],
+      "automerge": false
+    }
   ]
 }
