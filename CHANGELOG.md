@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Soft-fail lychee link check with summary (`actions/lychee-link-check`).
 
 - Repository scaffolding: CONTRIBUTING, AGENTS.md, CODEOWNERS, SECURITY, Renovate, yamllint, gitignore.
 - CI workflow (yamllint, actionlint, unit tests) and release workflow that moves the floating major tag (`v1`).
