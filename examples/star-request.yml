@@ -1,0 +1,13 @@
+# Thin caller — keep triggers here; call the reusable workflow for the job.
+name: Star request comment
+
+on:
+  pull_request_target:
+    types: [opened]
+
+permissions:
+  pull-requests: write
+
+jobs:
+  comment:
+    uses: LLazyEmail/documentation-actions/.github/workflows/reusable-star-request.yml@main

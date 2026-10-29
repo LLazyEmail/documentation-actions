@@ -1,0 +1,38 @@
+name: Star request comment
+description: >
+  On a newly opened pull request, thank the contributor and ask for a repository star.
+  Skips bots and maintainers (OWNER, MEMBER, COLLABORATOR).
+
+branding:
+  icon: star
+  color: yellow
+
+inputs:
+  message:
+    description: Comment body posted on the pull request
+    required: false
+    default: >
+      Thanks for the contribution! 🙌 If you find this list useful, could you give
+      the repository a ⭐ star? It really helps us keep it growing.
+  github-token:
+    description: Token with pull-requests:write
+    required: false
+    default: ${{ github.token }}
+
+runs:
+  using: composite
+  steps:
+    - name: Ask contributor for a star
+      uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7.0.1
+      env:
+        STAR_REQUEST_MESSAGE: ${{ inputs.message }}
+      with:
+        github-token: ${{ inputs.github-token }}
+        script: |
+          const body = process.env.STAR_REQUEST_MESSAGE;
+          await github.rest.issues.createComment({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.payload.pull_request.number,
+            body,
+          });
