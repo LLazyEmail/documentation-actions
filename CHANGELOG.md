@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Reusable GitHub Pages and peaceiris deploy (`reusable-docusaurus-pages-deploy`).
 - Install, optional prebuild, and Docusaurus build (`actions/docusaurus-build`).
 
 - Repository scaffolding: CONTRIBUTING, AGENTS.md, CODEOWNERS, SECURITY, Renovate, yamllint, gitignore.
