@@ -44,3 +44,7 @@ Current tag to use from other repos after the first release: `LLazyEmail/documen
 - Action inventory and usage: `README.md`
 - Examples: `examples/`
 - Release notes: `CHANGELOG.md`
+
+## Append-only actions index
+
+When adding an action, append **one new row** to [`docs/actions-index.md`](docs/actions-index.md). Do not reorder, edit, or delete existing rows. Keep the action entirely under `actions/<name>/` (plus its reusable workflow and example). Do not rewrite the root README table in action PRs.

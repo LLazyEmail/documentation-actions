@@ -1,0 +1,56 @@
+name: CI
+
+# Lints YAML / workflows and runs unit tests for scripts shipped with actions.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: yamllint
+        run: pipx run 'yamllint==1.38.0' --format github .
+
+      - name: actionlint
+        run: |
+          bash <(curl -fsSL \
+            https://raw.githubusercontent.com/rhysd/actionlint/914e7df21a07ef503a81201c76d2b11c789d3fca/scripts/download-actionlint.bash) \
+            1.7.12
+          status=0
+          ./actionlint -no-color > "$RUNNER_TEMP/actionlint.txt" 2>&1 || status=$?
+          cat "$RUNNER_TEMP/actionlint.txt"
+          sed -nE 's#^([^:]+):([0-9]+):([0-9]+): (.*)$#::error file=\1,line=\2,col=\3::\4#p' "$RUNNER_TEMP/actionlint.txt"
+          exit "$status"
+
+  test:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '20'
+
+      - name: Run unit tests
+        run: bash tests/run-unit.sh
