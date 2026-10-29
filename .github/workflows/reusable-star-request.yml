@@ -1,0 +1,30 @@
+name: Reusable star-request
+
+on:
+  workflow_call:
+    inputs:
+      message:
+        description: Comment body posted on the pull request
+        type: string
+        required: false
+        default: >
+          Thanks for the contribution! 🙌 If you find this list useful, could you give
+          the repository a ⭐ star? It really helps us keep it growing.
+
+permissions:
+  pull-requests: write
+
+jobs:
+  comment:
+    name: star-request
+    if: >-
+      github.event.pull_request.user.type != 'Bot' &&
+      github.event.pull_request.author_association != 'OWNER' &&
+      github.event.pull_request.author_association != 'MEMBER' &&
+      github.event.pull_request.author_association != 'COLLABORATOR'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ask contributor for a star
+        uses: LLazyEmail/documentation-actions/actions/star-request@main
+        with:
+          message: ${{ inputs.message }}
