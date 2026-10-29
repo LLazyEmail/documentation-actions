@@ -16,7 +16,7 @@ Already on `main`:
 
 Still open:
 
-- [ ] 3. [#22 docs: add MERGE_ORDER.md (merge checklist + adoption + settings)](https://github.com/LLazyEmail/documentation-actions/pull/22) — this file. Draft; base `main`. No code dependencies; merge anytime.
+- [ ] 3. [#23 docs: add MERGE_ORDER.md (merge checklist + adoption + settings)](https://github.com/LLazyEmail/documentation-actions/pull/23) — this file. Draft; base `main`. No code dependencies; merge anytime.
 - [ ] 4. **Cut `v1`** — create the first release / tag (e.g. `v1.0.0`) so `release.yml` can move the floating major tag `v1`. Prefer pin consumers to `@v1` (or a commit SHA) after this step.
 
 ---
