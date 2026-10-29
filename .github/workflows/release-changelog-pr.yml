@@ -9,10 +9,9 @@ on:
   workflow_dispatch:
     inputs:
       force-bump:
-        description: Override the detected bump level
+        description: "Override bump (patch, minor, or major). Leave empty to auto-detect."
         required: false
-        type: choice
-        options: ['', patch, minor, major]
+        type: string
         default: ''
 
 concurrency:
