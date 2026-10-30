@@ -39,11 +39,30 @@ Current tag to use from other repos after the first release: `LLazyEmail/documen
 - Do not merge or close PRs unless the human owner asks.
 - Never delete curated content in sibling awesome-list repos; extend or annotate.
 
+
+## Changelog entries (`.changelog/`)
+
+Do **not** edit `CHANGELOG.md` by hand for user-facing changes. Add one flat
+file under [`.changelog/`](.changelog/) instead (see [`.changelog/README.md`](.changelog/README.md)):
+
+```markdown
+semver: minor
+type: Added
+Short user-facing summary.
+```
+
+- `semver:` is required (`major` | `minor` | `patch`).
+- `type:` is optional (`Added` | `Changed` | `Deprecated` | `Removed` | `Fixed` | `Security`).
+- Filename is a unique slug only (avoids merge conflicts on `CHANGELOG.md`).
+- CI validates entries on every PR (`scripts/changelog-check.sh` + `dottics/actions-changelog` validate mode). Use label `skip-changelog` / `no-changelog` to waive.
+- After merge, **Changelog release PR** folds waiting entries into `CHANGELOG.md` and opens `chore(release): vX.Y.Z`. Merge that, then publish a GitHub Release; `release.yml` moves floating `v1`.
+
 ## Reference
 
 - Action inventory and usage: `README.md`
 - Examples: `examples/`
-- Release notes: `CHANGELOG.md`
+- Release notes: `CHANGELOG.md` (compiled from `.changelog/` entries)
+- Pending release notes: `.changelog/`
 
 ## Append-only actions index
 
