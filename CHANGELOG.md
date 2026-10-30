@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.1] - 2026-10-30
+
+### Fixed
+
+- Reusable changelog / catalog-api / docs-index workflows rebase and retry when a concurrent push to main rejects the update.
+- Auto-publish now moves the floating major tag (v1) inside tag-release.yml, because GITHUB_TOKEN-created releases never trigger release.yml.
+
 ## [1.1.0] - 2026-10-30
 
 ### Added
@@ -53,5 +60,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Reusable JSON API regenerate workflow (`reusable-catalog-api`).
 - Awesome-list checks: entry-format, duplicates, sorted-sections (`actions/awesome-list-checks`).
 
+[1.1.1]: https://github.com/LLazyEmail/documentation-actions/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/LLazyEmail/documentation-actions/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/LLazyEmail/documentation-actions/releases/tag/v1.0.0
