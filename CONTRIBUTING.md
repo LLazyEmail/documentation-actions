@@ -53,10 +53,22 @@ Rules:
    `skip-changelog` or `no-changelog` label.
 5. Local check: `bash scripts/changelog-check.sh`.
 
-Full format notes: [`.changelog/README.md`](.changelog/README.md). After entries
-merge to `main`, the Changelog release PR workflow proposes the version bump;
-publishing the GitHub Release still moves the floating `v1` tag via
-`release.yml`.
+Full format notes: [`.changelog/README.md`](.changelog/README.md).
+
+## Releasing
+
+1. Feature PRs land with `.changelog/` entries (validated in CI).
+2. **Changelog release PR** opens `rel/vX.Y.Z` and folds entries into `CHANGELOG.md`.
+3. Merge that release PR. **Tag release** (`tag-release.yml`) creates the `vX.Y.Z`
+   annotated tag and a GitHub Release from that changelog section. The workflow
+   is idempotent: if the tag already exists it skips tagging; if the Release is
+   missing it still publishes one (so a missed release like `v1.0.0` is created
+   on the next push to `main` or via **workflow_dispatch**).
+4. **Move major tag** (`release.yml`) points floating `v1` / `v2` at the new Release.
+
+This mirrors `LLazyEmail/generate-template` (changesets version PR → publish on
+merge), except publish here means tag + GitHub Release (Actions consumers pin
+`@v1`), not npm.
 
 ## License
 

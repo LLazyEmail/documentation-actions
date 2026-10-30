@@ -1,0 +1,95 @@
+# After a release PR merges (CHANGELOG.md gains a new ## [X.Y.Z] section),
+# create the matching git tag and GitHub Release. Idempotent: if the tag
+# already exists it no-ops (and still creates a missing Release).
+#
+# Modeled on dottics/actions-changelog examples/tag-on-merge.yml and on
+# LLazyEmail/generate-template's changesets "publish after version PR merges"
+# loop. "Publish" here means tag + GitHub Release (Actions Marketplace-ready);
+# release.yml then moves the floating major tag (v1).
+name: Tag release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: tag-release
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  tag:
+    name: Tag and publish GitHub Release
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - id: v
+        name: Read newest changelog version
+        run: |
+          set -euo pipefail
+          version="$(bash scripts/changelog-latest-version.sh CHANGELOG.md)"
+          if [[ -z "$version" ]]; then
+            echo "No version heading in CHANGELOG.md; nothing to tag."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          tag="v${version}"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+          if git rev-parse -q --verify "refs/tags/${tag}" >/dev/null; then
+            echo "tag_exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag_exists=false" >> "$GITHUB_OUTPUT"
+          fi
+          if gh release view "$tag" >/dev/null 2>&1; then
+            echo "release_exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "release_exists=false" >> "$GITHUB_OUTPUT"
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Extract release notes
+        if: steps.v.outputs.skip != 'true' && steps.v.outputs.release_exists != 'true'
+        run: |
+          set -euo pipefail
+          bash scripts/changelog-section.sh "${{ steps.v.outputs.version }}" CHANGELOG.md \
+            > "$RUNNER_TEMP/RELEASE_NOTES.md"
+          {
+            echo "## Release notes for ${{ steps.v.outputs.tag }}"
+            echo
+            cat "$RUNNER_TEMP/RELEASE_NOTES.md"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Create annotated tag
+        if: steps.v.outputs.skip != 'true' && steps.v.outputs.tag_exists != 'true'
+        env:
+          TAG: ${{ steps.v.outputs.tag }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$TAG" -m "$TAG"
+          git push origin "refs/tags/$TAG"
+          echo "Created tag $TAG"
+
+      - name: Publish GitHub Release
+        if: steps.v.outputs.skip != 'true' && steps.v.outputs.release_exists != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.v.outputs.tag }}
+        run: |
+          set -euo pipefail
+          gh release create "$TAG" \
+            --title "$TAG" \
+            --notes-file "$RUNNER_TEMP/RELEASE_NOTES.md"
+          echo "Published GitHub Release $TAG"
