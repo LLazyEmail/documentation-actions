@@ -5,7 +5,10 @@
 # Modeled on dottics/actions-changelog examples/tag-on-merge.yml and on
 # LLazyEmail/generate-template's changesets "publish after version PR merges"
 # loop. "Publish" here means tag + GitHub Release (Actions Marketplace-ready);
-# release.yml then moves the floating major tag (v1).
+# Also moves the floating major tag (v1) here: releases created with
+# GITHUB_TOKEN do not trigger release.yml (GitHub will not start new
+# workflows from GITHUB_TOKEN events). release.yml remains for manually
+# published releases / PAT-based publishes.
 name: Tag release
 
 on:
@@ -97,3 +100,23 @@ jobs:
             --title "$TAG" \
             --notes-file "$RUNNER_TEMP/RELEASE_NOTES.md"
           echo "Published GitHub Release $TAG"
+
+      # GITHUB_TOKEN-created releases do not fire `release:` workflows, so
+      # move the floating major tag in this same job (same as release.yml).
+      - name: Move floating major tag
+        if: steps.v.outputs.skip != 'true'
+        env:
+          TAG: ${{ steps.v.outputs.tag }}
+        run: |
+          set -euo pipefail
+          if ! [[ "$TAG" =~ ^v([0-9]+)\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Tag '$TAG' is not vMAJOR.MINOR.PATCH; nothing to move."
+            exit 0
+          fi
+          major="v${BASH_REMATCH[1]}"
+          sha=$(git rev-parse "${TAG}^{commit}")
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -f "$major" "$sha"
+          git push -f origin "refs/tags/$major"
+          echo "Moved $major to $TAG ($sha)"
