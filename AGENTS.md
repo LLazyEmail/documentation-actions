@@ -10,7 +10,7 @@ Guidance for AI coding agents that work **in** this repository, or that **add th
 2. **Reusable workflows** under `.github/workflows/reusable-*.yml` (job-level reuse via `workflow_call`).
 3. **Examples** under `examples/` showing thin caller workflows for consumer repos.
 
-Current tag to use from other repos after the first release: `LLazyEmail/documentation-actions@v1`. Until then, draft adoption PRs may pin `@main`.
+Current tag to use from other repos: `LLazyEmail/documentation-actions@v1` (floating major; created when the first GitHub Release publishes). Draft adoption PRs may pin `@main` only during the adoption window.
 
 ## Start here
 
@@ -34,7 +34,11 @@ Current tag to use from other repos after the first release: `LLazyEmail/documen
 
 - Every `uses:` of a third-party Action is pinned to a full commit SHA with a `# vX.Y.Z` comment. Renovate keeps them current.
 - `.github/workflows/ci.yml` lints YAML and runs unit/self-tests.
-- `.github/workflows/release.yml` moves the floating major tag (`v1`) when a `vMAJOR.MINOR.PATCH` release is published.
+- Release loop (same idea as `LLazyEmail/generate-template` changesets, adapted for Actions):
+  1. PRs add `.changelog/` fragments.
+  2. `release-changelog-pr.yml` opens a `rel/vX.Y.Z` release PR that folds them into `CHANGELOG.md`.
+  3. Merging that PR (or any push to `main` while a changelog version has no tag) runs `tag-release.yml`: creates `vX.Y.Z`, publishes a GitHub Release with those notes (idempotent if the tag already exists).
+  4. `release.yml` moves the floating major tag (`v1`) when that Release is published.
 - Small draft PRs; commit trailer `Co-authored-by: petroved <arthur.tkachenko.netweight@gmail.com>`.
 - Do not merge or close PRs unless the human owner asks.
 - Never delete curated content in sibling awesome-list repos; extend or annotate.
@@ -55,7 +59,7 @@ Short user-facing summary.
 - `type:` is optional (`Added` | `Changed` | `Deprecated` | `Removed` | `Fixed` | `Security`).
 - Filename is a unique slug only (avoids merge conflicts on `CHANGELOG.md`).
 - CI validates entries on every PR (`scripts/changelog-check.sh` + `dottics/actions-changelog` validate mode). Use label `skip-changelog` / `no-changelog` to waive.
-- After merge, **Changelog release PR** folds waiting entries into `CHANGELOG.md` and opens `chore(release): vX.Y.Z`. Merge that, then publish a GitHub Release; `release.yml` moves floating `v1`.
+- After merge, **Changelog release PR** folds waiting entries into `CHANGELOG.md` and opens `rel/vX.Y.Z`. Merge that release PR; **Tag release** creates the git tag + GitHub Release automatically, and `release.yml` moves floating `v1`.
 
 ## Reference
 

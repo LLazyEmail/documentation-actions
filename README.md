@@ -14,7 +14,7 @@ Extracted from duplicated automation across:
 
 Modeled on [`LLazyEmail/email-template-workflows`](https://github.com/LLazyEmail/email-template-workflows).
 
-Pin `LLazyEmail/documentation-actions@v1` after the first release. Until then, draft adoption PRs may use `@main`. For the strongest supply-chain guarantee, pin a full commit SHA and keep it current with Renovate.
+Pin `LLazyEmail/documentation-actions@v1` once the first GitHub Release exists (auto-created when a release PR merges). Draft adoption PRs may use `@main` only during the adoption window. For the strongest supply-chain guarantee, pin a full commit SHA and keep it current with Renovate.
 
 ## Quick start
 

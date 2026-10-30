@@ -57,10 +57,11 @@ they pass through untouched.
    (or refreshes) a `chore(release): vX.Y.Z` pull request that folds waiting
    entries into `CHANGELOG.md` and deletes the consumed files. The highest
    `semver:` among waiting entries wins.
-3. Merge that release PR, then publish a GitHub Release with tag
-   `vMAJOR.MINOR.PATCH`. Existing `.github/workflows/release.yml` moves the
-   floating major tag (`v1`, `v2`, …) — same pattern as
-   `LLazyEmail/email-template-workflows`.
+3. Merge that release PR. **Tag release** (`tag-release.yml`) creates the
+   `vMAJOR.MINOR.PATCH` tag and GitHub Release from the new changelog section
+   (idempotent if the tag already exists). Then `release.yml` moves the
+   floating major tag (`v1`, `v2`, …). Same publish-on-merge idea as
+   `LLazyEmail/generate-template`, adapted for an Actions repo.
 
 ## Adding an entry (quick)
 

@@ -1,6 +1,6 @@
 # After entries land on main, open (or refresh) a release PR that folds them
-# into CHANGELOG.md. Publishing the GitHub Release / moving floating v1 stays
-# with release.yml (same as email-template-workflows).
+# into CHANGELOG.md. Merging that PR triggers tag-release.yml (tag + GitHub
+# Release); release.yml then moves floating v1.
 name: Changelog release PR
 
 on:
