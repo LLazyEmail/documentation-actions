@@ -39,7 +39,11 @@ on:
         default: ''
 
 permissions:
-  contents: read
+  # contents: write so peaceiris callers that grant write keep it via intersection.
+  # Actions Pages callers may keep contents: read; intersection yields read and
+  # pages/id-token still work. Do NOT put contents: write on a nested job — GitHub
+  # validates nested job permissions against the caller even when the job is skipped.
+  contents: write
   pages: write
   id-token: write
 
@@ -90,8 +94,6 @@ jobs:
     name: Deploy via peaceiris
     if: inputs.peaceiris-publish-dir != ''
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
