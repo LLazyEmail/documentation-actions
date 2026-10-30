@@ -42,19 +42,23 @@ jobs:
             exit 0
           fi
           tag="v${version}"
-          echo "version=$version" >> "$GITHUB_OUTPUT"
-          echo "tag=$tag" >> "$GITHUB_OUTPUT"
-          echo "skip=false" >> "$GITHUB_OUTPUT"
           if git rev-parse -q --verify "refs/tags/${tag}" >/dev/null; then
-            echo "tag_exists=true" >> "$GITHUB_OUTPUT"
+            tag_exists=true
           else
-            echo "tag_exists=false" >> "$GITHUB_OUTPUT"
+            tag_exists=false
           fi
           if gh release view "$tag" >/dev/null 2>&1; then
-            echo "release_exists=true" >> "$GITHUB_OUTPUT"
+            release_exists=true
           else
-            echo "release_exists=false" >> "$GITHUB_OUTPUT"
+            release_exists=false
           fi
+          {
+            echo "version=$version"
+            echo "tag=$tag"
+            echo "skip=false"
+            echo "tag_exists=$tag_exists"
+            echo "release_exists=$release_exists"
+          } >> "$GITHUB_OUTPUT"
         env:
           GH_TOKEN: ${{ github.token }}
 
