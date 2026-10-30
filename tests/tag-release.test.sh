@@ -52,9 +52,13 @@ if grep -q '1.2.0' "$tmp/notes.md"; then
   exit 1
 fi
 
-# Repo changelog (post v1.0.0 fold) must resolve to 1.0.0
+# Repo changelog must resolve to some X.Y.Z. Do not pin a specific
+# version: release PRs (rel/v*) bump CHANGELOG.md and would fail CI.
 repo_ver="$("$latest" "$root/CHANGELOG.md")"
-[[ "$repo_ver" == "1.0.0" ]] || { echo "expected repo 1.0.0, got '$repo_ver'" >&2; exit 1; }
+[[ "$repo_ver" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || {
+  echo "expected repo semver X.Y.Z, got '$repo_ver'" >&2
+  exit 1
+}
 
 # Empty / no version
 printf '# Changelog\n\n## [Unreleased]\n\n- x\n' >"$tmp/empty.md"
