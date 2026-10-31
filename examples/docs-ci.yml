@@ -1,0 +1,51 @@
+# Umbrella docs CI — one caller instead of separate markdown-lint / link-check /
+# test-deploy workflow files. Triggers stay here; jobs live in documentation-actions.
+name: Docs CI
+
+on:
+  pull_request:
+    paths:
+      - 'README.md'
+      - 'CHANGELOG.md'
+      - 'website/**'
+      - '.github/workflows/docs-ci.yml'
+      - '.markdownlint.json'
+      - '.lychee.toml'
+  push:
+    branches: [main]
+    paths:
+      - 'README.md'
+      - 'CHANGELOG.md'
+      - 'website/**'
+      - '.markdownlint.json'
+  schedule:
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  docs-ci:
+    uses: LLazyEmail/documentation-actions/.github/workflows/reusable-docs-ci.yml@main
+    with:
+      # Defaults: Node 22, website/, npm ci, run-build true, annotate-log true.
+      run-markdownlint: true
+      markdownlint-globs: |
+        README.md
+        CHANGELOG.md
+        website/docs/**/*.md
+        !website/node_modules/**
+        !website/build/**
+      run-lychee: true
+      lychee-args: >-
+        --verbose --no-progress --max-concurrency 8
+        --accept 200,204,206,403,429 --timeout 20
+        --exclude-path node_modules --exclude-path website/node_modules
+        --exclude-path website/build --exclude-path .git
+        README.md CHANGELOG.md 'website/docs/**/*.md' 'website/docs/**/*.mdx'
+      lychee-create-issue: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
+      # pr-comment: true
+    secrets: inherit
