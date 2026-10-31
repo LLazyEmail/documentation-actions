@@ -65,29 +65,9 @@ jobs:
         working-directory: ${{ inputs.working-directory }}
         run: ${{ inputs.generate-command }}
 
-      - name: Commit and push changelog
-        env:
-          COMMIT_PATHS: ${{ inputs.commit-paths }}
-          COMMIT_MESSAGE: ${{ inputs.commit-message }}
-        run: |
-          set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          # shellcheck disable=SC2086
-          git add $COMMIT_PATHS
-          if git diff --staged --quiet; then
-            echo "Changelog already up to date."
-            exit 0
-          fi
-          git commit -m "$COMMIT_MESSAGE"
-          # Concurrent consumer pushes can race; rebase and retry.
-          for attempt in 1 2 3 4 5; do
-            if git push origin HEAD:main; then
-              exit 0
-            fi
-            echo "push rejected (attempt $attempt); rebasing onto origin/main"
-            git pull --rebase origin main
-            sleep $((attempt * 2))
-          done
-          echo "push failed after retries" >&2
-          exit 1
+      - name: Commit and push
+        uses: LLazyEmail/documentation-actions/actions/git-push-retry@main
+        with:
+          commit-paths: ${{ inputs.commit-paths }}
+          commit-message: ${{ inputs.commit-message }}
+          up-to-date-message: Changelog already up to date.

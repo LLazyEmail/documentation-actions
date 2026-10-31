@@ -1,0 +1,28 @@
+# Illustrative step inside a commit-back job (changelog / docs-index / catalog-api).
+# Prefer the reusable workflows; this shows the composite alone.
+name: Example git-push-retry step
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  commit-back:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: main
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      # ... generate files ...
+
+      - name: Commit and push
+        uses: LLazyEmail/documentation-actions/actions/git-push-retry@main
+        with:
+          commit-paths: CHANGELOG.md website/src/data/changelog.json
+          commit-message: 'chore(changelog): regenerate after merged pull request'
+          up-to-date-message: Changelog already up to date.

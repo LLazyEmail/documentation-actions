@@ -89,6 +89,17 @@ jobs:
 
 This repository also ships an early in-repo `.github/workflows/auto-rebase-prs.yml` so the draft stack stays current before the composite action merges.
 
+### Git push with rebase retry
+
+```yaml
+- uses: LLazyEmail/documentation-actions/actions/git-push-retry@v1
+  with:
+    commit-paths: CHANGELOG.md website/src/data/changelog.json
+    commit-message: 'chore(changelog): regenerate after merged pull request'
+```
+
+Commit-back reusable workflows (changelog, docs-index, catalog-api) already use this composite.
+
 ## Adoption
 
 See [`docs/adoption.md`](docs/adoption.md) for consumer cut-over notes and [`docs/design.md`](docs/design.md) for layout conventions.
