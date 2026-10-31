@@ -18,7 +18,7 @@ jobs:
     uses: LLazyEmail/documentation-actions/.github/workflows/reusable-catalog-api.yml@main
     with:
       working-directory: website
-      node-version: '20'
+      node-version: '22'
       generate-command: npm run generate:industry-leaders
       commit-paths: website/static/api/v1/industry-leaders.json
       commit-message: 'chore(api): regenerate industry-leaders articles JSON'
