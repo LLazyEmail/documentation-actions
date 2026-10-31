@@ -32,7 +32,7 @@ on:
         required: false
         default: 0
       lfs:
-        description: Pass lfs: true to actions/checkout (Git LFS repos)
+        description: "Pass lfs: true to actions/checkout (Git LFS repos)"
         type: boolean
         required: false
         default: false
