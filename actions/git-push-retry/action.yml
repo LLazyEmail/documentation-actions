@@ -1,0 +1,52 @@
+name: git push with rebase retry
+description: >
+  Stage paths, commit when there is a diff, then push with rebase-and-retry
+  so concurrent main updates (changelog + docs-index + catalog-api) do not
+  fail the job. Used by the commit-back reusable workflows.
+
+branding:
+  icon: git-commit
+  color: blue
+
+inputs:
+  commit-paths:
+    description: Space-separated paths to git add
+    required: true
+  commit-message:
+    description: Commit message when there is a staged diff
+    required: true
+  up-to-date-message:
+    description: Log line when there is nothing to commit
+    required: false
+    default: Already up to date.
+  remote-ref:
+    description: git push refspec (default HEAD:main)
+    required: false
+    default: HEAD:main
+  max-attempts:
+    description: How many push attempts before failing
+    required: false
+    default: '5'
+  git-user-name:
+    description: git config user.name
+    required: false
+    default: github-actions[bot]
+  git-user-email:
+    description: git config user.email
+    required: false
+    default: 41898282+github-actions[bot]@users.noreply.github.com
+
+runs:
+  using: composite
+  steps:
+    - name: Commit and push with rebase retry
+      shell: bash
+      env:
+        COMMIT_PATHS: ${{ inputs.commit-paths }}
+        COMMIT_MESSAGE: ${{ inputs.commit-message }}
+        UP_TO_DATE_MESSAGE: ${{ inputs.up-to-date-message }}
+        REMOTE_REF: ${{ inputs.remote-ref }}
+        MAX_ATTEMPTS: ${{ inputs.max-attempts }}
+        GIT_USER_NAME: ${{ inputs.git-user-name }}
+        GIT_USER_EMAIL: ${{ inputs.git-user-email }}
+      run: bash "${{ github.action_path }}/commit-and-push.sh"
