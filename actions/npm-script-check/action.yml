@@ -1,0 +1,55 @@
+name: npm script check
+description: >
+  Checkout-friendly composite: setup Node (default 22), optional npm ci, then
+  run a package.json script. For media guardrails, naming conventions,
+  format:check, typecheck, i18n sync, missing-images, and similar PR checks.
+
+branding:
+  icon: terminal
+  color: blue
+
+inputs:
+  working-directory:
+    description: Directory that contains package.json
+    required: false
+    default: '.'
+  node-version:
+    description: Node.js version
+    required: false
+    default: '22'
+  cache-dependency-path:
+    description: Lockfile path for setup-node cache
+    required: false
+    default: package-lock.json
+  install-command:
+    description: Install command (empty skips install)
+    required: false
+    default: npm ci
+  package-manager-cache:
+    description: setup-node cache value (npm, yarn, pnpm) or empty to disable
+    required: false
+    default: npm
+  run-command:
+    description: Command to run after install (required)
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Setup Node
+      uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+      with:
+        node-version: ${{ inputs.node-version }}
+        cache: ${{ inputs.package-manager-cache != '' && inputs.package-manager-cache || '' }}
+        cache-dependency-path: ${{ inputs.cache-dependency-path }}
+
+    - name: Install dependencies
+      if: inputs.install-command != ''
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: ${{ inputs.install-command }}
+
+    - name: Run check
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: ${{ inputs.run-command }}
