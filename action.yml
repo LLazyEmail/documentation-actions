@@ -1,9 +1,5 @@
-name: Documentation Actions
-description: >
-  Reusable composite actions and workflows for Docusaurus documentation sites
-  and awesome-list repositories. Optionally run markdownlint, a soft-fail lychee
-  link check, and a Docusaurus build in one step. Specialized actions live under
-  actions/<name> and reusable workflows under .github/workflows/.
+name: LLazyEmail Documentation Actions
+description: Reusable actions for Docusaurus sites and awesome-lists: lint, link-check, and build.
 
 branding:
   icon: book-open
