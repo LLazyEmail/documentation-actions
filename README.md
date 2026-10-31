@@ -16,6 +16,27 @@ Modeled on [`LLazyEmail/email-template-workflows`](https://github.com/LLazyEmail
 
 Pin `LLazyEmail/documentation-actions@v1` once the first GitHub Release exists (auto-created when a release PR merges). Draft adoption PRs may use `@main` only during the adoption window. For the strongest supply-chain guarantee, pin a full commit SHA and keep it current with Renovate.
 
+## Marketplace
+
+The repository root contains an `action.yml` so the suite can be listed on the [GitHub Marketplace](https://github.com/marketplace). After the next release, check **Publish this Action to the GitHub Marketplace** when drafting the release.
+
+The root action is an umbrella composite that optionally runs markdownlint, a soft-fail lychee check, and a Docusaurus build. Specialized composite actions (under `actions/<name>/`) and reusable workflows (under `.github/workflows/`) continue to be used by path and are not listed separately on the Marketplace.
+
+```yaml
+- uses: LLazyEmail/documentation-actions@v1
+  with:
+    run-markdownlint: true
+    markdownlint-globs: |
+      README.md
+      website/docs/**/*.md
+    run-lychee: true
+    lychee-args: >-
+      --verbose --no-progress --accept 200,204,206,403,429
+      README.md 'website/docs/**/*.md'
+    run-build: true
+    working-directory: website
+```
+
 ## Quick start
 
 ```yaml

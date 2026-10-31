@@ -1,0 +1,104 @@
+name: Documentation Actions
+description: >
+  Reusable composite actions and workflows for Docusaurus documentation sites
+  and awesome-list repositories. Optionally run markdownlint, a soft-fail lychee
+  link check, and a Docusaurus build in one step. Specialized actions live under
+  actions/<name> and reusable workflows under .github/workflows/.
+
+branding:
+  icon: book-open
+  color: blue
+
+author: LLazyEmail
+
+inputs:
+  # --- markdownlint ---------------------------------------------------------
+  run-markdownlint:
+    description: Run markdownlint-cli2 on the given globs
+    required: false
+    default: 'false'
+  markdownlint-globs:
+    description: Multiline globs for markdownlint (required when run-markdownlint is true)
+    required: false
+    default: ''
+
+  # --- lychee ---------------------------------------------------------------
+  run-lychee:
+    description: Run a soft-fail lychee link check
+    required: false
+    default: 'false'
+  lychee-args:
+    description: Arguments passed to lychee (paths and flags; required when run-lychee is true)
+    required: false
+    default: ''
+  lychee-fail:
+    description: Whether the lychee step should fail the job (default false = soft)
+    required: false
+    default: 'false'
+  lychee-create-issue:
+    description: Create or update an issue from the lychee report
+    required: false
+    default: 'false'
+
+  # --- Docusaurus build -----------------------------------------------------
+  run-build:
+    description: Install dependencies and build a Docusaurus site
+    required: false
+    default: 'false'
+  working-directory:
+    description: Directory that contains package.json (website or .)
+    required: false
+    default: website
+  node-version:
+    description: Node.js version
+    required: false
+    default: '22'
+  cache-dependency-path:
+    description: Lockfile path for setup-node cache
+    required: false
+    default: website/package-lock.json
+  install-command:
+    description: Install command
+    required: false
+    default: npm ci
+  build-command:
+    description: Build command
+    required: false
+    default: npm run build
+  prebuild-command:
+    description: Optional command before build (empty skips)
+    required: false
+    default: ''
+  annotate-log:
+    description: Tee the build log and emit annotations + job summary
+    required: false
+    default: 'true'
+
+runs:
+  using: composite
+  steps:
+    - name: Markdown lint
+      if: inputs.run-markdownlint == 'true'
+      uses: ./actions/markdownlint
+      with:
+        globs: ${{ inputs.markdownlint-globs }}
+
+    - name: Lychee link check
+      if: inputs.run-lychee == 'true'
+      uses: ./actions/lychee-link-check
+      with:
+        args: ${{ inputs.lychee-args }}
+        fail: ${{ inputs.lychee-fail }}
+        create-issue: ${{ inputs.lychee-create-issue }}
+
+    - name: Docusaurus build
+      if: inputs.run-build == 'true'
+      uses: ./actions/docusaurus-build
+      with:
+        working-directory: ${{ inputs.working-directory }}
+        node-version: ${{ inputs.node-version }}
+        cache-dependency-path: ${{ inputs.cache-dependency-path }}
+        install-command: ${{ inputs.install-command }}
+        build-command: ${{ inputs.build-command }}
+        prebuild-command: ${{ inputs.prebuild-command }}
+        annotate-log: ${{ inputs.annotate-log }}
