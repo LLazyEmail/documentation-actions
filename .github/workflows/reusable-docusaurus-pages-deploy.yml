@@ -10,7 +10,7 @@ on:
       node-version:
         type: string
         required: false
-        default: ''
+        default: '22'
       cache-dependency-path:
         type: string
         required: false
@@ -37,6 +37,11 @@ on:
         type: string
         required: false
         default: ''
+      lfs:
+        description: Pass lfs: true to actions/checkout (Git LFS docs repos)
+        type: boolean
+        required: false
+        default: false
 
 permissions:
   # contents: write so peaceiris callers that grant write keep it via intersection.
@@ -61,6 +66,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+          lfs: ${{ inputs.lfs }}
 
       - name: Build Docusaurus
         uses: LLazyEmail/documentation-actions/actions/docusaurus-build@main
@@ -97,6 +103,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          lfs: ${{ inputs.lfs }}
 
       - name: Build Docusaurus
         uses: LLazyEmail/documentation-actions/actions/docusaurus-build@main
