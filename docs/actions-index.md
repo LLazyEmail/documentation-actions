@@ -15,3 +15,4 @@ Append-only. Each action PR adds **exactly one new line** at the end of the tabl
 | `docs-index` | `.github/workflows/reusable-docs-index.yml` | Reusable pages-index regenerate workflow |
 | `catalog-api` | `.github/workflows/reusable-catalog-api.yml` | Reusable JSON API regenerate workflow |
 | `awesome-list-checks` | `actions/awesome-list-checks` | Entry-format, duplicates, and sorted-sections checks |
+| `npm-script-check` | `actions/npm-script-check` | Setup Node, optional npm ci, run a package.json check script |

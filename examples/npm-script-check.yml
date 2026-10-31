@@ -1,0 +1,23 @@
+name: Media guardrails
+
+on:
+  pull_request:
+    paths:
+      - '**/*.png'
+      - '**/*.jpg'
+      - '**/*.webp'
+      - 'scripts/check-media-guardrails.mjs'
+      - 'package.json'
+      - '.github/workflows/media-guardrails.yml'
+
+jobs:
+  media:
+    uses: LLazyEmail/documentation-actions/.github/workflows/reusable-npm-script-check.yml@v1
+    with:
+      working-directory: .
+      cache-dependency-path: package-lock.json
+      node-version: '22'
+      lfs: true
+      job-name: Check media additions
+      # Caller expands github.base_ref in the run-command string:
+      run-command: npm run check:media -- --base origin/main --head HEAD

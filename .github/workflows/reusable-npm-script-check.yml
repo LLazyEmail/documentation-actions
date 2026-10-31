@@ -1,0 +1,63 @@
+name: Reusable npm script check
+
+on:
+  workflow_call:
+    inputs:
+      working-directory:
+        type: string
+        required: false
+        default: '.'
+      node-version:
+        type: string
+        required: false
+        default: '22'
+      cache-dependency-path:
+        type: string
+        required: false
+        default: package-lock.json
+      install-command:
+        type: string
+        required: false
+        default: npm ci
+      package-manager-cache:
+        type: string
+        required: false
+        default: npm
+      run-command:
+        description: Command to run (e.g. npm run check:media -- --base origin/main --head HEAD)
+        type: string
+        required: true
+      fetch-depth:
+        type: number
+        required: false
+        default: 0
+      lfs:
+        description: Pass lfs: true to actions/checkout (Git LFS repos)
+        type: boolean
+        required: false
+        default: false
+      job-name:
+        type: string
+        required: false
+        default: npm script check
+
+jobs:
+  npm-script-check:
+    name: ${{ inputs.job-name }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: ${{ inputs.fetch-depth }}
+          lfs: ${{ inputs.lfs }}
+
+      - name: Run npm script check
+        uses: LLazyEmail/documentation-actions/actions/npm-script-check@main
+        with:
+          working-directory: ${{ inputs.working-directory }}
+          node-version: ${{ inputs.node-version }}
+          cache-dependency-path: ${{ inputs.cache-dependency-path }}
+          install-command: ${{ inputs.install-command }}
+          package-manager-cache: ${{ inputs.package-manager-cache }}
+          run-command: ${{ inputs.run-command }}
