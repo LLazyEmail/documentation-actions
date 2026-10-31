@@ -1,7 +1,8 @@
 name: Docusaurus build
 description: >
   Install dependencies and build a Docusaurus site. Optional pre-build script
-  (for example lint:docs-links). Does not deploy.
+  (for example lint:docs-links). Tees the build log and surfaces broken-link /
+  warning / error lines as GitHub annotations and a job summary. Does not deploy.
 
 branding:
   icon: package
@@ -36,6 +37,21 @@ inputs:
     description: setup-node cache value (npm, yarn, pnpm) or empty to disable
     required: false
     default: npm
+  annotate-log:
+    description: Tee build output and emit annotations + job summary
+    required: false
+    default: 'true'
+
+outputs:
+  warning-count:
+    description: Number of warning-like lines matched in the build log
+    value: ${{ steps.annotate.outputs.warning-count }}
+  error-count:
+    description: Number of error-like lines matched in the build log
+    value: ${{ steps.annotate.outputs.error-count }}
+  build-log-path:
+    description: Path to the teed build log (empty when annotate-log is false)
+    value: ${{ steps.annotate.outputs.build-log-path }}
 
 runs:
   using: composite
@@ -59,6 +75,35 @@ runs:
       run: ${{ inputs.prebuild-command }}
 
     - name: Build website
+      id: build
       shell: bash
       working-directory: ${{ inputs.working-directory }}
-      run: ${{ inputs.build-command }}
+      env:
+        ANNOTATE_LOG: ${{ inputs.annotate-log }}
+        BUILD_COMMAND: ${{ inputs.build-command }}
+      run: |
+        set -euo pipefail
+        if [[ "${ANNOTATE_LOG}" != "true" ]]; then
+          eval "${BUILD_COMMAND}"
+          exit 0
+        fi
+        log="${RUNNER_TEMP}/docusaurus-build.log"
+        set +e
+        set -o pipefail
+        eval "${BUILD_COMMAND}" 2>&1 | tee "${log}"
+        status=${PIPESTATUS[0]}
+        set -e
+        echo "build-log-path=${log}" >>"${GITHUB_OUTPUT}"
+        exit "${status}"
+
+    - name: Annotate build log
+      id: annotate
+      if: always() && inputs.annotate-log == 'true'
+      shell: bash
+      env:
+        LOG_PATH: ${{ steps.build.outputs.build-log-path }}
+      run: |
+        set -euo pipefail
+        log="${LOG_PATH:-${RUNNER_TEMP}/docusaurus-build.log}"
+        echo "build-log-path=${log}" >>"${GITHUB_OUTPUT}"
+        bash "${{ github.action_path }}/scripts/annotate-build-log.sh" "${log}"
