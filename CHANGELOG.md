@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-10-31
+
+### Added
+
+- Reusable `docs-ci` umbrella workflow with toggle inputs for markdownlint, lychee, Docusaurus test build, and an optional npm-script check. Sensible Node 22 / website/ defaults so callers can stay around 10–20 YAML lines.
+- Docusaurus builds tee the log and surface broken-link / warning / error lines as GitHub annotations and a job summary (`annotate-log`, default true). Optional `pr-comment` on test-deploy upserts a PR comment with those counts via `actions/docusaurus-pr-comment`.
+- Composite `git-push-retry` for commit-back jobs; changelog, docs-index, and catalog-api reusable workflows now call it instead of inlining the rebase-retry loop.
+
+### Changed
+
+- Reusable catalog-api now defaults to Node 22 (was 20), matching other documentation-actions defaults. Callers can still override `node-version`.
+
 ## [1.2.0] - 2026-10-31
 
 ### Added
@@ -76,6 +88,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Reusable JSON API regenerate workflow (`reusable-catalog-api`).
 - Awesome-list checks: entry-format, duplicates, sorted-sections (`actions/awesome-list-checks`).
 
+[1.3.0]: https://github.com/LLazyEmail/documentation-actions/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/LLazyEmail/documentation-actions/compare/v1.1.2...v1.2.0
 [1.1.2]: https://github.com/LLazyEmail/documentation-actions/compare/v1.1.1...v1.1.2
 [1.1.1]: https://github.com/LLazyEmail/documentation-actions/compare/v1.1.0...v1.1.1
