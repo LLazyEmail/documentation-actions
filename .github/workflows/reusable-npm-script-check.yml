@@ -24,7 +24,7 @@ on:
         required: false
         default: npm
       run-command:
-        description: Command to run (e.g. npm run check:media -- --base origin/main --head HEAD)
+        description: "Command to run (e.g. npm run check:media -- --base origin/main --head HEAD)"
         type: string
         required: true
       fetch-depth:
