@@ -19,3 +19,4 @@ Append-only. Each action PR adds **exactly one new line** at the end of the tabl
 | `git-push-retry` | `actions/git-push-retry` | Stage, commit, and push with rebase-retry for commit-back jobs |
 | `docusaurus-pr-comment` | `actions/docusaurus-pr-comment` | Upsert a PR comment with Docusaurus build warning/error counts |
 | `docs-ci` | `.github/workflows/reusable-docs-ci.yml` | Umbrella docs CI (toggle markdownlint, lychee, build, npm-check) |
+| `documentation-actions` | `action.yml` | Marketplace root composite (optional markdownlint + lychee + Docusaurus build) |
