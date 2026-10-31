@@ -1,0 +1,191 @@
+name: Reusable docs CI umbrella
+
+# One workflow_call that optionally runs markdownlint, lychee, and/or a
+# Docusaurus test build (plus an optional npm-script check). Triggers and path
+# filters stay on the thin caller so each site needs ~10–20 YAML lines total.
+
+on:
+  workflow_call:
+    inputs:
+      working-directory:
+        type: string
+        required: false
+        default: website
+      node-version:
+        type: string
+        required: false
+        default: '22'
+      cache-dependency-path:
+        type: string
+        required: false
+        default: website/package-lock.json
+      install-command:
+        type: string
+        required: false
+        default: npm ci
+      build-command:
+        type: string
+        required: false
+        default: npm run build
+      prebuild-command:
+        type: string
+        required: false
+        default: ''
+      lfs:
+        type: boolean
+        required: false
+        default: false
+      run-build:
+        description: Run Docusaurus test build (default true)
+        type: boolean
+        required: false
+        default: true
+      annotate-log:
+        type: boolean
+        required: false
+        default: true
+      pr-comment:
+        description: 'PR comment with build counts (needs pull-requests: write on caller)'
+        type: boolean
+        required: false
+        default: false
+      run-markdownlint:
+        type: boolean
+        required: false
+        default: false
+      markdownlint-globs:
+        description: Multiline globs (required when run-markdownlint is true)
+        type: string
+        required: false
+        default: ''
+      run-lychee:
+        type: boolean
+        required: false
+        default: false
+      lychee-args:
+        description: Lychee args including paths (required when run-lychee is true)
+        type: string
+        required: false
+        default: ''
+      lychee-create-issue:
+        type: boolean
+        required: false
+        default: false
+      run-npm-check:
+        type: boolean
+        required: false
+        default: false
+      npm-check-command:
+        description: Command for npm-script-check (required when run-npm-check is true)
+        type: string
+        required: false
+        default: ''
+      npm-check-job-name:
+        type: string
+        required: false
+        default: npm script check
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  markdownlint:
+    name: markdownlint
+    if: inputs.run-markdownlint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Require globs
+        if: inputs.markdownlint-globs == ''
+        shell: bash
+        run: |
+          echo "::error::run-markdownlint is true but markdownlint-globs is empty" >&2
+          exit 1
+
+      - name: Lint markdown
+        uses: LLazyEmail/documentation-actions/actions/markdownlint@main
+        with:
+          globs: ${{ inputs.markdownlint-globs }}
+
+  lychee:
+    name: lychee
+    if: inputs.run-lychee
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Require args
+        if: inputs.lychee-args == ''
+        shell: bash
+        run: |
+          echo "::error::run-lychee is true but lychee-args is empty" >&2
+          exit 1
+
+      - name: Link check
+        uses: LLazyEmail/documentation-actions/actions/lychee-link-check@main
+        with:
+          args: ${{ inputs.lychee-args }}
+          create-issue: ${{ inputs.lychee-create-issue && 'true' || 'false' }}
+
+  npm-check:
+    name: ${{ inputs.npm-check-job-name }}
+    if: inputs.run-npm-check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          lfs: ${{ inputs.lfs }}
+
+      - name: Require command
+        if: inputs.npm-check-command == ''
+        shell: bash
+        run: |
+          echo "::error::run-npm-check is true but npm-check-command is empty" >&2
+          exit 1
+
+      - name: Run npm script check
+        uses: LLazyEmail/documentation-actions/actions/npm-script-check@main
+        with:
+          working-directory: ${{ inputs.working-directory }}
+          node-version: ${{ inputs.node-version }}
+          cache-dependency-path: ${{ inputs.cache-dependency-path }}
+          install-command: ${{ inputs.install-command }}
+          run-command: ${{ inputs.npm-check-command }}
+
+  build:
+    name: Test build
+    if: inputs.run-build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          lfs: ${{ inputs.lfs }}
+
+      - name: Build Docusaurus
+        id: build
+        uses: LLazyEmail/documentation-actions/actions/docusaurus-build@main
+        with:
+          working-directory: ${{ inputs.working-directory }}
+          node-version: ${{ inputs.node-version }}
+          cache-dependency-path: ${{ inputs.cache-dependency-path }}
+          install-command: ${{ inputs.install-command }}
+          build-command: ${{ inputs.build-command }}
+          prebuild-command: ${{ inputs.prebuild-command }}
+          annotate-log: ${{ inputs.annotate-log && 'true' || 'false' }}
+
+      - name: PR comment with build results
+        if: always() && inputs.pr-comment && github.event_name == 'pull_request'
+        uses: LLazyEmail/documentation-actions/actions/docusaurus-pr-comment@main
+        with:
+          warning-count: ${{ steps.build.outputs.warning-count }}
+          error-count: ${{ steps.build.outputs.error-count }}
+          build-conclusion: ${{ job.status }}

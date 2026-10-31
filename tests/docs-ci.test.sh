@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+set -euo pipefail
+root="$(cd "$(dirname "$0")/.." && pwd)"
+wf="$root/.github/workflows/reusable-docs-ci.yml"
+grep -q 'Reusable docs CI umbrella' "$wf"
+grep -q "default: '22'" "$wf"
+grep -q 'run-build:' "$wf"
+grep -q 'run-markdownlint:' "$wf"
+grep -q 'run-lychee:' "$wf"
+grep -q 'run-npm-check:' "$wf"
+grep -q 'actions/docusaurus-build@main' "$wf"
+grep -q 'actions/markdownlint@main' "$wf"
+grep -q 'actions/lychee-link-check@main' "$wf"
+grep -q 'actions/npm-script-check@main' "$wf"
+test -f "$root/examples/docs-ci.yml"
+grep -q 'reusable-docs-ci.yml' "$root/examples/docs-ci.yml"
+echo "docs-ci: ok"

@@ -116,6 +116,27 @@ jobs:
 
 Broken links, anchors, and `[WARNING]` / `[ERROR]` lines from the Docusaurus build become check annotations and a job-summary section automatically.
 
+### Docs CI umbrella
+
+```yaml
+jobs:
+  docs-ci:
+    uses: LLazyEmail/documentation-actions/.github/workflows/reusable-docs-ci.yml@v1
+    with:
+      run-markdownlint: true
+      markdownlint-globs: |
+        README.md
+        website/docs/**/*.md
+      run-lychee: true
+      lychee-args: >-
+        --verbose --no-progress --accept 200,204,206,403,429
+        README.md 'website/docs/**/*.md'
+      # run-build: true  (default)
+    secrets: inherit
+```
+
+Keep triggers on the caller; toggle jobs with boolean inputs. Full copy-paste: [`examples/docs-ci.yml`](examples/docs-ci.yml).
+
 ## Adoption
 
 See [`docs/adoption.md`](docs/adoption.md) for consumer cut-over notes and [`docs/design.md`](docs/design.md) for layout conventions.
