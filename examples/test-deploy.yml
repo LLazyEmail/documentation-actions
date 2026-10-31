@@ -16,3 +16,5 @@ jobs:
       cache-dependency-path: website/package-lock.json
       # AEM only — omit for awesome-newsletters / documentation:
       # prebuild-command: npm run lint:docs-links
+      # Git LFS repos (e.g. fuck-ecoflow):
+      # lfs: true
