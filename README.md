@@ -100,6 +100,22 @@ This repository also ships an early in-repo `.github/workflows/auto-rebase-prs.y
 
 Commit-back reusable workflows (changelog, docs-index, catalog-api) already use this composite.
 
+### Build annotations and PR comment
+
+```yaml
+jobs:
+  test-deploy:
+    uses: LLazyEmail/documentation-actions/.github/workflows/reusable-docusaurus-test-deploy.yml@v1
+    with:
+      working-directory: website
+      cache-dependency-path: website/package-lock.json
+      # annotate-log: true   # default
+      pr-comment: true      # optional; grant pull-requests: write on the caller
+    secrets: inherit
+```
+
+Broken links, anchors, and `[WARNING]` / `[ERROR]` lines from the Docusaurus build become check annotations and a job-summary section automatically.
+
 ## Adoption
 
 See [`docs/adoption.md`](docs/adoption.md) for consumer cut-over notes and [`docs/design.md`](docs/design.md) for layout conventions.

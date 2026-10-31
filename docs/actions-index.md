@@ -17,3 +17,4 @@ Append-only. Each action PR adds **exactly one new line** at the end of the tabl
 | `awesome-list-checks` | `actions/awesome-list-checks` | Entry-format, duplicates, and sorted-sections checks |
 | `npm-script-check` | `actions/npm-script-check` | Setup Node, optional npm ci, run a package.json check script |
 | `git-push-retry` | `actions/git-push-retry` | Stage, commit, and push with rebase-retry for commit-back jobs |
+| `docusaurus-pr-comment` | `actions/docusaurus-pr-comment` | Upsert a PR comment with Docusaurus build warning/error counts |

@@ -1,0 +1,37 @@
+name: Docusaurus build PR comment
+description: >
+  Upsert a pull request comment with Docusaurus build warning/error counts.
+  Idempotent via an HTML marker. No-op when the event is not pull_request.
+
+branding:
+  icon: comment
+  color: blue
+
+inputs:
+  warning-count:
+    description: Number of warning lines surfaced from the build log
+    required: false
+    default: '0'
+  error-count:
+    description: Number of error lines surfaced from the build log
+    required: false
+    default: '0'
+  build-conclusion:
+    description: Job or step conclusion string (success, failure, …)
+    required: false
+    default: success
+
+runs:
+  using: composite
+  steps:
+    - name: Upsert build PR comment
+      uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7.0.1
+      env:
+        WARNING_COUNT: ${{ inputs.warning-count }}
+        ERROR_COUNT: ${{ inputs.error-count }}
+        BUILD_CONCLUSION: ${{ inputs.build-conclusion }}
+        COMMENT_SCRIPT: ${{ github.action_path }}/pr-build-comment.js
+      with:
+        script: |
+          const mod = require(process.env.COMMENT_SCRIPT);
+          await mod.run({ github, context, core, env: process.env });

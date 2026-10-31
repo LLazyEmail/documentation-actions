@@ -36,6 +36,22 @@ on:
         type: boolean
         required: false
         default: false
+      annotate-log:
+        description: Surface broken-link/warning lines as annotations + job summary
+        type: boolean
+        required: false
+        default: true
+      pr-comment:
+        description: >
+          Upsert a PR comment with build warning/error counts (pull_request only).
+          Caller should grant pull-requests: write when enabling.
+        type: boolean
+        required: false
+        default: false
+
+permissions:
+  contents: read
+  pull-requests: write
 
 jobs:
   test-deploy:
@@ -49,6 +65,7 @@ jobs:
           lfs: ${{ inputs.lfs }}
 
       - name: Build Docusaurus
+        id: build
         uses: LLazyEmail/documentation-actions/actions/docusaurus-build@main
         with:
           working-directory: ${{ inputs.working-directory }}
@@ -57,3 +74,12 @@ jobs:
           install-command: ${{ inputs.install-command }}
           build-command: ${{ inputs.build-command }}
           prebuild-command: ${{ inputs.prebuild-command }}
+          annotate-log: ${{ inputs.annotate-log && 'true' || 'false' }}
+
+      - name: PR comment with build results
+        if: always() && inputs.pr-comment && github.event_name == 'pull_request'
+        uses: LLazyEmail/documentation-actions/actions/docusaurus-pr-comment@main
+        with:
+          warning-count: ${{ steps.build.outputs.warning-count }}
+          error-count: ${{ steps.build.outputs.error-count }}
+          build-conclusion: ${{ job.status }}

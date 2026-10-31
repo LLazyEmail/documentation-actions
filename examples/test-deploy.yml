@@ -8,6 +8,11 @@ on:
       - 'website/**'
       - '.github/workflows/**'
 
+# Optional when enabling pr-comment:
+# permissions:
+#   contents: read
+#   pull-requests: write
+
 jobs:
   test-deploy:
     uses: LLazyEmail/documentation-actions/.github/workflows/reusable-docusaurus-test-deploy.yml@main
@@ -18,3 +23,5 @@ jobs:
       # prebuild-command: npm run lint:docs-links
       # Git LFS repos (e.g. fuck-ecoflow):
       # lfs: true
+      # annotate-log: true   # default — broken links/warnings as annotations + job summary
+      # pr-comment: true     # optional PR comment with warning/error counts
