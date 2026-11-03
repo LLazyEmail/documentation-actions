@@ -48,7 +48,9 @@ on:
         required: false
         default: true
       pr-comment:
-        description: "Upsert a PR comment with build warning/error counts (pull_request only). Caller should grant pull-requests: write when enabling."
+        description: >
+          Upsert a PR comment with build warning/error counts (pull_request only).
+          Caller should grant pull-requests: write when enabling.
         type: boolean
         required: false
         default: false
