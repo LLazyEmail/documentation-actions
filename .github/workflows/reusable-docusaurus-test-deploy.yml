@@ -1,5 +1,10 @@
 name: Reusable Docusaurus test-deploy
 
+# Compatibility wrapper: preserves the historical workflow_call path for
+# callers still pinned to reusable-docusaurus-test-deploy.yml@v1 while the
+# real implementation lives under reusable-docs-ci.yml.
+# New callers should use reusable-docs-ci.yml directly (run-build: true).
+
 on:
   workflow_call:
     inputs:
@@ -28,6 +33,7 @@ on:
         required: false
         default: ''
       fetch-depth:
+        description: "Accepted for compatibility; docs-ci always checks out with fetch-depth 0"
         type: number
         required: false
         default: 0
@@ -52,34 +58,19 @@ on:
 permissions:
   contents: read
   pull-requests: write
+  issues: write
 
 jobs:
   test-deploy:
-    name: Test build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          fetch-depth: ${{ inputs.fetch-depth }}
-          lfs: ${{ inputs.lfs }}
-
-      - name: Build Docusaurus
-        id: build
-        uses: LLazyEmail/documentation-actions/actions/docusaurus-build@main
-        with:
-          working-directory: ${{ inputs.working-directory }}
-          node-version: ${{ inputs.node-version }}
-          cache-dependency-path: ${{ inputs.cache-dependency-path }}
-          install-command: ${{ inputs.install-command }}
-          build-command: ${{ inputs.build-command }}
-          prebuild-command: ${{ inputs.prebuild-command }}
-          annotate-log: ${{ inputs.annotate-log && 'true' || 'false' }}
-
-      - name: PR comment with build results
-        if: always() && inputs.pr-comment && github.event_name == 'pull_request'
-        uses: LLazyEmail/documentation-actions/actions/docusaurus-pr-comment@main
-        with:
-          warning-count: ${{ steps.build.outputs.warning-count }}
-          error-count: ${{ steps.build.outputs.error-count }}
-          build-conclusion: ${{ job.status }}
+    uses: ./.github/workflows/reusable-docs-ci.yml
+    with:
+      working-directory: ${{ inputs.working-directory }}
+      node-version: ${{ inputs.node-version }}
+      cache-dependency-path: ${{ inputs.cache-dependency-path }}
+      install-command: ${{ inputs.install-command }}
+      build-command: ${{ inputs.build-command }}
+      prebuild-command: ${{ inputs.prebuild-command }}
+      lfs: ${{ inputs.lfs }}
+      run-build: true
+      annotate-log: ${{ inputs.annotate-log }}
+      pr-comment: ${{ inputs.pr-comment }}

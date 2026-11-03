@@ -33,7 +33,12 @@ grep -q 'Broken link on /docs/foo' "$summary"
 grep -q 'annotate-log' "$root/actions/docusaurus-build/action.yml"
 grep -q 'annotate-build-log.sh' "$root/actions/docusaurus-build/action.yml"
 grep -q 'pr-comment' "$root/.github/workflows/reusable-docusaurus-test-deploy.yml"
-grep -q 'docusaurus-pr-comment@main' "$root/.github/workflows/reusable-docusaurus-test-deploy.yml"
+# Compat wrapper may delegate to docs-ci; accept either the action pin in the
+# legacy workflow or a call through to reusable-docs-ci (which owns the step).
+if ! grep -q 'docusaurus-pr-comment@main' "$root/.github/workflows/reusable-docusaurus-test-deploy.yml"; then
+  grep -q 'reusable-docs-ci.yml' "$root/.github/workflows/reusable-docusaurus-test-deploy.yml"
+  grep -q 'docusaurus-pr-comment@main' "$root/.github/workflows/reusable-docs-ci.yml"
+fi
 grep -q 'documentation-actions:docusaurus-build' "$root/actions/docusaurus-pr-comment/pr-build-comment.js"
 grep -q "default: 'true'" "$root/actions/docusaurus-build/action.yml"
 
