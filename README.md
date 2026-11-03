@@ -37,6 +37,12 @@ The root action is an umbrella composite that optionally runs markdownlint, a so
     working-directory: website
 ```
 
+## Skills
+
+Reusable agent / human checklists live under [`skills/`](skills/):
+
+- [`skills/docusaurus-docs-site/SKILL.md`](skills/docusaurus-docs-site/SKILL.md) — step-by-step checklist to stand up a proper Docusaurus documentation website using this repo’s shared workflows (Node version, `reusable-docs-ci` @v1, deploy, markdownlint, lychee, changelog, auto-rebase, i18n, AGENTS.md, PR template, verification). Based on the real callers in awesome-newsletters, awesome-email-marketing, assemblya, and fuck-ecoflow.
+
 ## Quick start
 
 ```yaml
