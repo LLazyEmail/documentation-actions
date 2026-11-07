@@ -171,3 +171,19 @@ See [`docs/adoption.md`](docs/adoption.md) for consumer cut-over notes and [`doc
 ## License
 
 [MIT](./LICENSE) © LLazyEmail
+
+## Built-site image verification
+
+Use the [reusable image checker](docs/build-image-check.md) after adoption release:
+
+```yaml
+name: Build images
+on: [pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  images:
+    uses: LLazyEmail/documentation-actions/.github/workflows/reusable-build-image-check.yml@v1
+```
+
+See the guide for subdirectory sites, allowlists, and fail/warn mode.
