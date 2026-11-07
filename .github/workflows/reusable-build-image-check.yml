@@ -1,0 +1,84 @@
+name: Reusable build image check
+
+on:
+  workflow_call:
+    inputs:
+      build-dir:
+        description: Built directory relative to repository root
+        type: string
+        required: false
+        default: 'build'
+      base-url:
+        description: Site path prefix
+        type: string
+        required: false
+        default: '/'
+      allowlist:
+        description: Optional repository-relative allowlist
+        type: string
+        required: false
+        default: ''
+      mode:
+        description: fail or warn
+        type: string
+        required: false
+        default: 'fail'
+      working-directory:
+        description: Directory containing package.json
+        type: string
+        required: false
+        default: '.'
+      node-version:
+        description: Node.js version
+        type: string
+        required: false
+        default: '22'
+      cache-dependency-path:
+        description: Lockfile relative to repository root
+        type: string
+        required: false
+        default: 'package-lock.json'
+      install-command:
+        description: Dependency installation command
+        type: string
+        required: false
+        default: 'npm ci'
+      build-command:
+        description: Website build command
+        type: string
+        required: false
+        default: 'npm run build'
+      prebuild-command:
+        description: Optional command before build
+        type: string
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+jobs:
+  images:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Build site
+        uses: LLazyEmail/documentation-actions/actions/docusaurus-build@main
+        with:
+          working-directory: ${{ inputs.working-directory }}
+          node-version: ${{ inputs.node-version }}
+          cache-dependency-path: ${{ inputs.cache-dependency-path }}
+          install-command: ${{ inputs.install-command }}
+          build-command: ${{ inputs.build-command }}
+          prebuild-command: ${{ inputs.prebuild-command }}
+      - name: Check images
+        uses: LLazyEmail/documentation-actions/actions/build-image-check@main
+        with:
+          build-dir: ${{ inputs.build-dir }}
+          base-url: ${{ inputs.base-url }}
+          allowlist: ${{ inputs.allowlist }}
+          mode: ${{ inputs.mode }}

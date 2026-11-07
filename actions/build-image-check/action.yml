@@ -1,0 +1,29 @@
+name: Build image check
+description: Check local HTML and CSS image references, with annotations and a job summary.
+inputs:
+  build-dir:
+    description: Built site directory relative to the workspace
+    default: build
+  base-url:
+    description: Site URL path prefix (for example /docs/)
+    default: /
+  allowlist:
+    description: Optional workspace-relative allowlist file
+    default: ''
+  mode:
+    description: fail or warn (configuration errors always fail)
+    default: fail
+runs:
+  using: composite
+  steps:
+    - name: Verify built images
+      shell: bash
+      env:
+        CHECKER: ${{ github.action_path }}/scripts/check-build-images.mjs
+        BUILD_DIR: ${{ inputs.build-dir }}
+        BASE_URL: ${{ inputs.base-url }}
+        ALLOWLIST: ${{ inputs.allowlist }}
+        MODE: ${{ inputs.mode }}
+      run: |
+        node "$CHECKER" --build-dir "$BUILD_DIR" --base-url "$BASE_URL" \
+          --allowlist "$ALLOWLIST" --mode "$MODE"

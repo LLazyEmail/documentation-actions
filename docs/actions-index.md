@@ -20,3 +20,4 @@ Append-only. Each action PR adds **exactly one new line** at the end of the tabl
 | `docusaurus-pr-comment` | `actions/docusaurus-pr-comment` | Upsert a PR comment with Docusaurus build warning/error counts |
 | `docs-ci` | `.github/workflows/reusable-docs-ci.yml` | Umbrella docs CI (toggle markdownlint, lychee, build, npm-check) |
 | `documentation-actions` | `action.yml` | Marketplace root composite (optional markdownlint + lychee + Docusaurus build) |
+| `build-image-check` | `actions/build-image-check` | Validate built HTML/CSS image references with annotations and summary |

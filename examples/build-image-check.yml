@@ -1,0 +1,7 @@
+name: Build images
+on: [pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  images:
+    uses: LLazyEmail/documentation-actions/.github/workflows/reusable-build-image-check.yml@v1
