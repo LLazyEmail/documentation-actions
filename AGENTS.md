@@ -103,6 +103,16 @@ Short user-facing summary.
 
 When adding an action, append **one new row** to [`docs/actions-index.md`](docs/actions-index.md). Do not reorder, edit, or delete existing rows. Keep the action entirely under `actions/<name>/` (plus its reusable workflow and example). Do not rewrite the root README table in action PRs.
 
+## PR hygiene (all LLazyEmail repos)
+
+Full checklist: [`skills/pr-hygiene/SKILL.md`](skills/pr-hygiene/SKILL.md). Consumer template: [`docs/templates/AGENTS.md`](docs/templates/AGENTS.md).
+
+1. **Same file → same PR.** Edits to the same file go in one PR; do not open a second PR touching a file another open PR edits.
+2. **`Merge after #X`.** A PR that depends on another starts its body with `Merge after #X`.
+3. **`Closes #N`.** A combined PR lists every PR it replaces as `Closes #N`, so GitHub closes them on merge.
+4. **Grouped dependency updates.** Use weekly grouped Dependabot ([`examples/dependabot.yml`](examples/dependabot.yml)) or Renovate.
+5. **AI fixes only on failure.** See [`docs/ai-fix-step.md`](docs/ai-fix-step.md) (design note).
+
 ## Rebase requests
 
 When a rebase is requested, first dispatch the shared rebase workflow with the
