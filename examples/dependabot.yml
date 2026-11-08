@@ -1,0 +1,33 @@
+# Copy to .github/dependabot.yml. One grouped PR per ecosystem per week
+# instead of a stream of single-package PRs (fewer rebases, fewer reviews).
+# Drop the npm block for repos without package.json; set directory to
+# /website for Docusaurus sites that keep package.json there.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: '06:00'
+      timezone: Europe/Kyiv
+    groups:
+      github-actions:
+        patterns: ['*']
+    labels: [dependencies]
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: '06:00'
+      timezone: Europe/Kyiv
+    groups:
+      npm-minor-patch:
+        update-types: [minor, patch]
+      npm-major:
+        update-types: [major]
+    labels: [dependencies]
+    open-pull-requests-limit: 5

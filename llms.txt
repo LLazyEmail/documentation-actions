@@ -7,7 +7,10 @@
 - README.md — inventory, badges, usage snippets
 - AGENTS.md — rules for AI agents
 - CONTRIBUTING.md — PR conventions
-- examples/ — thin caller workflows
+- examples/ — thin caller workflows (plus examples/dependabot.yml)
+- skills/pr-hygiene/SKILL.md — PR rules (same file same PR, Merge after #X, Closes #N)
+- docs/templates/AGENTS.md — AGENTS.md template for consumer repos
+- docs/ai-fix-step.md — optional AI-fix step design note
 
 ## Actions (paths)
 
