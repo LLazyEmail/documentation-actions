@@ -11,6 +11,18 @@ on:
         description: Opt in to git rebase for conflicting PRs
         type: boolean
         default: false
+      report-conflicts:
+        description: Without rebase-conflicts, comment conflicting files once per head SHA instead of failing
+        type: boolean
+        default: false
+      comment-on-update:
+        description: Comment on PRs after a successful branch update
+        type: boolean
+        default: true
+    secrets:
+      AUTO_REBASE_TOKEN:
+        description: Optional PAT/App token so updated branches re-trigger CI (GITHUB_TOKEN pushes do not)
+        required: false
 
 permissions:
   contents: write
@@ -30,3 +42,6 @@ jobs:
         with:
           pr-numbers: ${{ inputs.pr-numbers }}
           rebase-conflicts: ${{ inputs.rebase-conflicts }}
+          report-conflicts: ${{ inputs.report-conflicts }}
+          comment-on-update: ${{ inputs.comment-on-update }}
+          github-token: ${{ secrets.AUTO_REBASE_TOKEN || github.token }}

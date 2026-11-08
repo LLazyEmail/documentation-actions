@@ -34,3 +34,44 @@ Keep `contents: write` and `pull-requests: write` in the caller. Do not use
 into shell commands. The implementation uses argv arrays and environment values.
 A green update request means accepted, not necessarily completed: inspect the
 PR's final mergeability and CI after the job.
+
+## Run on every push to main
+
+Callers can run the bulk mode after each merge so nobody has to ask for a
+rebase. Copy [`examples/auto-rebase-prs.yml`](../examples/auto-rebase-prs.yml):
+
+```yaml
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      pr-numbers: {type: string, default: ''}
+      rebase-conflicts: {type: boolean, default: false}
+jobs:
+  rebase:
+    uses: LLazyEmail/documentation-actions/.github/workflows/reusable-auto-rebase-prs.yml@v1
+    with:
+      pr-numbers: ${{ inputs.pr-numbers || '' }}
+      rebase-conflicts: ${{ inputs.rebase-conflicts || false }}
+      report-conflicts: true
+      comment-on-update: ${{ github.event_name != 'push' }}
+    secrets: inherit
+```
+
+| Input | Default | Effect |
+| --- | --- | --- |
+| `report-conflicts` | `false` | When `rebase-conflicts` is off, a conflicting PR gets a trial rebase in a throwaway clone (never pushed) and **one** comment per head SHA listing the conflicting files. The job does not fail for reported conflicts. |
+| `comment-on-update` | `true` | Set `false` on push runs to avoid a "branch updated" comment on every merge. |
+| secret `AUTO_REBASE_TOKEN` | unset | Optional fine-grained PAT or GitHub App token. Branch updates made with the default `GITHUB_TOKEN` do **not** re-trigger `pull_request` CI, so required checks can look stale. Add the secret yourself in repo settings; the workflow falls back to `GITHUB_TOKEN`. |
+
+Notes:
+
+- GitHub only reports `mergeable_state: behind` when branch protection
+  requires up-to-date branches. Without that rule, a behind PR reads `clean`
+  and is left alone (it is still mergeable), which avoids re-running CI on
+  every open PR after each merge.
+- After a conflict comment, fix the files manually or dispatch the workflow
+  with `pr-numbers` and `rebase-conflicts: true` (owner approval required).
+- Concurrent runs are serialized per repository; a burst of merges queues at
+  most one pending run.
