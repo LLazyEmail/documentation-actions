@@ -102,3 +102,10 @@ Short user-facing summary.
 ## Append-only actions index
 
 When adding an action, append **one new row** to [`docs/actions-index.md`](docs/actions-index.md). Do not reorder, edit, or delete existing rows. Keep the action entirely under `actions/<name>/` (plus its reusable workflow and example). Do not rewrite the root README table in action PRs.
+
+## Rebase requests
+
+When a rebase is requested, first dispatch the shared rebase workflow with the
+target `pr-numbers`. Only fall back to a manual rebase if the workflow cannot
+resolve the conflicts, with the owner's approval for any history replacement.
+Do not dispatch an untargeted bulk workflow for a targeted request.

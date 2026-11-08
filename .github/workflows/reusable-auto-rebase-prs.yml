@@ -2,6 +2,15 @@ name: Reusable auto-rebase PRs
 
 on:
   workflow_call:
+    inputs:
+      pr-numbers:
+        description: Comma-separated PR numbers; empty selects all open PRs
+        type: string
+        default: ''
+      rebase-conflicts:
+        description: Opt in to git rebase for conflicting PRs
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -11,6 +20,13 @@ jobs:
   rebase:
     name: auto-rebase
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    concurrency:
+      group: auto-rebase-${{ github.repository }}
+      cancel-in-progress: false
     steps:
       - name: Attempt to update branches of open PRs
         uses: LLazyEmail/documentation-actions/actions/auto-rebase@main
+        with:
+          pr-numbers: ${{ inputs.pr-numbers }}
+          rebase-conflicts: ${{ inputs.rebase-conflicts }}
