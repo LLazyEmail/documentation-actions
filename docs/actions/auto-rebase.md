@@ -6,19 +6,22 @@ Update behind open PR branches (and optionally rebase conflicts).
 
 ## When to use
 
-Schedule + `workflow_dispatch` to keep stacked draft PRs current.
+`push` to main (plus schedule + `workflow_dispatch`) to keep open PRs current without anyone asking. See [push-trigger setup](../auto-rebase.md#run-on-every-push-to-main).
 
 ## Key inputs
 
 - `pr-numbers` — optional targeted list
 - `rebase-conflicts` — opt-in true rebase (with SHA lease)
+- `report-conflicts` — comment conflicting files once per head SHA instead of failing
+- `comment-on-update` — set `false` on push runs to skip update comments
+- secret `AUTO_REBASE_TOKEN` — optional token so updated branches re-run CI
 
 ## Example
 
 ```yaml
 on:
-  schedule:
-    - cron: '0 */6 * * *'
+  push:
+    branches: [main]
   workflow_dispatch:
 permissions:
   contents: write
@@ -26,6 +29,10 @@ permissions:
 jobs:
   rebase:
     uses: LLazyEmail/documentation-actions/.github/workflows/reusable-auto-rebase-prs.yml@v1
+    with:
+      report-conflicts: true
+      comment-on-update: ${{ github.event_name != 'push' }}
+    secrets: inherit
 ```
 
 ## Agent notes

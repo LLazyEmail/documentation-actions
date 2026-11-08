@@ -16,6 +16,12 @@ inputs:
   rebase-conflicts:
     description: Opt in to git rebase and force-push with lease
     default: 'false'
+  report-conflicts:
+    description: Without rebase-conflicts, comment conflicting files once per head SHA instead of failing
+    default: 'false'
+  comment-on-update:
+    description: Comment on PRs after a successful branch update
+    default: 'true'
 runs:
   using: composite
   steps:
@@ -26,6 +32,8 @@ runs:
         REBASE_CONFLICTS: ${{ inputs.rebase-conflicts }}
         SUCCESS_MESSAGE: ${{ inputs.success-message }}
         FORK_BLOCKED_MESSAGE: ${{ inputs.fork-blocked-message }}
+        REPORT_CONFLICTS: ${{ inputs.report-conflicts }}
+        COMMENT_ON_UPDATE: ${{ inputs.comment-on-update }}
         REBASE_TOKEN: ${{ inputs.github-token }}
       with:
         github-token: ${{ inputs.github-token }}
@@ -36,4 +44,6 @@ runs:
             successMessage: process.env.SUCCESS_MESSAGE,
             forkBlockedMessage: process.env.FORK_BLOCKED_MESSAGE,
             mode: process.env.REBASE_CONFLICTS === 'true',
+            report: process.env.REPORT_CONFLICTS === 'true',
+            commentOnUpdate: process.env.COMMENT_ON_UPDATE !== 'false',
             token: process.env.REBASE_TOKEN});

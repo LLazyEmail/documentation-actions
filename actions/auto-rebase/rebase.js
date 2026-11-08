@@ -17,9 +17,10 @@ async function details(github, params, pause = ms => new Promise(r => setTimeout
   }
   throw new Error('Mergeability remained unknown after six attempts; retry later');
 }
-function gitRebase(pr, token) {
+// push: false runs a throwaway trial rebase that only reports conflicting files.
+function gitRebase(pr, token, {push = true} = {}) {
   if (!pr.head.repo || !/^[\w.-]+\/[\w.-]+$/.test(pr.head.repo.full_name)) throw new Error('Invalid or deleted head repository');
-  if (['main', 'master', pr.base.repo.default_branch].includes(pr.head.ref)) throw new Error('Refusing to force-push a default/main branch');
+  if (push && ['main', 'master', pr.base.repo.default_branch].includes(pr.head.ref)) throw new Error('Refusing to force-push a default/main branch');
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pr-rebase-'));
   const env = {...process.env, GIT_TERMINAL_PROMPT: '0', GIT_CONFIG_COUNT: '1',
     GIT_CONFIG_KEY_0: 'http.https://github.com/.extraheader',
@@ -39,14 +40,29 @@ function gitRebase(pr, token) {
     try { git('rebase', base); } catch {
       const files = git('diff', '--name-only', '--diff-filter=U').trim().split('\n').filter(Boolean);
       git('rebase', '--abort');
-      return {ok: false, message: files.length ? `Rebase conflicts (aborted):\n${files.map(f => `- ${f}`).join('\n')}` : 'Rebase failed and was aborted; inspect workflow logs'};
+      return {ok: false, files, message: files.length ? `Rebase conflicts (aborted):\n${files.map(f => `- ${f}`).join('\n')}` : 'Rebase failed and was aborted; inspect workflow logs'};
     }
+    if (!push) return {ok: true, files: [], message: 'Trial rebase applied cleanly; nothing pushed'};
     if (git('rev-parse', 'HEAD^{tree}').trim() === git('rev-parse', `${base}^{tree}`).trim()) throw new Error('Refusing to push a branch identical to its base');
     git('push', `--force-with-lease=refs/heads/${pr.head.ref}:${pr.head.sha}`, 'head', `HEAD:refs/heads/${pr.head.ref}`);
     return {ok: true, message: 'Rebased onto base and pushed with an explicit SHA lease'};
   } finally { fs.rmSync(dir, {recursive: true, force: true}); }
 }
-async function run({github, context, core, numbers = '', mode = false, token, successMessage = 'Automatically updated this PR branch.', forkBlockedMessage = 'Check fork write permissions.'}) {
+const MARKER = sha => `<!-- auto-rebase-conflicts:${sha} -->`;
+// One comment per head SHA, so push-triggered runs do not repeat themselves.
+async function reportConflicts(github, repo, pr, result) {
+  const marker = MARKER(pr.head.sha);
+  const comments = await github.paginate(github.rest.issues.listComments, {...repo, issue_number: pr.number, per_page: 100});
+  if (comments.some(c => (c.body || '').includes(marker))) return false;
+  const list = result.files && result.files.length
+    ? `Files with conflicts:\n${result.files.map(f => `- \`${f}\``).join('\n')}`
+    : result.ok ? 'GitHub reports a conflict, but a trial rebase applied cleanly. Dispatch the workflow with `rebase-conflicts: true` for this PR.'
+      : result.message;
+  await github.rest.issues.createComment({...repo, issue_number: pr.number,
+    body: `⚠️ Auto-rebase: this PR conflicts with \`${pr.base.ref}\` and needs a manual or opt-in rebase.\n\n${list}\n\n${marker}`});
+  return true;
+}
+async function run({github, context, core, numbers = '', mode = false, report = false, commentOnUpdate = true, token, successMessage = 'Automatically updated this PR branch.', forkBlockedMessage = 'Check fork write permissions.'}) {
   const repo = {...context.repo};
   const selected = parseNumbers(numbers) || (await github.paginate(github.rest.pulls.list, {...repo, state: 'open', per_page: 100})).map(pr => pr.number);
   let failed = false;
@@ -62,6 +78,14 @@ async function run({github, context, core, numbers = '', mode = false, token, su
         message = 'Branch update requested (merge-base update, not git rebase)';
         updated = true;
       } else if (pr.mergeable_state === 'dirty') {
+        if (!mode && report) {
+          const trial = gitRebase(pr, token, {push: false});
+          const posted = await reportConflicts(github, repo, pr, trial);
+          message = `Conflicts reported${posted ? '' : ' (already commented for this head)'}: ${trial.files.join(', ') || trial.message}`;
+          core.info(`#${number}: ${message}`);
+          await core.summary.addHeading(`#${number}`, 3).addCodeBlock(message, 'text').write();
+          continue;
+        }
         if (!mode) throw new Error('Conflicts require opt-in rebase-conflicts mode');
         const result = gitRebase(pr, token);
         if (!result.ok) throw new Error(result.message);
@@ -76,7 +100,7 @@ async function run({github, context, core, numbers = '', mode = false, token, su
       try { await github.rest.issues.createComment({...repo, issue_number: number, body: `Auto-rebase: ${message}`}); }
       catch (commentError) { core.warning(`Could not comment on #${number}: ${commentError.message}`); }
     }
-    if (updated) {
+    if (updated && commentOnUpdate) {
       try { await github.rest.issues.createComment({...repo, issue_number: number, body: successMessage}); }
       catch (err) { core.warning(`Updated #${number}, but could not comment: ${err.message}`); }
     }
@@ -85,4 +109,4 @@ async function run({github, context, core, numbers = '', mode = false, token, su
   }
   if (failed) core.setFailed('One or more PR updates failed; see per-PR summary');
 }
-module.exports = {parseNumbers, details, gitRebase, run};
+module.exports = {parseNumbers, details, gitRebase, reportConflicts, run};
