@@ -11,6 +11,16 @@ Thanks for helping maintain the shared Actions used by LLazyEmail docs and aweso
 5. **Add a self-test** (fixture or CI job) with every new action.
 6. **Update README, examples, AGENTS.md, and add a `.changelog/` entry** in the same PR when inputs/outputs change (do not hand-edit `CHANGELOG.md` for those changes).
 
+## For AI agents
+
+- Start with [AGENTS.md](AGENTS.md) and [docs/ai-agent-guide.md](docs/ai-agent-guide.md).
+- Copy from [examples/](examples/) — never invent job YAML.
+- Use the checklists under [skills/](skills/) (see [skills/README.md](skills/README.md)).
+- Append exactly one new row to `docs/actions-index.md` when adding an action; never reorder.
+- Add a `.changelog/` fragment (or label `skip-changelog` / `no-changelog` for pure docs).
+- Do not merge or close PRs unless the human owner asks.
+- Commit trailer: `Co-authored-by: petroved <arthur.tkachenko.netweight@gmail.com>`.
+
 ## Commit trailer
 
 When working for the maintainer, every commit carries:
