@@ -1,0 +1,15 @@
+name: Open PRs status report
+
+on:
+  schedule:
+    - cron: '0 8 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: read
+
+jobs:
+  report:
+    uses: LLazyEmail/documentation-actions/.github/workflows/reusable-pr-status-report.yml@v1
