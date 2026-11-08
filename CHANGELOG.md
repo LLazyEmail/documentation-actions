@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.1] - 2026-11-08
+
+### Added
+
+- Added focused agent skills for awesome-list adoption, changelog patterns, and troubleshooting.
+
+### Changed
+
+- Added detailed per-action reference guides under docs/actions/ covering inputs, examples, and agent notes for all major composites and workflows.
+- Overhauled README.md with table of contents, architecture diagram, For AI agents section, and clearer structure.
+- Added docs/troubleshooting.md and expanded docs/design.md with layout conventions, pinning rules, and agent-oriented guidance.
+
 ## [1.7.0] - 2026-11-08
 
 ### Added
@@ -135,6 +147,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Reusable JSON API regenerate workflow (`reusable-catalog-api`).
 - Awesome-list checks: entry-format, duplicates, sorted-sections (`actions/awesome-list-checks`).
 
+[1.7.1]: https://github.com/LLazyEmail/documentation-actions/compare/v1.7.0...v1.7.1
 [1.7.0]: https://github.com/LLazyEmail/documentation-actions/compare/v1.6.2...v1.7.0
 [1.6.2]: https://github.com/LLazyEmail/documentation-actions/compare/v1.6.1...v1.6.2
 [1.6.1]: https://github.com/LLazyEmail/documentation-actions/compare/v1.6.0...v1.6.1
