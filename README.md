@@ -31,8 +31,13 @@ Modeled on [LLazyEmail/email-template-workflows](https://github.com/LLazyEmail/e
 Start here:
 
 - [AGENTS.md](AGENTS.md) — structured playbook with decision trees and pitfalls
+- [docs/quickstart-for-agents.md](docs/quickstart-for-agents.md) — ultra-concise checklist
 - [docs/ai-agent-guide.md](docs/ai-agent-guide.md) — step-by-step adoption and extension flows
-- [skills/docusaurus-docs-site/SKILL.md](skills/docusaurus-docs-site/SKILL.md) — full checklist for standing up a docs site
+- [docs/examples-guide.md](docs/examples-guide.md) — when to copy which example
+- [docs/inputs-reference.md](docs/inputs-reference.md) — common inputs table
+- [docs/pinning.md](docs/pinning.md) — SHA and `@v1` rules
+- [docs/troubleshooting.md](docs/troubleshooting.md) — symptom / cause / fix
+- [skills/](skills/) — focused checklists (see [skills/README.md](skills/README.md))
 - Copy from [examples/](examples/) — never invent job YAML from scratch
 
 ## Architecture
@@ -80,10 +85,11 @@ Detailed reference: [docs/actions/](docs/actions/).
 Reusable checklists under [skills/](skills/):
 
 - [docusaurus-docs-site](skills/docusaurus-docs-site/SKILL.md) — full site setup and hardening.
+- See [skills/README.md](skills/README.md) for the full index.
 
 ## Adoption
 
-See [docs/adoption.md](docs/adoption.md) and [docs/design.md](docs/design.md).
+See [docs/adoption.md](docs/adoption.md), [docs/design.md](docs/design.md), and [docs/pinning.md](docs/pinning.md).
 
 ## Marketplace
 
