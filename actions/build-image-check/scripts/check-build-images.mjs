@@ -41,7 +41,7 @@ function configurationError(message) {
   process.exit(2);
 }
 
-const IMAGE_EXT = /\.(png|jpe?g|gif|webp|svg|avif|ico|bmp)(\?.*)?$/i;
+const IMAGE_EXT = /\.(png|jpe?g|gif|webp|svg|avif|ico|bmp)(?:[?#].*)?$/i;
 const LFS_HEADER = 'version https://git-lfs.github.com/spec/';
 
 function normalizeBase(u) {
@@ -150,33 +150,49 @@ function detectImageKind(buf) {
   return 'unknown';
 }
 
+// Accept quoted and Docusaurus-minified unquoted values. Tokenize attributes
+// rather than searching for "src" inside data-src or another attribute's value.
+function htmlAttributes(tag) {
+  const attrs = new Map();
+  const body = tag.replace(/^<[a-z][\w:-]*/i, '').replace(/>$/, '');
+  const pattern = /([^\s"'<>/=]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+)))?/g;
+  for (const match of body.matchAll(pattern)) {
+    const name = match[1].toLowerCase();
+    if (!attrs.has(name)) attrs.set(name, match[2] ?? match[3] ?? match[4] ?? '');
+  }
+  return attrs;
+}
+
 function extractFromHtml(html) {
   const refs = [];
-  // <img ... src="...">
-  for (const m of html.matchAll(/<img\b[^>]*>/gi)) {
-    const tag = m[0];
-    const src = tag.match(/\bsrc\s*=\s*(["'])([\s\S]*?)\1/i)?.[2];
-    if (src) refs.push({ kind: 'img-src', ref: src });
-    const srcset = tag.match(/\bsrcset\s*=\s*(["'])([\s\S]*?)\1/i)?.[2];
-    if (srcset) {
-      for (const part of srcset.split(',')) {
-        const u = part.trim().split(/\s+/)[0];
-        if (u) refs.push({ kind: 'img-srcset', ref: u });
+  // Keep > inside quoted attributes from terminating the tag early.
+  const tags = /<(img|source|a|link|image|video|input|object)\b(?:[^>"']|"[^"]*"|'[^']*')*>/gi;
+  for (const match of html.matchAll(tags)) {
+    const tagName = match[1].toLowerCase();
+    const attrs = htmlAttributes(match[0]);
+    const add = (name, force = false) => {
+      const ref = attrs.get(name);
+      if (ref && (force || looksLikeImageRef(ref))) {
+        refs.push({ kind: `${tagName}-${name}`, ref });
+      }
+    };
+    if (tagName === 'img' || tagName === 'source') {
+      add('src', true);
+      const srcset = attrs.get('srcset');
+      if (srcset) {
+        for (const part of srcset.split(',')) {
+          const ref = part.trim().split(/\s+/)[0];
+          if (ref) refs.push({ kind: `${tagName}-srcset`, ref });
+        }
       }
     }
-  }
-  // <source srcset>
-  for (const m of html.matchAll(/<source\b[^>]*>/gi)) {
-    const tag = m[0];
-    const srcset = tag.match(/\bsrcset\s*=\s*(["'])([\s\S]*?)\1/i)?.[2];
-    if (srcset) {
-      for (const part of srcset.split(',')) {
-        const u = part.trim().split(/\s+/)[0];
-        if (u) refs.push({ kind: 'source-srcset', ref: u });
-      }
+    if (tagName === 'a' || tagName === 'link' || tagName === 'image') {
+      add('href', tagName === 'image');
+      if (tagName === 'image') add('xlink:href', true);
     }
-    const src = tag.match(/\bsrc\s*=\s*(["'])([\s\S]*?)\1/i)?.[2];
-    if (src) refs.push({ kind: 'source-src', ref: src });
+    if (tagName === 'video') add('poster', true);
+    if (tagName === 'input' && attrs.get('type')?.toLowerCase() === 'image') add('src', true);
+    if (tagName === 'object') add('data');
   }
   // inline style background / url()
   for (const m of html.matchAll(/url\(\s*(['"]?)([^)'"]+)\1\s*\)/gi)) {

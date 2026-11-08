@@ -4,7 +4,9 @@ Builds the caller's site and checks local image references in HTML (`img`,
 `source`, srcset, inline styles) and CSS. No deployment or external HTTP checks.
 Validates presence, non-empty files, magic bytes, and Git LFS pointers; this is
 not a full image decoder or browser-rendering test. HTML extraction is deliberately
-lightweight (quoted attributes); complex data-URI srcsets are not supported.
+lightweight (quoted and unquoted attributes); complex data-URI srcsets are not supported.
+Image links (`href`), SVG image references, video posters, image inputs, and
+image object data are checked too; ordinary page links are ignored.
 
 ## Minimal caller
 
