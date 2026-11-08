@@ -12,18 +12,28 @@ This guide helps coding agents (Claude, Copilot, Grok, Cursor, etc.) adopt, exte
 6. **Changelog fragments only.** Never hand-edit `CHANGELOG.md` for user-facing changes.
 7. **Do not merge** unless the human owner explicitly asks.
 
+## Quick links
+
+- [docs/quickstart-for-agents.md](quickstart-for-agents.md)
+- [docs/examples-guide.md](examples-guide.md)
+- [docs/inputs-reference.md](inputs-reference.md)
+- [docs/pinning.md](pinning.md)
+- [docs/troubleshooting.md](troubleshooting.md)
+- [docs/actions/](actions/) — per-action reference
+- [skills/](../skills/) — checklists
+
 ## Adoption flow (step-by-step)
 
-1. Read [`skills/docusaurus-docs-site/SKILL.md`](../skills/docusaurus-docs-site/SKILL.md) for the full site checklist.
-2. Identify the matching example in `examples/`.
+1. Read [`skills/docusaurus-docs-site/SKILL.md`](../skills/docusaurus-docs-site/SKILL.md) for the full site checklist (or the more focused skills).
+2. Identify the matching example in `examples/` (see [docs/examples-guide.md](examples-guide.md)).
 3. Copy the example into the consumer's `.github/workflows/`.
 4. Adjust:
    - Triggers and path filters (keep them on the caller).
    - Permissions (minimal).
-   - Inputs (`working-directory`, globs, Node version, `prebuild-command`, etc.).
+   - Inputs (`working-directory`, globs, Node version, `prebuild-command`, etc.). See [docs/inputs-reference.md](inputs-reference.md).
    - `secrets: inherit` when the workflow needs write access.
 5. In the adoption PR body, link the documentation-actions PR and paste/link the previous local workflow for review.
-6. After `v1` exists, switch the pin from `@main` to `@v1` (or a SHA).
+6. After `v1` exists, switch the pin from `@main` to `@v1` (or a SHA). See [docs/pinning.md](pinning.md).
 7. Verify locally where possible (`npm ci && npm run build`) and on a smoke PR.
 
 ## Adding a new composite action
@@ -42,24 +52,11 @@ Prefer reusable workflows when the entire job (permissions, concurrency, multi-s
 
 ## Common input patterns
 
-| Input | Typical values | Notes |
-| --- | --- | --- |
-| `working-directory` | `website` or `.` | Match where `package.json` lives |
-| `cache-dependency-path` | `website/package-lock.json` | Repository-relative |
-| `node-version` | `22` (default) or `24` | Align with `.nvmrc` |
-| `markdownlint-globs` | Multiline YAML | Exclude `node_modules` / `build` |
-| `lychee-args` | Flags + paths | Soft-fail by default; accept 403/429 |
-| `prebuild-command` | `npm run lint:docs-links` | Empty skips |
-| `commit-paths` | Space-separated | For git-push-retry |
+See the full table in [docs/inputs-reference.md](inputs-reference.md).
 
 ## Troubleshooting for agents
 
-- **Workflow not found / access denied**: Org policy must allow reusable workflows from this repo.
-- **Commit-back fails**: Missing `secrets: inherit` or `contents: write`.
-- **Build fails on missing deps**: Wrong `working-directory` or lockfile path.
-- **Lychee fails hard**: Set `fail: false` (default) or adjust `--accept`.
-- **Index conflicts**: You edited an existing row in `docs/actions-index.md` — revert to append-only.
-- **Changelog validation fails**: Add a `.changelog/*.md` or label the PR `skip-changelog`.
+See [docs/troubleshooting.md](troubleshooting.md) and the troubleshooting skill.
 
 ## Reference consumers
 
