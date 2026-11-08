@@ -8,182 +8,87 @@ Reusable **GitHub Actions** and **reusable workflows** for Docusaurus documentat
 
 Extracted from duplicated automation across:
 
-- [`LLazyEmail/awesome-email-marketing`](https://github.com/LLazyEmail/awesome-email-marketing)
-- [`LLazyEmail/awesome-newsletters`](https://github.com/LLazyEmail/awesome-newsletters)
-- [`LLazyEmail/documentation`](https://github.com/LLazyEmail/documentation)
+- [LLazyEmail/awesome-email-marketing](https://github.com/LLazyEmail/awesome-email-marketing)
+- [LLazyEmail/awesome-newsletters](https://github.com/LLazyEmail/awesome-newsletters)
+- [LLazyEmail/documentation](https://github.com/LLazyEmail/documentation)
 
-Modeled on [`LLazyEmail/email-template-workflows`](https://github.com/LLazyEmail/email-template-workflows).
+Modeled on [LLazyEmail/email-template-workflows](https://github.com/LLazyEmail/email-template-workflows).
 
-Pin `LLazyEmail/documentation-actions@v1` once the first GitHub Release exists (auto-created when a release PR merges). Draft adoption PRs may use `@main` only during the adoption window. For the strongest supply-chain guarantee, pin a full commit SHA and keep it current with Renovate.
+**Pin** `LLazyEmail/documentation-actions@v1` once released. Draft adoption PRs may use `@main` only during the adoption window. Prefer full SHA + Renovate for production.
 
-## Marketplace
+## Table of contents
 
-The repository root contains an `action.yml` so the suite can be listed on the [GitHub Marketplace](https://github.com/marketplace). After the next release, check **Publish this Action to the GitHub Marketplace** when drafting the release.
+- [For AI agents](#for-ai-agents)
+- [Architecture](#architecture)
+- [Quick start](#quick-start)
+- [Actions and workflows](#actions-and-workflows)
+- [Skills](#skills)
+- [Adoption](#adoption)
+- [Marketplace](#marketplace)
 
-The root action is an umbrella composite that optionally runs markdownlint, a soft-fail lychee check, and a Docusaurus build. Specialized composite actions (under `actions/<name>/`) and reusable workflows (under `.github/workflows/`) continue to be used by path and are not listed separately on the Marketplace.
+## For AI agents
 
-```yaml
-- uses: LLazyEmail/documentation-actions@v1
-  with:
-    run-markdownlint: true
-    markdownlint-globs: |
-      README.md
-      website/docs/**/*.md
-    run-lychee: true
-    lychee-args: >-
-      --verbose --no-progress --accept 200,204,206,403,429
-      README.md 'website/docs/**/*.md'
-    run-build: true
-    working-directory: website
+Start here:
+
+- [AGENTS.md](AGENTS.md) — structured playbook with decision trees and pitfalls
+- [docs/ai-agent-guide.md](docs/ai-agent-guide.md) — step-by-step adoption and extension flows
+- [skills/docusaurus-docs-site/SKILL.md](skills/docusaurus-docs-site/SKILL.md) — full checklist for standing up a docs site
+- Copy from [examples/](examples/) — never invent job YAML from scratch
+
+## Architecture
+
+```mermaid
+flowchart TD
+  A[Consumer workflow<br/>triggers + permissions] -->|workflow_call| B[Reusable workflow<br/>.github/workflows/reusable-*.yml]
+  A -->|uses step| C[Composite action<br/>actions/<name>/]
+  B --> C
+  D[examples/] -.->|copy-paste| A
+  E[skills/] -.->|checklist| A
 ```
 
-## Skills
-
-Reusable agent / human checklists live under [`skills/`](skills/):
-
-- [`skills/docusaurus-docs-site/SKILL.md`](skills/docusaurus-docs-site/SKILL.md) — step-by-step checklist to stand up a proper Docusaurus documentation website using this repo’s shared workflows (Node version, `reusable-docs-ci` @v1, deploy, markdownlint, lychee, changelog, auto-rebase, i18n, AGENTS.md, PR template, verification). Based on the real callers in awesome-newsletters, awesome-email-marketing, assemblya, and fuck-ecoflow.
+- **Reusable workflows** for whole jobs (deploy, changelog, docs-ci, auto-rebase).
+- **Composite actions** for shared steps inside custom jobs.
+- **Examples** are the source of truth for thin callers.
+- Inventory is append-only in [docs/actions-index.md](docs/actions-index.md).
 
 ## Quick start
 
 ```yaml
-# PR test build for a Docusaurus site under website/
-jobs:
-  test-deploy:
-    uses: LLazyEmail/documentation-actions/.github/workflows/reusable-docusaurus-test-deploy.yml@main
-    with:
-      working-directory: website
-      cache-dependency-path: website/package-lock.json
-```
-
-```yaml
-# Soft-fail lychee with a job summary
-jobs:
-  lychee:
-    uses: LLazyEmail/documentation-actions/.github/workflows/reusable-link-check.yml@main
-    with:
-      args: >-
-        --verbose --no-progress --accept 200,204,206,403,429
-        README.md 'website/docs/**/*.md'
-```
-
-More copy-paste callers live in [`examples/`](examples/).
-
-## Actions and workflows
-
-The inventory is **append-only** in [`docs/actions-index.md`](docs/actions-index.md): each action PR adds exactly one new table row at the end and never reorders or edits other rows. That keeps stacked PRs from conflicting on the README.
-
-Composite actions live only under `actions/<name>/` (plus their reusable workflow, example, and test). Do not scatter related files across shared directories in a way that forces every PR to touch the same lines.
-
-## Usage snippets
-
-### Star request
-
-```yaml
-on:
-  pull_request_target:
-    types: [opened]
-permissions:
-  pull-requests: write
-jobs:
-  comment:
-    uses: LLazyEmail/documentation-actions/.github/workflows/reusable-star-request.yml@main
-```
-
-### Awesome-list checks
-
-```yaml
-jobs:
-  checks:
-    uses: LLazyEmail/documentation-actions/.github/workflows/reusable-awesome-list-checks.yml@main
-    with:
-      checks: entry-format,duplicate-links,sorted-sections
-```
-
-### Auto-rebase (consumers)
-
-```yaml
-on:
-  schedule:
-    - cron: '0 */6 * * *'
-  workflow_dispatch:
-permissions:
-  contents: write
-  pull-requests: write
-jobs:
-  rebase:
-    uses: LLazyEmail/documentation-actions/.github/workflows/reusable-auto-rebase-prs.yml@main
-```
-
-This repository also ships an early in-repo `.github/workflows/auto-rebase-prs.yml` so the draft stack stays current before the composite action merges.
-
-### Git push with rebase retry
-
-```yaml
-- uses: LLazyEmail/documentation-actions/actions/git-push-retry@v1
-  with:
-    commit-paths: CHANGELOG.md website/src/data/changelog.json
-    commit-message: 'chore(changelog): regenerate after merged pull request'
-```
-
-Commit-back reusable workflows (changelog, docs-index, catalog-api) already use this composite.
-
-### Build annotations and PR comment
-
-```yaml
-jobs:
-  test-deploy:
-    uses: LLazyEmail/documentation-actions/.github/workflows/reusable-docusaurus-test-deploy.yml@v1
-    with:
-      working-directory: website
-      cache-dependency-path: website/package-lock.json
-      # annotate-log: true   # default
-      pr-comment: true      # optional; grant pull-requests: write on the caller
-    secrets: inherit
-```
-
-Broken links, anchors, and `[WARNING]` / `[ERROR]` lines from the Docusaurus build become check annotations and a job-summary section automatically.
-
-### Docs CI umbrella
-
-```yaml
+# Umbrella docs CI (preferred for greenfield)
 jobs:
   docs-ci:
     uses: LLazyEmail/documentation-actions/.github/workflows/reusable-docs-ci.yml@v1
     with:
+      working-directory: website
+      cache-dependency-path: website/package-lock.json
       run-markdownlint: true
-      markdownlint-globs: |
-        README.md
-        website/docs/**/*.md
       run-lychee: true
-      lychee-args: >-
-        --verbose --no-progress --accept 200,204,206,403,429
-        README.md 'website/docs/**/*.md'
-      # run-build: true  (default)
+      run-build: true
     secrets: inherit
 ```
 
-Keep triggers on the caller; toggle jobs with boolean inputs. Full copy-paste: [`examples/docs-ci.yml`](examples/docs-ci.yml).
+More callers live in [examples/](examples/).
+
+## Actions and workflows
+
+See the append-only inventory: [docs/actions-index.md](docs/actions-index.md).
+
+Detailed reference: [docs/actions/](docs/actions/).
+
+## Skills
+
+Reusable checklists under [skills/](skills/):
+
+- [docusaurus-docs-site](skills/docusaurus-docs-site/SKILL.md) — full site setup and hardening.
 
 ## Adoption
 
-See [`docs/adoption.md`](docs/adoption.md) for consumer cut-over notes and [`docs/design.md`](docs/design.md) for layout conventions.
+See [docs/adoption.md](docs/adoption.md) and [docs/design.md](docs/design.md).
+
+## Marketplace
+
+The root `action.yml` is an umbrella composite (optional markdownlint + lychee + build). Specialized actions and workflows are used by path.
 
 ## License
 
 [MIT](./LICENSE) © LLazyEmail
-
-## Built-site image verification
-
-Use the [reusable image checker](docs/build-image-check.md) after adoption release:
-
-```yaml
-name: Build images
-on: [pull_request, workflow_dispatch]
-permissions:
-  contents: read
-jobs:
-  images:
-    uses: LLazyEmail/documentation-actions/.github/workflows/reusable-build-image-check.yml@v1
-```
-
-See the guide for subdirectory sites, allowlists, and fail/warn mode.
