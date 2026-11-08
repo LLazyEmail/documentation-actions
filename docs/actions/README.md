@@ -6,6 +6,7 @@ Each page covers purpose, inputs/outputs, minimal caller, and agent notes.
 
 ## Pages
 
+- [root-action](root-action.md) — marketplace umbrella composite
 - [markdownlint](markdownlint.md)
 - [lychee-link-check](lychee-link-check.md)
 - [docusaurus-build](docusaurus-build.md)
