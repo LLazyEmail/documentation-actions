@@ -46,32 +46,39 @@ function gitRebase(pr, token) {
     return {ok: true, message: 'Rebased onto base and pushed with an explicit SHA lease'};
   } finally { fs.rmSync(dir, {recursive: true, force: true}); }
 }
-async function run({github, context, core, numbers = '', mode = false, token}) {
+async function run({github, context, core, numbers = '', mode = false, token, successMessage = 'Automatically updated this PR branch.', forkBlockedMessage = 'Check fork write permissions.'}) {
   const repo = {...context.repo};
   const selected = parseNumbers(numbers) || (await github.paginate(github.rest.pulls.list, {...repo, state: 'open', per_page: 100})).map(pr => pr.number);
   let failed = false;
   await core.summary.addHeading('PR branch updates').write();
   for (const number of selected) {
     let message;
+    let updated = false;
     try {
       const pr = await details(github, {...repo, pull_number: number});
       if (pr.state !== 'open') throw new Error('PR is not open');
       if (pr.mergeable_state === 'behind') {
         await github.rest.pulls.updateBranch({...repo, pull_number: number, expected_head_sha: pr.head.sha});
         message = 'Branch update requested (merge-base update, not git rebase)';
+        updated = true;
       } else if (pr.mergeable_state === 'dirty') {
         if (!mode) throw new Error('Conflicts require opt-in rebase-conflicts mode');
         const result = gitRebase(pr, token);
         if (!result.ok) throw new Error(result.message);
         message = result.message;
+        updated = true;
       } else {
         message = `No update required (state: ${pr.mergeable_state})`;
       }
     } catch (err) {
       failed = true;
-      message = `Failed: ${err.message}`;
+      message = `Failed: ${err.message}${err.status === 403 ? `; ${forkBlockedMessage}` : ''}`;
       try { await github.rest.issues.createComment({...repo, issue_number: number, body: `Auto-rebase: ${message}`}); }
       catch (commentError) { core.warning(`Could not comment on #${number}: ${commentError.message}`); }
+    }
+    if (updated) {
+      try { await github.rest.issues.createComment({...repo, issue_number: number, body: successMessage}); }
+      catch (err) { core.warning(`Updated #${number}, but could not comment: ${err.message}`); }
     }
     core.info(`#${number}: ${message}`);
     await core.summary.addHeading(`#${number}`, 3).addCodeBlock(message, 'text').write();

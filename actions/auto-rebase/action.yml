@@ -4,6 +4,12 @@ inputs:
   github-token:
     description: Token with write access to target branches
     default: ${{ github.token }}
+  success-message:
+    description: Comment after a successful branch update
+    default: '✅ Automatically updated this PR branch with the latest changes from main.'
+  fork-blocked-message:
+    description: Guidance when fork permissions block updates
+    default: 'Enable Allow edits from maintainers or update the fork branch yourself.'
   pr-numbers:
     description: Comma-separated PR numbers; empty selects all open PRs
     default: ''
@@ -18,6 +24,8 @@ runs:
         ACTION_PATH: ${{ github.action_path }}
         PR_NUMBERS: ${{ inputs.pr-numbers }}
         REBASE_CONFLICTS: ${{ inputs.rebase-conflicts }}
+        SUCCESS_MESSAGE: ${{ inputs.success-message }}
+        FORK_BLOCKED_MESSAGE: ${{ inputs.fork-blocked-message }}
         REBASE_TOKEN: ${{ inputs.github-token }}
       with:
         github-token: ${{ inputs.github-token }}
@@ -25,5 +33,7 @@ runs:
           const {run} = require(`${process.env.ACTION_PATH}/rebase.js`);
           await run({github, context, core,
             numbers: process.env.PR_NUMBERS,
+            successMessage: process.env.SUCCESS_MESSAGE,
+            forkBlockedMessage: process.env.FORK_BLOCKED_MESSAGE,
             mode: process.env.REBASE_CONFLICTS === 'true',
             token: process.env.REBASE_TOKEN});
