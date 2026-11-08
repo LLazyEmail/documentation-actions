@@ -1,0 +1,83 @@
+name: Reusable README ↔ docs sync check
+
+on:
+  workflow_call:
+    inputs:
+      docs-glob:
+        description: Glob for docs files that count as "in sync"
+        type: string
+        required: false
+        default: website/docs/**/*.md
+      comment-body:
+        description: Markdown comment posted when README changes without docs
+        type: string
+        required: false
+        default: >
+          ### Docs sync check
+
+          This PR updates `README.md` but does not touch any file under the docs path.
+
+          Please also update the matching documentation page so the published site stays in sync.
+
+          After adding the docs change, this check will pass.
+      fail-on-missing:
+        description: Fail the job when docs are missing (otherwise only comment)
+        type: boolean
+        required: false
+        default: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  check-sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Detect README-only changes
+        id: check
+        env:
+          DOCS_GLOB: ${{ inputs.docs-glob }}
+        run: |
+          set -euo pipefail
+          BASE="${{ github.event.pull_request.base.sha }}"
+          HEAD="${{ github.event.pull_request.head.sha }}"
+
+          README_CHANGED=$(git diff --name-only "$BASE" "$HEAD" \
+            | grep -c '^README.md$' || true)
+          # shellcheck disable=SC2016
+          DOCS_CHANGED=$(git diff --name-only "$BASE" "$HEAD" \
+            | grep -cE "^${DOCS_GLOB//\*\*/.*}" || true)
+
+          echo "readme_changed=$README_CHANGED" >> "$GITHUB_OUTPUT"
+          echo "docs_changed=$DOCS_CHANGED" >> "$GITHUB_OUTPUT"
+
+          if [ "$README_CHANGED" -gt 0 ] && [ "$DOCS_CHANGED" -eq 0 ]; then
+            echo "missing_docs=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "missing_docs=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Comment if docs page missing
+        if: steps.check.outputs.missing_docs == 'true'
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7.0.1
+        env:
+          COMMENT_BODY: ${{ inputs.comment-body }}
+        with:
+          script: |
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: process.env.COMMENT_BODY
+            });
+
+      - name: Fail if docs missing
+        if: steps.check.outputs.missing_docs == 'true' && inputs.fail-on-missing
+        run: |
+          echo "::error::README.md changed but no matching docs file was updated."
+          exit 1
