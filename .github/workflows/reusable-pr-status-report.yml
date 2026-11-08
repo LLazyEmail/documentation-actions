@@ -25,7 +25,8 @@ jobs:
               per_page: 100
             });
 
-            let rows = '| PR | Title | Author | Mergeable | Updated |\n|---|---|---|---|---|\n';
+            let rows = '| PR | Title | Author | Mergeable | Updated |\n';
+            rows += '|---|---|---|---|---|\n';
             for (const pr of prs) {
               const { data: full } = await github.rest.pulls.get({
                 owner: context.repo.owner,
@@ -34,7 +35,9 @@ jobs:
               });
               const state = full.mergeable_state || 'unknown';
               const updated = full.updated_at.slice(0, 10);
-              rows += `| [#${pr.number}](${pr.html_url}) | ${pr.title.replace(/\|/g, '\\|')} | @${pr.user.login} | \`${state}\` | ${updated} |\n`;
+              const title = pr.title.replace(/\|/g, '\\|');
+              rows += `| [#${pr.number}](${pr.html_url}) | ${title} `;
+              rows += `| @${pr.user.login} | \`${state}\` | ${updated} |\n`;
             }
 
             const body = `## Open pull requests status
