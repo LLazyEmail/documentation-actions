@@ -1,0 +1,16 @@
+name: Label conflicted PRs
+
+on:
+  schedule:
+    - cron: '0 */4 * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  label:
+    uses: LLazyEmail/documentation-actions/.github/workflows/reusable-label-conflicted-prs.yml@v1
