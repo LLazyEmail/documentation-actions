@@ -21,3 +21,6 @@ Append-only. Each action PR adds **exactly one new line** at the end of the tabl
 | `docs-ci` | `.github/workflows/reusable-docs-ci.yml` | Umbrella docs CI (toggle markdownlint, lychee, build, npm-check) |
 | `documentation-actions` | `action.yml` | Marketplace root composite (optional markdownlint + lychee + Docusaurus build) |
 | `build-image-check` | `actions/build-image-check` | Validate built HTML/CSS image references with annotations and summary |
+| `label-conflicted-prs` | `.github/workflows/reusable-label-conflicted-prs.yml` | Label open PRs that have conflicts |
+| `pr-status-report` | `.github/workflows/reusable-pr-status-report.yml` | Weekly open-PR summary tracking issue |
+| `readme-docs-sync-check` | `.github/workflows/reusable-readme-docs-sync-check.yml` | Fail when README changes without matching docs |
