@@ -8,6 +8,8 @@ lightweight (quoted and unquoted attributes); complex data-URI srcsets are not s
 Image links (`href`), SVG image references, video posters, image inputs, and
 image object data are checked too; ordinary page links are ignored.
 
+Recent coverage includes unquoted Docusaurus-minified attributes, image hrefs, SVG references, and video posters.
+
 ## Minimal caller
 
 Available at `@v1` after this change is merged and released normally:
@@ -44,27 +46,44 @@ are appended to the job summary, matching DA's build reporting conventions.
 No write permissions or secrets are required. Checkout does not fetch Git LFS.
 As in DA's existing workflows, shared composite actions are loaded from `@main`.
 
-## Allowlists and step-level reuse
+## Allowlists
 
 No site-specific exceptions are bundled. One literal reference, normalized URL
 path (without the base prefix), or basename per line; `#` starts a comment.
 Prefer full paths over broad basenames, and document a tracking issue for each
-exception. Example:
+exception.
 
 ```text
 # Tracked in the caller repository's issue 123
 /img/temporarily-missing.png
+# Basename (use sparingly)
+logo.svg
 ```
 
-For an existing build job, use
-`LLazyEmail/documentation-actions/actions/build-image-check@v1` after building.
-It accepts the first four inputs above and requires Node on PATH. Direct CLI:
+## Mode guidance
+
+- Start with `mode: warn` during adoption so existing broken images do not block unrelated PRs.
+- Switch to `mode: fail` once the tree is clean (or only known allowlisted exceptions remain).
+
+## Step-level reuse
+
+When an existing job already builds the site:
+
+```yaml
+- uses: LLazyEmail/documentation-actions/actions/build-image-check@v1
+  with:
+    build-dir: website/build
+    base-url: /awesome-email-marketing/
+    mode: warn
+```
+
+Requires Node on PATH. Direct CLI:
 `node actions/build-image-check/scripts/check-build-images.mjs --build-dir build`.
 
 ## Verified adoption candidates
 
 These default-branch workflows already call DA `@v1`; their Docusaurus configs
-were checked separately. No consumer PRs have been opened.
+were checked separately.
 
 | Repository | Existing workflow | Additional inputs |
 | --- | --- | --- |
@@ -88,3 +107,11 @@ For awesome-newsletters use `/awesome-newsletters/`, `node-version: '20'`,
 and omit `prebuild-command`. Preserve existing triggers and other checks when
 adopting; the standalone workflow builds independently, so step-level reuse is
 preferable when an existing job already builds the site.
+
+## Agent notes
+
+- `build-dir` is always relative to the repository root.
+- `base-url` is a path prefix only.
+- Soften with `mode: warn` first.
+- Document every allowlist entry with a tracking issue.
+- The checker now handles unquoted attributes common in Docusaurus production HTML.
