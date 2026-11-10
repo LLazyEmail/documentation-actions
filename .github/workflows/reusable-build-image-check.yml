@@ -53,6 +53,11 @@ on:
         type: string
         required: false
         default: ''
+      lfs:
+        description: "Pass lfs: true to actions/checkout (Git LFS docs repos)"
+        type: boolean
+        required: false
+        default: false
 
 permissions:
   contents: read
@@ -66,6 +71,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          lfs: ${{ inputs.lfs }}
       - name: Build site
         uses: LLazyEmail/documentation-actions/actions/docusaurus-build@main
         with:

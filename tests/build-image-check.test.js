@@ -45,6 +45,13 @@ try {
   html('<img data-src=missing.png alt="src=missing.png"><a href=/ordinary-page>page</a><link rel=stylesheet href=missing.css>');
   assert.equal(run().status, 0);
   assert.match(run().stdout, /image refs checked: 0/);
+  // An LFS pointer that was never pulled gets inlined by Docusaurus as a data: URI.
+  const pointer = Buffer.from('version https://git-lfs.github.com/spec/v1\noid sha256:' + 'a'.repeat(64) + '\nsize 123\n').toString('base64');
+  html(`<img src="data:image/jpeg;base64,${pointer}">`);
+  const inlined = run();
+  assert.equal(inlined.status, 1);
+  assert.match(inlined.stderr, /inlined-git-lfs-pointer/);
+  assert.equal(run('--mode', 'warn').status, 0);
   html('<img src=//cdn.example/ok.png><img src=data:image/png;base64,AA==>');
   assert.equal(run().status, 0);
   html('<img src=/missing.png>');

@@ -246,6 +246,20 @@ function checkRef(pageFile, kind, ref) {
       return;
     }
   }
+  const pageRelForData = path.relative(buildDir, pageFile).split(path.sep).join('/');
+  // Docusaurus inlines small images as data: URIs. A Git LFS pointer that was
+  // never pulled (checkout without lfs: true) is ~130 bytes, so it is inlined
+  // too and would otherwise be skipped as "data:".
+  const dataUri = /^data:[^,]*;base64,(.*)$/is.exec(ref);
+  if (dataUri) {
+    let decoded = null;
+    try { decoded = Buffer.from(dataUri[1].trim(), 'base64'); } catch { /* not base64 */ }
+    if (decoded && isLfsPointer(decoded)) {
+      checked++;
+      record(pageRelForData, kind, `${ref.slice(0, 48)}...`, 'inlined-git-lfs-pointer');
+      return;
+    }
+  }
   const resolved = resolveInBuild(ref, pageFile);
   if (resolved.skip) {
     skippedExternal++;
