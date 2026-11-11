@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.13.0] - 2026-11-11
+
+### Added
+
+- Build image check: report Git LFS pointers that Docusaurus inlined as `data:` URIs (`inlined-git-lfs-pointer`), and add an `lfs` input to `reusable-build-image-check.yml`.
+
 ## [1.12.1] - 2026-11-08
 
 ### Changed
@@ -218,6 +224,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Reusable JSON API regenerate workflow (`reusable-catalog-api`).
 - Awesome-list checks: entry-format, duplicates, sorted-sections (`actions/awesome-list-checks`).
 
+[1.13.0]: https://github.com/LLazyEmail/documentation-actions/compare/v1.12.1...v1.13.0
 [1.12.1]: https://github.com/LLazyEmail/documentation-actions/compare/v1.12.0...v1.12.1
 [1.12.0]: https://github.com/LLazyEmail/documentation-actions/compare/v1.11.0...v1.12.0
 [1.11.0]: https://github.com/LLazyEmail/documentation-actions/compare/v1.10.0...v1.11.0
