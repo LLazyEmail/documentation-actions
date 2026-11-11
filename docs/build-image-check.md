@@ -38,12 +38,16 @@ jobs:
 | `install-command` | `npm ci` | Dependency installation |
 | `build-command` | `npm run build` | Build command |
 | `prebuild-command` | empty | Optional pre-build command |
+| `lfs` | `false` | Pass `lfs: true` to `actions/checkout` for Git LFS docs repos |
 
 Build/install/configuration errors always fail, including missing build output,
 missing explicitly requested allowlist, or output with no HTML/CSS. Each broken
 reference emits an escaped GitHub error/warning annotation. Counts and details
 are appended to the job summary, matching DA's build reporting conventions.
-No write permissions or secrets are required. Checkout does not fetch Git LFS.
+No write permissions or secrets are required. Checkout fetches Git LFS objects only
+with `lfs: true`. Without it, unpulled LFS pointers that Docusaurus inlines as
+`data:` URIs are still reported as `inlined-git-lfs-pointer`, so a missing
+`lfs: true` in a deploy workflow is caught too.
 As in DA's existing workflows, shared composite actions are loaded from `@main`.
 
 ## Allowlists
