@@ -1,0 +1,14 @@
+name: Thin content
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 6 * * 1'
+permissions:
+  contents: read
+jobs:
+  thin-content:
+    uses: LLazyEmail/documentation-actions/.github/workflows/reusable-thin-content-check.yml@v1
+    with:
+      base-url: /my-site/
+      site-url: https://example.github.io
+      min-words: 150
