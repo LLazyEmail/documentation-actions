@@ -58,6 +58,11 @@ on:
         type: boolean
         required: false
         default: false
+      site-url:
+        description: Optional site origin (for example https://example.github.io) for full page URLs in the report
+        type: string
+        required: false
+        default: ''
 
 permissions:
   contents: read
@@ -88,3 +93,12 @@ jobs:
           base-url: ${{ inputs.base-url }}
           allowlist: ${{ inputs.allowlist }}
           mode: ${{ inputs.mode }}
+          site-url: ${{ inputs.site-url }}
+          report-json: build-image-report.json
+      - name: Upload page report
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: build-image-report
+          path: build-image-report.json
+          if-no-files-found: ignore

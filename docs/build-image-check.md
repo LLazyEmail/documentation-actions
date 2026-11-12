@@ -39,6 +39,7 @@ jobs:
 | `build-command` | `npm run build` | Build command |
 | `prebuild-command` | empty | Optional pre-build command |
 | `lfs` | `false` | Pass `lfs: true` to `actions/checkout` for Git LFS docs repos |
+| `site-url` | empty | Site origin, e.g. `https://example.github.io`, used to print full page URLs |
 
 Build/install/configuration errors always fail, including missing build output,
 missing explicitly requested allowlist, or output with no HTML/CSS. Each broken
@@ -49,6 +50,22 @@ with `lfs: true`. Without it, unpulled LFS pointers that Docusaurus inlines as
 `data:` URIs are still reported as `inlined-git-lfs-pointer`, so a missing
 `lfs: true` in a deploy workflow is caught too.
 As in DA's existing workflows, shared composite actions are loaded from `@main`.
+
+## Page report
+
+The job summary starts with a **Pages with broken images** checklist, one line per
+built page with its URL (`site-url` + `base-url` + route) and failure count. The
+same data is uploaded as the `build-image-report` artifact (`build-image-report.json`):
+
+```json
+{ "failures": 1, "pages": [ { "page": "docs/intro/index.html",
+  "url": "https://example.github.io/site/docs/intro/",
+  "failures": [ { "kind": "img-src", "ref": "img/missing.png", "issue": "missing" } ] } ] }
+```
+
+Issues: `missing`, `empty-file`, `git-lfs-pointer`, `not-an-image`, `not-a-file`,
+`outside-build`, `inlined-git-lfs-pointer`, and `inlined-not-an-image` (a raster
+`data:` URI whose bytes are empty or not an image, such as an inlined placeholder file).
 
 ## Allowlists
 

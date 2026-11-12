@@ -13,6 +13,12 @@ inputs:
   mode:
     description: fail or warn (configuration errors always fail)
     default: fail
+  site-url:
+    description: Optional site origin (for example https://example.github.io) for full page URLs in the report
+    default: ''
+  report-json:
+    description: Optional workspace-relative path for a JSON report of pages with broken images
+    default: ''
 runs:
   using: composite
   steps:
@@ -24,6 +30,9 @@ runs:
         BASE_URL: ${{ inputs.base-url }}
         ALLOWLIST: ${{ inputs.allowlist }}
         MODE: ${{ inputs.mode }}
+        SITE_URL: ${{ inputs.site-url }}
+        REPORT_JSON: ${{ inputs.report-json }}
       run: |
         node "$CHECKER" --build-dir "$BUILD_DIR" --base-url "$BASE_URL" \
-          --allowlist "$ALLOWLIST" --mode "$MODE"
+          --allowlist "$ALLOWLIST" --mode "$MODE" --site-url "$SITE_URL" \
+          --report-json "$REPORT_JSON"

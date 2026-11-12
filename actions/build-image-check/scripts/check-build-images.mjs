@@ -9,6 +9,10 @@
  * Usage:
  *   node check-build-images.mjs [--build-dir build] [--base-url /site/]
  *     [--allowlist scripts/build-image-allowlist.txt] [--mode fail|warn]
+ *     [--site-url https://example.github.io] [--report-json build-image-report.json]
+ *
+ * The job summary lists every page with broken images (with its full URL when
+ * --site-url is given); --report-json writes the same per-page list as JSON.
  *
  * Exit 1 for broken images in fail mode; configuration errors always exit 2.
  */
@@ -29,6 +33,8 @@ const baseUrl = normalizeBase(argValue('--base-url', '/'));
 const allowlistArg = argValue('--allowlist', '');
 const allowlistPath = allowlistArg ? path.resolve(root, allowlistArg) : null;
 const mode = argValue('--mode', 'fail');
+const siteUrl = argValue('--site-url', '').replace(/\/+$/, '');
+const reportJsonArg = argValue('--report-json', '');
 if (!['fail', 'warn'].includes(mode)) {
   console.error('::error::mode must be fail or warn');
   process.exit(2);
@@ -259,6 +265,16 @@ function checkRef(pageFile, kind, ref) {
       record(pageRelForData, kind, `${ref.slice(0, 48)}...`, 'inlined-git-lfs-pointer');
       return;
     }
+    // A raster data: URI whose bytes are empty or not an image (for example a
+    // 2-byte placeholder file that Docusaurus inlined) renders as a broken image.
+    if (decoded && /^data:image\/(png|jpe?g|gif|webp|avif|bmp)/i.test(ref)) {
+      const inlinedKind = detectImageKind(decoded);
+      if (inlinedKind === 'empty' || inlinedKind === 'unknown') {
+        checked++;
+        record(pageRelForData, kind, `${ref.slice(0, 48)}...`, 'inlined-not-an-image');
+        return;
+      }
+    }
   }
   const resolved = resolveInBuild(ref, pageFile);
   if (resolved.skip) {
@@ -343,6 +359,30 @@ for (const f of failures) {
   byPage.get(f.page).push(f);
 }
 
+function pageUrl(page) {
+  const route = page.replace(/(^|\/)index\.html$/i, '$1').replace(/\.html$/i, '');
+  return `${siteUrl}${baseUrl}${route}`;
+}
+const pages = [...byPage.entries()]
+  .sort(([a], [b]) => a.localeCompare(b))
+  .map(([page, items]) => ({
+    page,
+    url: pageUrl(page),
+    failures: items.map(({ kind, ref, issue }) => ({ kind, ref, issue })),
+  }));
+if (reportJsonArg) {
+  const report = {
+    baseUrl,
+    siteUrl: siteUrl || null,
+    htmlFiles: htmlFiles.length,
+    checked,
+    skippedExternal,
+    failures: failures.length,
+    pages,
+  };
+  fs.writeFileSync(path.resolve(root, reportJsonArg), JSON.stringify(report, null, 2) + '\n');
+}
+
 const lines = [];
 lines.push(`# Build image check`);
 lines.push('');
@@ -355,8 +395,13 @@ lines.push(
 lines.push(
   `- allowlist entries: ${allowlist.size}, allowlisted hits: ${allowlistedHits}`,
 );
-lines.push(`- **failures: ${failures.length}**`);
+lines.push(`- **failures: ${failures.length}** on **${pages.length}** page(s)`);
 lines.push('');
+if (pages.length) {
+  lines.push('## Pages with broken images');
+  for (const p of pages) lines.push(`- [ ] ${p.url} (${p.failures.length})`);
+  lines.push('');
+}
 
 if (failures.length) {
   lines.push(`| Page | Kind | Ref | Issue |`);
