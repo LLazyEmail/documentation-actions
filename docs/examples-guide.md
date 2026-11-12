@@ -16,6 +16,7 @@ Thin callers under `examples/` are the source of truth. Always start by copying 
 | `star-request.yml` | Thank-you comment on opened PRs |
 | `npm-script-check.yml` | Prettier / i18n / images / typecheck |
 | `build-image-check.yml` | Built-site image validation |
+| `thin-content-check.yml` | Pages with little content (weekly, warn) |
 | `git-push-retry-step.yml` | Standalone commit-and-push step |
 | `docusaurus-build-step.yml` | Standalone build step |
 

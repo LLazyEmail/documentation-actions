@@ -18,6 +18,7 @@ Each page covers purpose, inputs/outputs, minimal caller, and agent notes.
 - [docusaurus-pr-comment](docusaurus-pr-comment.md)
 - [npm-script-check](npm-script-check.md)
 - [build-image-check](build-image-check.md)
+- [thin-content-check](thin-content-check.md)
 - [pages-deploy](pages-deploy.md)
 - [changelog](changelog.md)
 - [docs-index](docs-index.md)
