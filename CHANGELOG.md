@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.14.0] - 2026-11-12
+
+### Added
+
+- Build image check: list pages with broken images (full URLs with the new `site-url` input) in the job summary and as a `build-image-report` JSON artifact, and report raster `data:` URIs whose bytes are not an image (`inlined-not-an-image`).
+- Thin content check: new `actions/thin-content-check` and `reusable-thin-content-check.yml` that list built Docusaurus pages with little main content (word count, image-only, heading-only, placeholder text) as a job summary checklist with page URLs and a `thin-content-report` JSON artifact.
+
 ## [1.13.0] - 2026-11-11
 
 ### Added
@@ -224,6 +231,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Reusable JSON API regenerate workflow (`reusable-catalog-api`).
 - Awesome-list checks: entry-format, duplicates, sorted-sections (`actions/awesome-list-checks`).
 
+[1.14.0]: https://github.com/LLazyEmail/documentation-actions/compare/v1.13.0...v1.14.0
 [1.13.0]: https://github.com/LLazyEmail/documentation-actions/compare/v1.12.1...v1.13.0
 [1.12.1]: https://github.com/LLazyEmail/documentation-actions/compare/v1.12.0...v1.12.1
 [1.12.0]: https://github.com/LLazyEmail/documentation-actions/compare/v1.11.0...v1.12.0
