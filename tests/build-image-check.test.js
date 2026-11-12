@@ -12,7 +12,7 @@ const run = (...args) => spawnSync(process.execPath, [script, ...args], { cwd: r
 const html = text => fs.writeFileSync(path.join(build, 'index.html'), text);
 try {
   fs.writeFileSync(path.join(build, 'assets', 'ok.png'), Buffer.from([137,80,78,71,13,10,26,10]));
-  html('<img src="/site/assets/ok.png"><img src="//cdn.example/test.png"><img src="data:image/png;base64,AA==">');
+  html('<img src="/site/assets/ok.png"><img src="//cdn.example/test.png"><img src="data:image/png;base64,iVBORw0KGgo=">');
   assert.equal(run('--base-url', '/site/').status, 0);
   // Docusaurus production HTML drops quotes around simple attribute values.
   html('<img src=/site/assets/ok.png alt=Logo class="theme logo"/><source srcset=/site/assets/ok.png><a href=/site/assets/ok.png#preview>image</a>');
@@ -52,7 +52,36 @@ try {
   assert.equal(inlined.status, 1);
   assert.match(inlined.stderr, /inlined-git-lfs-pointer/);
   assert.equal(run('--mode', 'warn').status, 0);
-  html('<img src=//cdn.example/ok.png><img src=data:image/png;base64,AA==>');
+  // A 2-byte placeholder (CRLF) that Docusaurus inlined renders as a broken image.
+  html(`<img src="data:image/jpeg;base64,${Buffer.from('\r\n').toString('base64')}">`);
+  const placeholder = run();
+  assert.equal(placeholder.status, 1);
+  assert.match(placeholder.stderr, /inlined-not-an-image/);
+  // SVG data URIs are text and stay skipped.
+  html('<img src="data:image/svg+xml;base64,PHN2Zy8+">');
+  assert.equal(run().status, 0);
+  // Per-page report: job summary list and JSON with full page URLs.
+  fs.mkdirSync(path.join(build, 'guide', 'intro'), { recursive: true });
+  fs.writeFileSync(path.join(build, 'guide', 'intro', 'index.html'), '<img src="/site/missing-a.png"><img src="/site/missing-b.png">');
+  html('<img src="/site/assets/ok.png">');
+  const summaryFile = path.join(root, 'summary');
+  fs.rmSync(summaryFile, { force: true });
+  const paged = run('--base-url', '/site/', '--site-url', 'https://example.github.io/', '--report-json', 'report.json', '--mode', 'warn');
+  assert.equal(paged.status, 0);
+  const report = JSON.parse(fs.readFileSync(path.join(root, 'report.json'), 'utf8'));
+  assert.equal(report.failures, 2);
+  assert.equal(report.pages.length, 1);
+  assert.equal(report.pages[0].page, 'guide/intro/index.html');
+  assert.equal(report.pages[0].url, 'https://example.github.io/site/guide/intro/');
+  assert.deepEqual(report.pages[0].failures.map(f => f.issue), ['missing', 'missing']);
+  const summary = fs.readFileSync(summaryFile, 'utf8');
+  assert.match(summary, /## Pages with broken images/);
+  assert.match(summary, /- \[ \] https:\/\/example\.github\.io\/site\/guide\/intro\/ \(2\)/);
+  fs.rmSync(path.join(build, 'guide'), { recursive: true });
+  // Clean build still writes an empty page list.
+  assert.equal(run('--base-url', '/site/', '--report-json', 'report.json').status, 0);
+  assert.deepEqual(JSON.parse(fs.readFileSync(path.join(root, 'report.json'), 'utf8')).pages, []);
+  html('<img src=//cdn.example/ok.png><img src=data:image/png;base64,iVBORw0KGgo=>');
   assert.equal(run().status, 0);
   html('<img src=/missing.png>');
   fs.writeFileSync(path.join(root, 'unquoted-allow.txt'), '/missing.png\n');
