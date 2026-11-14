@@ -26,3 +26,4 @@ Append-only. Each action PR adds **exactly one new line** at the end of the tabl
 | `pr-status-report` | `.github/workflows/reusable-pr-status-report.yml` | Weekly open-PR summary tracking issue |
 | `readme-docs-sync-check` | `.github/workflows/reusable-readme-docs-sync-check.yml` | Fail when README changes without matching docs |
 | `comment-readme-only` | `.github/workflows/reusable-comment-readme-only.yml` | One-time comment when PR only changes README.md |
+| `awesome-entry-format-check` | `.github/workflows/reusable-awesome-entry-format-check.yml` | Warn on list entries missing the description separator |
