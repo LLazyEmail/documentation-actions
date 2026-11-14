@@ -17,7 +17,9 @@ jobs:
           set -euo pipefail
           echo "Checking list entry style in changed markdown files..."
 
-          FILES=$(git diff --name-only "${{ github.event.pull_request.base.sha }}" "${{ github.event.pull_request.head.sha }}" | grep -E '\.md$' || true)
+          BASE="${{ github.event.pull_request.base.sha }}"
+          HEAD="${{ github.event.pull_request.head.sha }}"
+          FILES=$(git diff --name-only "$BASE" "$HEAD" | grep -E '\.md$' || true)
 
           if [ -z "$FILES" ]; then
             echo "No markdown files changed"
