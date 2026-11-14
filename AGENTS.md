@@ -21,7 +21,7 @@ Current pin: `LLazyEmail/documentation-actions@v1` (floating major). Draft adopt
 | --- | --- | --- |
 | Add docs CI (lint + links + build) to a Docusaurus site | `examples/docs-ci.yml` → `reusable-docs-ci.yml@v1` | Toggle booleans; keep triggers on the caller |
 | PR test build only | `examples/test-deploy.yml` | Enable `pr-comment` if you want the build summary on the PR |
-| Pages deploy | `examples/deploy-pages.yml` or `deploy-peaceiris.yml` | Modern Pages needs `pages: write` + `id-token: write` |
+| Pages deploy | `examples/deploy-pages.yml` or short name `reusable-pages-deploy` | Modern Pages needs `pages: write` + `id-token: write` |
 | Soft-fail link check | `examples/link-check.yml` | Soft by default; issue creation only on schedule |
 | Awesome-list validators | `examples/awesome-list-checks.yml` | Scripts live here; no local copies needed |
 | Changelog / docs-index / catalog commit-back | Matching `examples/*.yml` | Use `secrets: inherit` + `contents: write` |
@@ -31,6 +31,13 @@ Current pin: `LLazyEmail/documentation-actions@v1` (floating major). Draft adopt
 
 Full inventory (append-only): [`docs/actions-index.md`](docs/actions-index.md).
 
+## New guides (read these)
+
+- [`docs/architecture.md`](docs/architecture.md) — clean layers and design principles
+- [`docs/yaml-ai-rules.md`](docs/yaml-ai-rules.md) — strict YAML rules for agents
+- [`docs/naming.md`](docs/naming.md) — long names + short-name aliases / v2 plan
+- [`llms.txt`](llms.txt) — compact LLM entry point
+
 ## Decision rules for consumers
 
 1. Prefer a **reusable workflow** when the whole job should move (deploy, changelog, docs-index, auto-rebase, docs-ci).
@@ -38,6 +45,7 @@ Full inventory (append-only): [`docs/actions-index.md`](docs/actions-index.md).
 3. Awesome-list validators ship scripts inside this repo — consumers do not need local copies once adopted.
 4. Docusaurus inputs must match the consumer: `working-directory` (`website` vs `.`), Node version, package-manager cache path, and any `prebuild-command`.
 5. Never invent new job YAML from scratch. Copy an example, adjust inputs and triggers, keep permissions minimal.
+6. Prefer short-name aliases (`reusable-pages-deploy`, `reusable-readme-sync`) when they exist. Both names work.
 
 ## Required caller setup
 
@@ -88,9 +96,13 @@ Short user-facing summary.
 | Editing `CHANGELOG.md` by hand | Use `.changelog/` fragments only |
 | Reordering `docs/actions-index.md` | Append-only — stacked PRs will conflict |
 | Forgetting path filters on callers | Keep triggers + path filters on the consumer workflow |
+| Using long workflow names when a short alias exists | Prefer `reusable-pages-deploy` / `reusable-readme-sync` |
 
 ## Reference
 
+- Architecture: [`docs/architecture.md`](docs/architecture.md)
+- YAML AI rules: [`docs/yaml-ai-rules.md`](docs/yaml-ai-rules.md)
+- Naming: [`docs/naming.md`](docs/naming.md)
 - Action inventory: [`docs/actions-index.md`](docs/actions-index.md)
 - Examples: [`examples/`](examples/)
 - Adoption notes: [`docs/adoption.md`](docs/adoption.md)

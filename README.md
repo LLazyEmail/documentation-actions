@@ -30,7 +30,11 @@ Modeled on [LLazyEmail/email-template-workflows](https://github.com/LLazyEmail/e
 
 Start here:
 
+- [llms.txt](llms.txt) — compact entry point
 - [AGENTS.md](AGENTS.md) — structured playbook with decision trees and pitfalls
+- [docs/architecture.md](docs/architecture.md) — layers and design principles
+- [docs/yaml-ai-rules.md](docs/yaml-ai-rules.md) — strict YAML rules
+- [docs/naming.md](docs/naming.md) — short-name aliases and v2 plan
 - [docs/quickstart-for-agents.md](docs/quickstart-for-agents.md) — ultra-concise checklist
 - [docs/ai-agent-guide.md](docs/ai-agent-guide.md) — step-by-step adoption and extension flows
 - [docs/examples-guide.md](docs/examples-guide.md) — when to copy which example
@@ -55,6 +59,7 @@ flowchart TD
 - **Composite actions** for shared steps inside custom jobs.
 - **Examples** are the source of truth for thin callers.
 - Inventory is append-only in [docs/actions-index.md](docs/actions-index.md).
+- Prefer short-name aliases when available (`reusable-pages-deploy`, `reusable-readme-sync`). See [docs/naming.md](docs/naming.md).
 
 ## Quick start
 
