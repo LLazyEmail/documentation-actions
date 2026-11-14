@@ -1,0 +1,18 @@
+name: Pages deploy (short name)
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  deploy:
+    uses: LLazyEmail/documentation-actions/.github/workflows/reusable-pages-deploy.yml@v1
+    with:
+      working-directory: website
+    secrets: inherit

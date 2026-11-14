@@ -1,0 +1,64 @@
+name: Reusable pages deploy (short name)
+
+# Short-name alias. Prefer this over reusable-docusaurus-pages-deploy.yml.
+# Both names call the same implementation.
+
+on:
+  workflow_call:
+    inputs:
+      working-directory:
+        type: string
+        required: false
+        default: website
+      node-version:
+        type: string
+        required: false
+        default: '22'
+      cache-dependency-path:
+        type: string
+        required: false
+        default: website/package-lock.json
+      install-command:
+        type: string
+        required: false
+        default: npm ci
+      build-command:
+        type: string
+        required: false
+        default: npm run build
+      artifact-path:
+        type: string
+        required: false
+        default: website/build
+      peaceiris-publish-dir:
+        type: string
+        required: false
+        default: ''
+      peaceiris-cname:
+        type: string
+        required: false
+        default: ''
+      lfs:
+        type: boolean
+        required: false
+        default: false
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  deploy:
+    uses: ./.github/workflows/reusable-docusaurus-pages-deploy.yml
+    with:
+      working-directory: ${{ inputs.working-directory }}
+      node-version: ${{ inputs.node-version }}
+      cache-dependency-path: ${{ inputs.cache-dependency-path }}
+      install-command: ${{ inputs.install-command }}
+      build-command: ${{ inputs.build-command }}
+      artifact-path: ${{ inputs.artifact-path }}
+      peaceiris-publish-dir: ${{ inputs.peaceiris-publish-dir }}
+      peaceiris-cname: ${{ inputs.peaceiris-cname }}
+      lfs: ${{ inputs.lfs }}
+    secrets: inherit
