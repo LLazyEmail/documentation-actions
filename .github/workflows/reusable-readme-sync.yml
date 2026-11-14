@@ -1,0 +1,38 @@
+name: Reusable README sync (short name)
+
+# Short-name alias. Prefer this over reusable-readme-docs-sync-check.yml.
+
+on:
+  workflow_call:
+    inputs:
+      docs-glob:
+        type: string
+        required: false
+        default: website/docs/**/*.md
+      comment-body:
+        type: string
+        required: false
+        default: >
+          ### Docs sync check
+
+          This PR updates `README.md` but does not touch any file under the docs path.
+
+          Please also update the matching documentation page so the published site stays in sync.
+
+          After adding the docs change, this check will pass.
+      fail-on-missing:
+        type: boolean
+        required: false
+        default: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  check:
+    uses: ./.github/workflows/reusable-readme-docs-sync-check.yml
+    with:
+      docs-glob: ${{ inputs.docs-glob }}
+      comment-body: ${{ inputs.comment-body }}
+      fail-on-missing: ${{ inputs.fail-on-missing }}
