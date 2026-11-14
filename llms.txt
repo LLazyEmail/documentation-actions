@@ -5,39 +5,41 @@
 
 ## Quick decision tree (agents)
 
-| Goal | Copy from | Notes |
-|------|-----------|-------|
-| Full docs CI (lint + links + build) | examples/docs-ci.yml | Prefer umbrella reusable-docs-ci |
-| PR build only | examples/test-deploy.yml | |
-| Pages deploy | examples/deploy-pages.yml | Modern Pages |
-| Link check (soft) | examples/link-check.yml | |
-| Awesome list validators | examples/awesome-list-checks.yml | |
-| Changelog / docs-index / catalog | matching examples/*.yml | secrets: inherit + contents: write |
+| Goal | Prefer | Notes |
+|------|--------|-------|
+| Full docs CI | examples/docs-ci.yml | reusable-docs-ci |
+| PR build only | examples/test-deploy.yml | reusable-test-deploy (alias) |
+| Pages deploy | examples/deploy-pages.yml | reusable-pages-deploy (alias) |
+| Link check | examples/link-check.yml | |
+| Awesome list | examples/awesome-list-checks.yml | |
+| Changelog / index / catalog | matching examples/ | secrets: inherit |
 | Auto-rebase | examples/auto-rebase-prs.yml | |
 | Star thank-you | examples/star-request.yml | pull_request_target |
-| Label conflicts | examples/label-conflicted-prs.yml | |
-| PR status report | examples/pr-status-report.yml | |
-| README ↔ docs sync | examples/readme-docs-sync-check.yml | |
-| README-only comment | examples/comment-readme-only.yml | |
+| Label conflicts | examples/label-conflicted-prs.yml | reusable-label-conflicts (alias) |
+| PR report | examples/pr-status-report.yml | reusable-pr-report (alias) |
+| README sync | examples/readme-docs-sync-check.yml | reusable-readme-sync (alias) |
+| README-only comment | examples/comment-readme-only.yml | reusable-readme-only (alias) |
 
-## Core rules for agents
+## Core rules
 
-1. **Copy, don't invent.** Start from an example under examples/.
-2. **Pin third-party Actions** to full SHA with `# vX.Y.Z` comment.
-3. **Keep triggers + permissions on the caller.** Reusable workflows contain only the job body.
-4. **Append-only index.** Never reorder docs/actions-index.md.
-5. **Changelog fragments only.** Never hand-edit CHANGELOG.md.
-6. **Line length ≤ 140** in YAML (see .yamllint.yml).
-7. **Do not merge** unless the human owner asks.
+1. Copy from examples/.
+2. Pin third-party Actions to full SHA.
+3. Triggers + permissions stay on the caller.
+4. Append-only index.
+5. Changelog fragments only.
+6. Line length ≤ 140.
+7. Prefer short-name aliases when they exist.
+8. Do not merge unless asked.
 
 ## Key files
 
-- AGENTS.md — primary agent playbook
-- docs/ai-agent-guide.md — adoption and extension flow
-- docs/yaml-ai-rules.md — strict YAML rules for agents
-- docs/naming.md — current names + v2 rename proposals
-- docs/actions-index.md — append-only inventory
-- examples/ — thin callers (source of truth)
-- skills/ — focused checklists
+- AGENTS.md
+- docs/architecture.md
+- docs/yaml-ai-rules.md
+- docs/naming.md
+- docs/v2-migration.md
+- docs/actions-index.md
+- examples/
+- skills/
 
-Pin: LLazyEmail/documentation-actions@v1 (or full SHA + Renovate).
+Pin: LLazyEmail/documentation-actions@v1
