@@ -15,11 +15,11 @@ Several reusable workflows and paths are longer than necessary. This increases t
 | Current | Proposed (alias available) | Notes |
 |---------|----------------------------|-------|
 | `reusable-docusaurus-pages-deploy` | `reusable-pages-deploy` | Alias added |
-| `reusable-docusaurus-test-deploy` | `reusable-test-deploy` | Planned |
+| `reusable-docusaurus-test-deploy` | `reusable-test-deploy` | Alias added |
 | `reusable-readme-docs-sync-check` | `reusable-readme-sync` | Alias added |
-| `reusable-comment-readme-only` | `reusable-readme-only` | Planned |
-| `reusable-label-conflicted-prs` | `reusable-label-conflicts` | Planned |
-| `reusable-pr-status-report` | `reusable-pr-report` | Planned |
+| `reusable-comment-readme-only` | `reusable-readme-only` | Alias added |
+| `reusable-label-conflicted-prs` | `reusable-label-conflicts` | Alias added |
+| `reusable-pr-status-report` | `reusable-pr-report` | Alias added |
 | `reusable-thin-content-check` | `reusable-thin-content` | Planned |
 | `reusable-build-image-check` | `reusable-image-check` | Planned |
 | `reusable-awesome-entry-format-check` | `reusable-entry-format` | Planned |
@@ -28,7 +28,7 @@ Short-name aliases are thin wrappers that call the original workflows. Both name
 
 ## Migration plan for v2
 
-1. Introduce the shorter names as aliases (started).
+1. Introduce the shorter names as aliases (in progress).
 2. Keep the old names working for one major version with deprecation notices.
 3. Update all examples and docs to the short names.
 4. Consumers pin `@v2` when ready.
