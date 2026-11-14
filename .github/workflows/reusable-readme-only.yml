@@ -1,0 +1,33 @@
+name: Reusable README-only comment (short name)
+
+# Short-name alias for reusable-comment-readme-only.yml.
+
+on:
+  workflow_call:
+    inputs:
+      docs-prefix:
+        type: string
+        required: false
+        default: website/docs/
+      comment-body:
+        type: string
+        required: false
+        default: >
+          ### Dual-update reminder
+
+          This PR currently only changes `README.md`.
+
+          Please also add the same entry to the matching page under the docs path so the site stays in sync.
+
+          Once the docs file is updated, this reminder can be ignored.
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  comment:
+    uses: ./.github/workflows/reusable-comment-readme-only.yml
+    with:
+      docs-prefix: ${{ inputs.docs-prefix }}
+      comment-body: ${{ inputs.comment-body }}
