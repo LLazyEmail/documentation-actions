@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.15.1] - 2026-11-14
+
+### Added
+
+- Added docs/naming.md with analysis of long action names and a proposed v2 rename plan.
+- Expanded llms.txt as an LLM entry point and added docs/yaml-ai-rules.md with strict rules for agents writing YAML.
+
 ## [1.15.0] - 2026-11-14
 
 ### Added
@@ -237,6 +244,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Reusable JSON API regenerate workflow (`reusable-catalog-api`).
 - Awesome-list checks: entry-format, duplicates, sorted-sections (`actions/awesome-list-checks`).
 
+[1.15.1]: https://github.com/LLazyEmail/documentation-actions/compare/v1.15.0...v1.15.1
 [1.15.0]: https://github.com/LLazyEmail/documentation-actions/compare/v1.14.0...v1.15.0
 [1.14.0]: https://github.com/LLazyEmail/documentation-actions/compare/v1.13.0...v1.14.0
 [1.13.0]: https://github.com/LLazyEmail/documentation-actions/compare/v1.12.1...v1.13.0
