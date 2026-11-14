@@ -1,24 +1,29 @@
 # Troubleshooting
 
-Common issues when adopting or working on documentation-actions.
+Common failures when adopting or extending documentation-actions.
 
-## Adoption failures
-
-| Symptom | Cause | Fix |
-| --- | --- | --- |
-| `uses:` of reusable workflow fails with access denied | Org Actions policy | Allow reusable workflows from `LLazyEmail/documentation-actions` |
-| Commit-back job fails to push | Missing permissions or secrets | `contents: write` + `secrets: inherit` |
-| Docusaurus build cannot find package.json | Wrong working-directory | Set to `website` or `.` matching the consumer |
-| Lockfile cache miss | Wrong cache-dependency-path | Use the repository-relative path to package-lock.json |
-| Lychee fails the job | `fail: true` or aggressive args | Keep default soft-fail; accept 403,429 |
-| Pages deploy fails intermittently | Known flakiness on some sites | Ignore for adoption PRs; verify once on main |
-
-## In this repository
+## Agent mistakes
 
 | Symptom | Cause | Fix |
-| --- | --- | --- |
-| Changelog check fails | Missing `.changelog/` file | Add fragment or label `skip-changelog` |
-| Stacked PR conflict on index | Edited existing row | Append only one new row |
-| YAML lint fails | Unpinned third-party action | Pin to full SHA with `# vX.Y.Z` |
+|---------|-------|-----|
+| yamllint line too long | Script lines > 140 | Break strings; avoid multi-line templates inside `script: \|` |
+| YAML syntax error in script | Multi-line template literal | Use concatenation or arrays |
+| Unpinned action fails CI | `actions/...@vN` | Pin to full SHA + `# vX.Y.Z` |
+| Reusable workflow not found | Wrong path or tag | Use exact path under `.github/workflows/` and `@v1` |
+| Missing secrets | Forgot `secrets: inherit` | Add it on commit-back / pages / star workflows |
+| Wrong working directory | Layout mismatch | Set `working-directory` to `website` or `.` |
+| Duplicate PR comments | No marker | Use the marker pattern from readme-only |
 
-See also the skill at `skills/troubleshooting/SKILL.md` and `docs/ai-agent-guide.md`.
+## Workflow-specific
+
+- **docs-ci / test-deploy**: Check Node version and lockfile path.
+- **pages-deploy**: Needs `pages: write` + `id-token: write`.
+- **label-conflicts**: Needs `pull-requests: write`.
+- **pr-report**: Needs `issues: write`.
+- **readme-sync**: Needs `pull-requests: write` and fetch-depth 0 (handled inside).
+
+## Short names
+
+Prefer short aliases when available (`reusable-pages-deploy`, `reusable-test-deploy`, `reusable-readme-sync`, `reusable-label-conflicts`, `reusable-pr-report`, `reusable-readme-only`). Both names work.
+
+See also `docs/yaml-ai-rules.md` and `docs/naming.md`.
