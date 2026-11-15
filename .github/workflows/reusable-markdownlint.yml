@@ -17,6 +17,6 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Lint markdown
-        uses: LLazyEmail/documentation-actions/actions/markdownlint@main
+        uses: LLazyEmail/documentation-actions/actions/markdownlint@9734333b8aebc1c70c1503f798954a1ce6c7ec13 # main
         with:
           globs: ${{ inputs.globs }}

@@ -68,7 +68,7 @@ jobs:
         run: ${{ inputs.generate-command }}
 
       - name: Commit and push
-        uses: LLazyEmail/documentation-actions/actions/git-push-retry@main
+        uses: LLazyEmail/documentation-actions/actions/git-push-retry@9734333b8aebc1c70c1503f798954a1ce6c7ec13 # main
         with:
           commit-paths: ${{ inputs.commit-paths }}
           commit-message: ${{ inputs.commit-message }}

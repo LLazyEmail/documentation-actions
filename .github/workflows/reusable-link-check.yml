@@ -26,7 +26,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Link check
-        uses: LLazyEmail/documentation-actions/actions/lychee-link-check@main
+        uses: LLazyEmail/documentation-actions/actions/lychee-link-check@9734333b8aebc1c70c1503f798954a1ce6c7ec13 # main
         with:
           args: ${{ inputs.args }}
           create-issue: ${{ inputs.create-issue && 'true' || 'false' }}

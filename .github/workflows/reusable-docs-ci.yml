@@ -107,7 +107,7 @@ jobs:
           exit 1
 
       - name: Lint markdown
-        uses: LLazyEmail/documentation-actions/actions/markdownlint@main
+        uses: LLazyEmail/documentation-actions/actions/markdownlint@9734333b8aebc1c70c1503f798954a1ce6c7ec13 # main
         with:
           globs: ${{ inputs.markdownlint-globs }}
 
@@ -127,7 +127,7 @@ jobs:
           exit 1
 
       - name: Link check
-        uses: LLazyEmail/documentation-actions/actions/lychee-link-check@main
+        uses: LLazyEmail/documentation-actions/actions/lychee-link-check@9734333b8aebc1c70c1503f798954a1ce6c7ec13 # main
         with:
           args: ${{ inputs.lychee-args }}
           create-issue: ${{ inputs.lychee-create-issue && 'true' || 'false' }}
@@ -151,7 +151,7 @@ jobs:
           exit 1
 
       - name: Run npm script check
-        uses: LLazyEmail/documentation-actions/actions/npm-script-check@main
+        uses: LLazyEmail/documentation-actions/actions/npm-script-check@9734333b8aebc1c70c1503f798954a1ce6c7ec13 # main
         with:
           working-directory: ${{ inputs.working-directory }}
           node-version: ${{ inputs.node-version }}
@@ -172,7 +172,7 @@ jobs:
 
       - name: Build Docusaurus
         id: build
-        uses: LLazyEmail/documentation-actions/actions/docusaurus-build@main
+        uses: LLazyEmail/documentation-actions/actions/docusaurus-build@9734333b8aebc1c70c1503f798954a1ce6c7ec13 # main
         with:
           working-directory: ${{ inputs.working-directory }}
           node-version: ${{ inputs.node-version }}
@@ -184,7 +184,7 @@ jobs:
 
       - name: PR comment with build results
         if: always() && inputs.pr-comment && github.event_name == 'pull_request'
-        uses: LLazyEmail/documentation-actions/actions/docusaurus-pr-comment@main
+        uses: LLazyEmail/documentation-actions/actions/docusaurus-pr-comment@9734333b8aebc1c70c1503f798954a1ce6c7ec13 # main
         with:
           warning-count: ${{ steps.build.outputs.warning-count }}
           error-count: ${{ steps.build.outputs.error-count }}

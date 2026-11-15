@@ -25,6 +25,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Ask contributor for a star
-        uses: LLazyEmail/documentation-actions/actions/star-request@main
+        uses: LLazyEmail/documentation-actions/actions/star-request@9734333b8aebc1c70c1503f798954a1ce6c7ec13 # main
         with:
           message: ${{ inputs.message }}

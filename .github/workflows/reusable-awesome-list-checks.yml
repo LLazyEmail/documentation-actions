@@ -38,7 +38,7 @@ jobs:
         with:
           node-version: ${{ inputs.node-version }}
       - name: Run checks
-        uses: LLazyEmail/documentation-actions/actions/awesome-list-checks@main
+        uses: LLazyEmail/documentation-actions/actions/awesome-list-checks@9734333b8aebc1c70c1503f798954a1ce6c7ec13 # main
         with:
           readme-path: ${{ inputs.readme-path }}
           checks: ${{ inputs.checks }}

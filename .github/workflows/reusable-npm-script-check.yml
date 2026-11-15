@@ -53,7 +53,7 @@ jobs:
           lfs: ${{ inputs.lfs }}
 
       - name: Run npm script check
-        uses: LLazyEmail/documentation-actions/actions/npm-script-check@main
+        uses: LLazyEmail/documentation-actions/actions/npm-script-check@9734333b8aebc1c70c1503f798954a1ce6c7ec13 # main
         with:
           working-directory: ${{ inputs.working-directory }}
           node-version: ${{ inputs.node-version }}
