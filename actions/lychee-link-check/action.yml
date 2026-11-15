@@ -41,7 +41,7 @@ runs:
   steps:
     - name: Link check
       id: lychee
-      uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2.6.1
+      uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2.9.0
       with:
         args: ${{ inputs.args }}
         fail: ${{ inputs.fail }}
@@ -69,7 +69,7 @@ runs:
     - name: Create or update issue from report
       if: always() && inputs.create-issue == 'true'
       continue-on-error: true
-      uses: peter-evans/create-issue-from-file@e8ef132d6df98ed982188e460ebb3b5d4ef3a9cd # v5.0.0
+      uses: peter-evans/create-issue-from-file@e8ef132d6df98ed982188e460ebb3b5d4ef3a9cd # v5.0.1
       with:
         title: ${{ inputs.issue-title }}
         content-filepath: ${{ inputs.output }}
