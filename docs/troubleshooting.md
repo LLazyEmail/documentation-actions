@@ -20,6 +20,7 @@ Common issues when adopting or working on documentation-actions.
 | Auto-rebase logs `No update required (state: unstable)` for a PR that is behind `main` | GitHub reports failing checks (`unstable`) or `blocked` ahead of `behind` | Fixed in v2.0.1: `unstable`/`blocked` PRs are compared with their base and updated when behind. Callers on `@v1` need `@v2` |
 | `star-request` (or another `pull_request_target` workflow) is skipped with "Workflows are being blocked due to a scheduled brownout of the default `pull_request_target` protection" | GitHub's new default blocks `pull_request_target` unless an org Actions event policy allows it | An org admin adds an Actions policy that allows `pull_request_target` for that workflow path only; keep the workflow minimal (no checkout of PR code) |
 | Org-owned fork PR cannot be updated by maintainers even with "Allow edits" | GitHub does not allow maintainer pushes to forks owned by an organization | Open a superseding PR from a branch in the base repo, keep the author's `Co-authored-by` trailer, and add `Closes #N` |
+| A skipped check is named `docs-ci / inputs.npm-check-job-name` | GitHub prints the raw `name:` expression for a job skipped by `if:`; happens when `run-npm-check` is off (the default) | Harmless and left as is; see [docs-ci](actions/docs-ci.md#why-a-skipped-check-is-called-inputsnpm-check-job-name). For a clean check list call `reusable-npm-script-check.yml` directly |
 
 ## In this repository
 
