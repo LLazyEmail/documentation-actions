@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.17.0] - 2026-11-16
+
+### Added
+
+- Added docs/agent-short-names.md with a short checklist for agents preferring short workflow names.
+- Added docs/deprecation.md listing long workflow names and their preferred short aliases.
+- Added short-name alias reusable-entry-format that calls the existing awesome-entry-format-check workflow.
+- Added short-name alias reusable-image-check that calls the existing build-image-check workflow.
+- Added short-name alias reusable-thin-content that calls the existing thin-content-check workflow.
+
 ## [1.16.4] - 2026-11-16
 
 ### Changed
@@ -288,6 +298,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Reusable JSON API regenerate workflow (`reusable-catalog-api`).
 - Awesome-list checks: entry-format, duplicates, sorted-sections (`actions/awesome-list-checks`).
 
+[1.17.0]: https://github.com/LLazyEmail/documentation-actions/compare/v1.16.4...v1.17.0
 [1.16.4]: https://github.com/LLazyEmail/documentation-actions/compare/v1.16.3...v1.16.4
 [1.16.3]: https://github.com/LLazyEmail/documentation-actions/compare/v1.16.2...v1.16.3
 [1.16.2]: https://github.com/LLazyEmail/documentation-actions/compare/v1.16.1...v1.16.2
