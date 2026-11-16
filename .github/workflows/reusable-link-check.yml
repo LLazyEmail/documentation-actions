@@ -16,6 +16,13 @@ on:
         type: string
         required: false
         default: 'Link check report (lychee)'
+      update-existing-issue:
+        description: >
+          Update the newest open issue titled issue-title instead of opening
+          a new one each run. Off by default.
+        type: boolean
+        required: false
+        default: false
 
 jobs:
   lychee:
@@ -31,3 +38,4 @@ jobs:
           args: ${{ inputs.args }}
           create-issue: ${{ inputs.create-issue && 'true' || 'false' }}
           issue-title: ${{ inputs.issue-title }}
+          update-existing-issue: ${{ inputs.update-existing-issue && 'true' || 'false' }}

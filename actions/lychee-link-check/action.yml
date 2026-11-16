@@ -27,6 +27,13 @@ inputs:
     description: Issue title when create-issue is true
     required: false
     default: 'Link check report (lychee)'
+  update-existing-issue:
+    description: >
+      If true (with create-issue), update the newest open issue whose title
+      equals issue-title instead of opening a new one every run. Default
+      false keeps the old behavior (a new issue per run).
+    required: false
+    default: 'false'
   issue-labels:
     description: Comma-separated labels for the issue
     required: false
@@ -66,6 +73,23 @@ runs:
           fi
         } >> "$GITHUB_STEP_SUMMARY"
 
+    - name: Find existing report issue
+      id: existing-issue
+      if: always() && inputs.create-issue == 'true' && inputs.update-existing-issue == 'true'
+      continue-on-error: true
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+        ISSUE_TITLE: ${{ inputs.issue-title }}
+      run: |
+        number="$("$GITHUB_ACTION_PATH/find-open-issue.sh")"
+        echo "number=$number" >> "$GITHUB_OUTPUT"
+        if [ -n "$number" ]; then
+          echo "Updating existing issue #$number"
+        else
+          echo "No open issue titled '$ISSUE_TITLE'; a new one will be created"
+        fi
+
     - name: Create or update issue from report
       if: always() && inputs.create-issue == 'true'
       continue-on-error: true
@@ -74,5 +98,5 @@ runs:
         title: ${{ inputs.issue-title }}
         content-filepath: ${{ inputs.output }}
         labels: ${{ inputs.issue-labels }}
-        issue-number: ''
+        issue-number: ${{ steps.existing-issue.outputs.number }}
         token: ${{ inputs.github-token }}
