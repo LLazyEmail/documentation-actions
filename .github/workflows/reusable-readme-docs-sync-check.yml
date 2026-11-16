@@ -1,3 +1,5 @@
+# DEPRECATED: Prefer reusable-readme-sync.yml.
+# This name remains supported on v1 and will be removed in v3.
 name: Reusable README ↔ docs sync check
 
 on:
