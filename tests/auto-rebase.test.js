@@ -28,6 +28,22 @@ const {parseNumbers, details, run, gitRebase} = require('../actions/auto-rebase/
   assert.equal(failure, false);
   assert.equal(comments, 0);
   assert.throws(() => gitRebase({head: {repo: {full_name: 'owner/repo'}, ref: 'main'}, base: {repo: {default_branch: 'main'}}}, ''), /Refusing/);
+  // "unstable" PRs that are behind their base get a branch update; ones that are not behind do not.
+  let updates = 0;
+  const unstable = {...pr, mergeable_state: 'unstable', base: {ref: 'main'}, head: {sha: 'abc', label: 'test:feat'}};
+  const gh2 = {rest: {pulls: {get: async () => ({data: unstable}), updateBranch: async () => {updates++;}},
+    issues: {createComment: async () => {}}, repos: {compareCommits: async () => ({data: {behind_by: 5}})}}};
+  failure = false;
+  await run({github: gh2, context: {repo: {}}, core, numbers: '351'});
+  assert.equal(updates, 1);
+  assert.equal(failure, false);
+  gh2.rest.repos.compareCommits = async () => ({data: {behind_by: 0}});
+  await run({github: gh2, context: {repo: {}}, core, numbers: '351'});
+  assert.equal(updates, 1);
+  gh2.rest.pulls.get = async () => ({data: {...unstable, mergeable_state: 'clean'}});
+  gh2.rest.repos.compareCommits = async () => {throw Error('clean PRs must not be compared');};
+  await run({github: gh2, context: {repo: {}}, core, numbers: '351'});
+  assert.equal(updates, 1);
   github.rest.pulls.get = async () => ({data: {...pr, mergeable: null, mergeable_state: 'unknown'}});
   await assert.rejects(details(github, {}, async () => {}), /six attempts/);
   console.log('targeted auto-rebase tests: ok');

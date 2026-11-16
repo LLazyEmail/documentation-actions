@@ -48,6 +48,18 @@ function gitRebase(pr, token, {push = true} = {}) {
     return {ok: true, message: 'Rebased onto base and pushed with an explicit SHA lease'};
   } finally { fs.rmSync(dir, {recursive: true, force: true}); }
 }
+// GitHub reports "unstable" (failing checks) or "blocked" ahead of "behind", so a PR that
+// is behind its base and also failing is never marked "behind". Compare directly for those.
+async function behindWhileFailing(github, repo, pr, core) {
+  if (!['unstable', 'blocked'].includes(pr.mergeable_state)) return false;
+  try {
+    const {data} = await github.rest.repos.compareCommits({...repo, basehead: `${pr.base.ref}...${pr.head.label}`});
+    return data.behind_by > 0;
+  } catch (err) {
+    core.warning(`#${pr.number}: could not compare with ${pr.base.ref}: ${err.message}`);
+    return false;
+  }
+}
 const MARKER = sha => `<!-- auto-rebase-conflicts:${sha} -->`;
 // One comment per head SHA, so push-triggered runs do not repeat themselves.
 async function reportConflicts(github, repo, pr, result) {
@@ -74,7 +86,7 @@ async function run({github, context, core, numbers = '', mode = false, report = 
     try {
       const pr = await details(github, {...repo, pull_number: number});
       if (pr.state !== 'open') throw new Error('PR is not open');
-      if (pr.mergeable_state === 'behind') {
+      if (pr.mergeable_state === 'behind' || await behindWhileFailing(github, repo, pr, core)) {
         await github.rest.pulls.updateBranch({...repo, pull_number: number, expected_head_sha: pr.head.sha});
         message = 'Branch update requested (merge-base update, not git rebase)';
         updated = true;
@@ -119,4 +131,4 @@ async function run({github, context, core, numbers = '', mode = false, report = 
   }
   if (failed) core.setFailed('One or more PR updates failed; see per-PR summary');
 }
-module.exports = {parseNumbers, details, gitRebase, reportConflicts, run};
+module.exports = {parseNumbers, details, gitRebase, reportConflicts, behindWhileFailing, run};
