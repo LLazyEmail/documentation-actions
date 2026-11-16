@@ -83,6 +83,17 @@ More callers live in [examples/](examples/).
 
 See the append-only inventory: [docs/actions-index.md](docs/actions-index.md).
 
+### Commit-back workflows (changelog, docs-index, catalog-api)
+
+These run on push to `main`, regenerate a file, and commit it back to `main`.
+Several can fire after the same merge, so they push through
+[`git-push-retry`](docs/actions/git-push-retry.md): if `main` moved, the push is
+rejected, the job runs `git pull --rebase --autostash origin main`, and tries
+again (`max-attempts`, default 5). `--autostash` keeps unrelated unstaged files
+(LFS-smudged media, build output) from aborting the retry. Callers need
+`permissions: contents: write`; nothing else to configure. The workflows use the
+action at `@main`, so fixes to it apply without a new release.
+
 Detailed reference: [docs/actions/](docs/actions/).
 
 ## Skills
