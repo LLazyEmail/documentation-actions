@@ -12,6 +12,8 @@ Common inputs used across documentation-actions composites and reusable workflow
 | `prebuild-command` | empty or `npm run lint:docs-links` | build, docs-ci | Empty skips |
 | `markdownlint-globs` | multiline YAML | docs-ci, root action | Exclude node_modules / build |
 | `lychee-args` | flags + paths | docs-ci, root action | Soft-fail by default; accept 403,429 |
+| `docusaurus-root` | `website` or empty | lychee-link-check, reusable-link-check | Empty skips. When set, resolves Docusaurus `/docs/...` and extensionless local links |
+| `config-file` | `.lychee.toml` or empty | lychee-link-check, reusable-link-check | Empty skips. Passes `--config` when the file exists; needed because lychee only auto-loads `lychee.toml` |
 | `run-markdownlint` / `run-lychee` / `run-build` | `true` / `false` | docs-ci, root action | Boolean toggles |
 | `annotate-log` | `true` (default) | docusaurus-build, test-deploy | Emits annotations + summary |
 | `pr-comment` | `false` | test-deploy | Needs `pull-requests: write` |
