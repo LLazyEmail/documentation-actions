@@ -64,7 +64,8 @@ async function reportConflicts(github, repo, pr, result) {
 }
 async function run({github, context, core, numbers = '', mode = false, report = false, commentOnUpdate = true, token, successMessage = 'Automatically updated this PR branch.', forkBlockedMessage = 'Check fork write permissions.'}) {
   const repo = {...context.repo};
-  const selected = parseNumbers(numbers) || (await github.paginate(github.rest.pulls.list, {...repo, state: 'open', per_page: 100})).map(pr => pr.number);
+  const explicit = parseNumbers(numbers);
+  const selected = explicit || (await github.paginate(github.rest.pulls.list, {...repo, state: 'open', per_page: 100})).map(pr => pr.number);
   let failed = false;
   await core.summary.addHeading('PR branch updates').write();
   for (const number of selected) {
@@ -82,6 +83,15 @@ async function run({github, context, core, numbers = '', mode = false, report = 
           const trial = gitRebase(pr, token, {push: false});
           const posted = await reportConflicts(github, repo, pr, trial);
           message = `Conflicts reported${posted ? '' : ' (already commented for this head)'}: ${trial.files.join(', ') || trial.message}`;
+          core.info(`#${number}: ${message}`);
+          await core.summary.addHeading(`#${number}`, 3).addCodeBlock(message, 'text').write();
+          continue;
+        }
+        if (!mode && !explicit) {
+          // Scheduled sweeps skip conflicting PRs quietly instead of failing the run
+          // and commenting on the same PR every few hours.
+          message = 'Skipped: conflicts need a manual rebase or a dispatch with rebase-conflicts: true';
+          core.warning(`#${number}: ${message}`);
           core.info(`#${number}: ${message}`);
           await core.summary.addHeading(`#${number}`, 3).addCodeBlock(message, 'text').write();
           continue;
