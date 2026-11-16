@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.17.1] - 2026-11-16
+
+### Changed
+
+- Added deprecation comments at the top of long-named reusable workflows pointing to short aliases.
+- Updated key examples to prefer short-name aliases and pin @v1.
+- Updated naming guide and v2 migration checklist to mark all short-name aliases as available.
+- Marked examples and deprecation steps complete in the v2 migration checklist.
+
 ## [1.17.0] - 2026-11-16
 
 ### Added
@@ -298,6 +307,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Reusable JSON API regenerate workflow (`reusable-catalog-api`).
 - Awesome-list checks: entry-format, duplicates, sorted-sections (`actions/awesome-list-checks`).
 
+[1.17.1]: https://github.com/LLazyEmail/documentation-actions/compare/v1.17.0...v1.17.1
 [1.17.0]: https://github.com/LLazyEmail/documentation-actions/compare/v1.16.4...v1.17.0
 [1.16.4]: https://github.com/LLazyEmail/documentation-actions/compare/v1.16.3...v1.16.4
 [1.16.3]: https://github.com/LLazyEmail/documentation-actions/compare/v1.16.2...v1.16.3
