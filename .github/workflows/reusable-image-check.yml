@@ -1,0 +1,75 @@
+name: Reusable image check (short name)
+
+# Short-name alias for reusable-build-image-check.yml.
+
+on:
+  workflow_call:
+    inputs:
+      build-dir:
+        type: string
+        required: false
+        default: 'build'
+      base-url:
+        type: string
+        required: false
+        default: '/'
+      allowlist:
+        type: string
+        required: false
+        default: ''
+      mode:
+        type: string
+        required: false
+        default: 'fail'
+      working-directory:
+        type: string
+        required: false
+        default: '.'
+      node-version:
+        type: string
+        required: false
+        default: '22'
+      cache-dependency-path:
+        type: string
+        required: false
+        default: 'package-lock.json'
+      install-command:
+        type: string
+        required: false
+        default: 'npm ci'
+      build-command:
+        type: string
+        required: false
+        default: 'npm run build'
+      prebuild-command:
+        type: string
+        required: false
+        default: ''
+      lfs:
+        type: boolean
+        required: false
+        default: false
+      site-url:
+        type: string
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+jobs:
+  images:
+    uses: ./.github/workflows/reusable-build-image-check.yml
+    with:
+      build-dir: ${{ inputs.build-dir }}
+      base-url: ${{ inputs.base-url }}
+      allowlist: ${{ inputs.allowlist }}
+      mode: ${{ inputs.mode }}
+      working-directory: ${{ inputs.working-directory }}
+      node-version: ${{ inputs.node-version }}
+      cache-dependency-path: ${{ inputs.cache-dependency-path }}
+      install-command: ${{ inputs.install-command }}
+      build-command: ${{ inputs.build-command }}
+      prebuild-command: ${{ inputs.prebuild-command }}
+      lfs: ${{ inputs.lfs }}
+      site-url: ${{ inputs.site-url }}
