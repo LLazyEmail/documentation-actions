@@ -8,17 +8,17 @@
 | Goal | Prefer | Notes |
 |------|--------|-------|
 | Full docs CI | examples/docs-ci.yml | reusable-docs-ci |
-| PR build only | examples/test-deploy.yml | reusable-test-deploy (alias) |
-| Pages deploy | examples/deploy-pages.yml | reusable-pages-deploy (alias) |
+| PR build only | examples/test-deploy.yml | reusable-test-deploy |
+| Pages deploy | examples/deploy-pages.yml | reusable-pages-deploy |
 | Link check | examples/link-check.yml | |
 | Awesome list | examples/awesome-list-checks.yml | |
 | Changelog / index / catalog | matching examples/ | secrets: inherit |
 | Auto-rebase | examples/auto-rebase-prs.yml | |
 | Star thank-you | examples/star-request.yml | pull_request_target |
-| Label conflicts | examples/label-conflicted-prs.yml | reusable-label-conflicts (alias) |
-| PR report | examples/pr-status-report.yml | reusable-pr-report (alias) |
-| README sync | examples/readme-docs-sync-check.yml | reusable-readme-sync (alias) |
-| README-only comment | examples/comment-readme-only.yml | reusable-readme-only (alias) |
+| Label conflicts | examples/label-conflicted-prs.yml | reusable-label-conflicts |
+| PR report | examples/pr-status-report.yml | reusable-pr-report |
+| README sync | examples/readme-docs-sync-check.yml | reusable-readme-sync |
+| README-only comment | examples/comment-readme-only.yml | reusable-readme-only |
 
 ## Core rules
 
@@ -28,7 +28,7 @@
 4. Append-only index.
 5. Changelog fragments only.
 6. Line length ≤ 140.
-7. Prefer short-name aliases when they exist.
+7. Prefer short-name aliases. Pin `@v2` for new work (or `@v1` until the major lands).
 8. Do not merge unless asked.
 
 ## Key files
@@ -38,8 +38,10 @@
 - docs/yaml-ai-rules.md
 - docs/naming.md
 - docs/v2-migration.md
+- docs/v2-release.md
+- docs/deprecation.md
 - docs/actions-index.md
 - examples/
 - skills/
 
-Pin: LLazyEmail/documentation-actions@v1
+Pin: LLazyEmail/documentation-actions@v1 (switch to @v2 when released).
