@@ -44,6 +44,8 @@ new `Link check report (lychee)` issue every week and the old ones stay open.
   `--config .lychee.toml` in `args`.
 - Docusaurus sites: root-relative (`/docs/...`) and extensionless (`./page`)
   links fail as local files unless `args` include
-  `--root-dir <absolute path to the site dir> --fallback-extensions md,mdx`
+  `--root-dir "$GITHUB_WORKSPACE/website" --fallback-extensions md,mdx`
+  (lychee-action evals `args`, so the shell variable expands on the runner;
+  `${{ github.workspace }}` is empty when passed through a reusable workflow)
   (and `--index-files index.md,index.mdx,.` for category folders).
 - Soft-fail keeps PRs green while still surfacing the summary.
