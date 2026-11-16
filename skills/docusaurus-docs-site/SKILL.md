@@ -166,7 +166,7 @@ Either toggle `run-markdownlint` on docs-ci, or use [`examples/markdown-lint.yml
 - [ ] Soft-fail with job summary; open issues only on `schedule` / `workflow_dispatch` via `create-issue` / `lychee-create-issue`.
 - [ ] Accept `403` / `429` when scanners are blocked; keep timeouts modest.
 - [ ] Put excludes for known noisy hosts in `lychee.toml` (auto-loaded). A file named `.lychee.toml` is **not** auto-loaded; pass `--config .lychee.toml` in `args`.
-- [ ] Docusaurus links are routes, so add `--root-dir ${{ github.workspace }}/website --fallback-extensions md,mdx --index-files index.md,index.mdx,.` to `args` (use the site directory for your layout). Without them, every `/docs/...` and extensionless `./page` link shows up as an error. Exclude React pages under `src/pages` (awesome-email-marketing excludes `/explore`).
+- [ ] Docusaurus links are routes, so add `--root-dir "$GITHUB_WORKSPACE/website" --fallback-extensions md,mdx --index-files index.md,index.mdx,.` to `args` (use the site directory for your layout). Without them, every `/docs/...` and extensionless `./page` link shows up as an error. Exclude React pages under `src/pages` (awesome-email-marketing excludes `/explore`).
 - [ ] Weekly `create-issue` runs open a new report issue each time; opt in to `update-existing-issue: true` once your pinned release includes it.
 
 ### 3f. Changelog regenerate
