@@ -71,6 +71,10 @@ Notes:
   requires up-to-date branches. Without that rule, a behind PR reads `clean`
   and is left alone (it is still mergeable), which avoids re-running CI on
   every open PR after each merge.
+- A PR with failing or pending required checks reads `unstable` or `blocked`
+  even when it is also behind. For those two states the action compares the
+  branch with its base and requests a branch update when it is behind, since
+  the failure may already be fixed on the base. `clean` PRs are still left alone.
 - After a conflict comment, fix the files manually or dispatch the workflow
   with `pr-numbers` and `rebase-conflicts: true` (owner approval required).
 - Concurrent runs are serialized per repository; a burst of merges queues at
