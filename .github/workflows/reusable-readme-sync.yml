@@ -24,6 +24,10 @@ on:
         type: boolean
         required: false
         default: true
+      pass-if-links-in-docs:
+        type: boolean
+        required: false
+        default: false
 
 permissions:
   contents: read
@@ -36,3 +40,4 @@ jobs:
       docs-glob: ${{ inputs.docs-glob }}
       comment-body: ${{ inputs.comment-body }}
       fail-on-missing: ${{ inputs.fail-on-missing }}
+      pass-if-links-in-docs: ${{ inputs.pass-if-links-in-docs }}

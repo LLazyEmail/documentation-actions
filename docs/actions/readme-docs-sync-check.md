@@ -11,6 +11,7 @@ Fail (and comment) when a PR updates `README.md` but does not touch a matching d
 | `docs-glob` | `website/docs/**/*.md` | Files that count as "in sync" |
 | `comment-body` | generic message | Markdown posted on the PR |
 | `fail-on-missing` | `true` | Fail the job (set `false` to only comment) |
+| `pass-if-links-in-docs` | `false` | Opt-in: pass a README-only PR when every link it adds to `README.md` is already in a file matching `docs-glob` |
 
 ## Example
 
