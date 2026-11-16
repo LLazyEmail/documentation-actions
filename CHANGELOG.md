@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.0] - 2026-11-16
+
+### Added
+
+- Added reusable-docs-suite as the recommended one-call entry point for greenfield Docusaurus sites.
+
+### Changed
+
+- `docs/actions/docs-ci.md` now lists every input, the check name each job produces, and explains the skipped `inputs.npm-check-job-name` check (GitHub does not evaluate `name:` on a job skipped by `if:`) and why it is left unchanged. Docs only.
+- Made reusable-docs-suite the recommended starting point in llms.txt and updated the v2 migration checklist.
+- `skills/docusaurus-docs-site` covers gaps found while adopting real sites: bootstrapping an empty repo, lychee config loading and Docusaurus local-link flags, auto-changelog 2.7.0 `output` refusal, MD025 with front-matter titles, i18n internal links with `onBrokenLinks: throw`, and build-only sites without Pages.
+
+### Fixed
+
+- Fixed reusable-docs-suite to call the existing label-conflicted workflow and added the short alias reusable-label-conflicts.
+- `git-push-retry` (used by the changelog, docs-index and catalog-api reusable workflows) now rebases with `--autostash` when a push to `main` is rejected, so unrelated unstaged files no longer abort the retry with "cannot pull with rebase: You have unstaged changes". It also stops pulling and sleeping after the final failed attempt. Runs whose first push succeeds are unchanged.
+
 ## [2.2.0] - 2026-11-16
 
 ### Added
@@ -356,6 +373,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Reusable JSON API regenerate workflow (`reusable-catalog-api`).
 - Awesome-list checks: entry-format, duplicates, sorted-sections (`actions/awesome-list-checks`).
 
+[2.3.0]: https://github.com/LLazyEmail/documentation-actions/compare/v2.2.0...v2.3.0
 [2.2.0]: https://github.com/LLazyEmail/documentation-actions/compare/v2.1.0...v2.2.0
 [2.1.0]: https://github.com/LLazyEmail/documentation-actions/compare/v2.0.1...v2.1.0
 [2.0.1]: https://github.com/LLazyEmail/documentation-actions/compare/v2.0.0...v2.0.1
