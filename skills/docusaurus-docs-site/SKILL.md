@@ -33,6 +33,7 @@ Also read [`AGENTS.md`](../../AGENTS.md), [`docs/adoption.md`](../../docs/adopti
 
 ## 1. Repo setup
 
+- [ ] **Empty repository?** Push one bootstrap commit to `main` (README, `.gitignore`, `LICENSE`) before opening stacked adoption PRs. A PR needs an existing base branch, and the first workflows only run once `main` exists.
 - [ ] Create (or fork) the docs repository under the org that can use reusable workflows from `LLazyEmail/documentation-actions`.
 - [ ] Choose layout:
   - **`website/` subdirectory** (awesome-* pattern): Docusaurus app in `website/`, curated list / root README at repo root.
@@ -156,6 +157,7 @@ Either toggle `run-markdownlint` on docs-ci, or use [`examples/markdown-lint.yml
 - [ ] Add `.markdownlint.json` (or `.markdownlint-cli2.jsonc`) at the repo root before enabling the job.
 - [ ] Scope globs to docs; exclude `node_modules` / `build`.
 - [ ] Soften rules (MD013 line length, MD033 inline HTML) when migrating large legacy markdown rather than rewriting every page in the adoption PR.
+- [ ] Docusaurus pages often set `title:` in front matter **and** start with an `# H1`; markdownlint reads that as two top-level headings (MD025). Disable MD025 (awesome-email-marketing does) or drop one of them.
 
 ### 3e. Link check (lychee)
 
@@ -163,13 +165,16 @@ Either toggle `run-markdownlint` on docs-ci, or use [`examples/markdown-lint.yml
 
 - [ ] Soft-fail with job summary; open issues only on `schedule` / `workflow_dispatch` via `create-issue` / `lychee-create-issue`.
 - [ ] Accept `403` / `429` when scanners are blocked; keep timeouts modest.
-- [ ] Add `.lychee.toml` excludes for known noisy hosts.
+- [ ] Put excludes for known noisy hosts in `lychee.toml` (auto-loaded). A file named `.lychee.toml` is **not** auto-loaded; pass `--config .lychee.toml` in `args`.
+- [ ] Docusaurus links are routes, so add `--root-dir "$GITHUB_WORKSPACE/website" --fallback-extensions md,mdx --index-files index.md,index.mdx,.` to `args` (use the site directory for your layout; `${{ github.workspace }}` is empty in reusable-workflow inputs, while lychee-action evals `args` so the shell variable expands). Without them, every `/docs/...` and extensionless `./page` link shows up as an error. Exclude React pages under `src/pages` (awesome-email-marketing excludes `/explore`).
+- [ ] Weekly `create-issue` runs open a new report issue each time; opt in to `update-existing-issue: true` once your pinned release includes it.
 
 ### 3f. Changelog regenerate
 
 [`examples/changelog.yml`](../../examples/changelog.yml) → `reusable-changelog.yml@v1` with `contents: write` and `secrets: inherit`.
 
 - [ ] Match `commit-paths` to what the site regenerates (`CHANGELOG.md`, optional `website/src/data/changelog.json`).
+- [ ] If `generate-command` runs auto-changelog, keep `output` out of `.auto-changelog`: since 2.7.0 it refuses in-repo config whose `output` escapes the working directory (`"../CHANGELOG.md"` from `website/`). Write the file from `--stdout` or pass `--output` on the command line.
 
 ### 3g. Auto-rebase
 
@@ -213,6 +218,7 @@ permissions:
   - Gate PRs with `npm-script-check` running the sync checker.
 - [ ] PR template should ask authors whether EN/UK (or other) copies were updated together.
 - [ ] Link-check both locale trees when they contain unique URLs.
+- [ ] With `onBrokenLinks: 'throw'` and more than one locale, write internal links as `/docs/...` routes or relative `.md` file links, then build every locale before merging. Found while building LLazyEmail/v-school (see #47); check the locale build output for broken-link warnings.
 
 ---
 
@@ -294,6 +300,7 @@ Before calling the docs site “done”:
 - [ ] `AGENTS.md`, PR template, `CONTRIBUTING.md`, `SECURITY.md`, `CODEOWNERS` present.
 - [ ] README links to this skill (or to `documentation-actions` adoption docs) so the next person finds the checklist.
 - [ ] A smoke PR shows: test-deploy green, lint green, link-check soft-fail only on known noise, Pages deploy succeeded once on `main` (ignore known flaky Pages on assemblya / fuck-ecoflow).
+- [ ] **Pages is optional.** A build-only site (no public hosting yet) can skip the Pages deploy caller and the `github-pages` environment; test-deploy still proves the build.
 - [ ] Stacked adoption PRs are draft, small, and kept current by auto-rebase.
 
 ---
