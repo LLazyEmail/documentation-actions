@@ -1,0 +1,15 @@
+name: Reusable PR report (short name)
+
+# Short-name alias for reusable-pr-status-report.yml.
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: read
+
+jobs:
+  report:
+    uses: ./.github/workflows/reusable-pr-status-report.yml
