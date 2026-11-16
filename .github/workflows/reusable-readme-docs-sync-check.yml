@@ -102,12 +102,19 @@ jobs:
           COMMENT_BODY: ${{ inputs.comment-body }}
         with:
           script: |
-            github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-              body: process.env.COMMENT_BODY
-            });
+            try {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: process.env.COMMENT_BODY
+              });
+            } catch (err) {
+              // PRs from forks get a read-only token; the next step still fails the check.
+              if (err.status !== 403) throw err;
+              core.warning('Could not comment (read-only token on a fork PR); see the job summary.');
+              await core.summary.addRaw(process.env.COMMENT_BODY).write();
+            }
 
       - name: Fail if docs missing
         if: steps.check.outputs.missing_docs == 'true' && inputs.fail-on-missing
