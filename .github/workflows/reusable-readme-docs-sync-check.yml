@@ -27,6 +27,13 @@ on:
         type: boolean
         required: false
         default: true
+      pass-if-links-in-docs:
+        description: >-
+          Opt-in. Pass a README-only PR when every link it adds to README.md
+          already appears in a docs file matching docs-glob. Off by default.
+        type: boolean
+        required: false
+        default: false
 
 permissions:
   contents: read
@@ -44,6 +51,7 @@ jobs:
         id: check
         env:
           DOCS_GLOB: ${{ inputs.docs-glob }}
+          LINKS_IN_DOCS: ${{ inputs.pass-if-links-in-docs }}
         run: |
           set -euo pipefail
           BASE="${{ github.event.pull_request.base.sha }}"
@@ -58,11 +66,34 @@ jobs:
           echo "readme_changed=$README_CHANGED" >> "$GITHUB_OUTPUT"
           echo "docs_changed=$DOCS_CHANGED" >> "$GITHUB_OUTPUT"
 
+          MISSING=false
           if [ "$README_CHANGED" -gt 0 ] && [ "$DOCS_CHANGED" -eq 0 ]; then
-            echo "missing_docs=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "missing_docs=false" >> "$GITHUB_OUTPUT"
+            MISSING=true
+            if [ "$LINKS_IN_DOCS" = "true" ]; then
+              # Links on lines this PR adds to README.md
+              LINKS=$(git diff -U0 "$BASE" "$HEAD" -- README.md \
+                | grep -E '^\+[^+]' \
+                | grep -oE 'https?://[^) >"]+' | sort -u || true)
+              DOCS_DIR="${DOCS_GLOB%%\**}"
+              DOCS_DIR="${DOCS_DIR:-.}"
+              if [ -n "$LINKS" ]; then
+                ALL_FOUND=true
+                while IFS= read -r url; do
+                  if git grep -qF "$url" "$HEAD" -- ":(glob)$DOCS_GLOB" 2>/dev/null; then
+                    echo "Already in docs: $url"
+                  else
+                    echo "Not in docs: $url"
+                    ALL_FOUND=false
+                  fi
+                done <<< "$LINKS"
+                if [ "$ALL_FOUND" = "true" ]; then
+                  echo "Every link added to README.md is already in $DOCS_DIR; docs are in sync."
+                  MISSING=false
+                fi
+              fi
+            fi
           fi
+          echo "missing_docs=$MISSING" >> "$GITHUB_OUTPUT"
 
       - name: Comment if docs page missing
         if: steps.check.outputs.missing_docs == 'true'
