@@ -20,6 +20,13 @@ const {parseNumbers, details, run, gitRebase} = require('../actions/auto-rebase/
   github.rest.pulls.get = async () => ({data: {...pr, mergeable: false, mergeable_state: 'dirty'}});
   await run({github, context: {repo: {}}, core, numbers: '351'});
   assert.equal(failure, true);
+  // A scheduled sweep (no PR numbers) skips conflicting PRs without failing or commenting.
+  failure = false;
+  let comments = 0;
+  const sweep = {...github, rest: {...github.rest, issues: {createComment: async () => {comments++;}}}, paginate: async () => [{number: 351}]};
+  await run({github: sweep, context: {repo: {}}, core, numbers: ''});
+  assert.equal(failure, false);
+  assert.equal(comments, 0);
   assert.throws(() => gitRebase({head: {repo: {full_name: 'owner/repo'}, ref: 'main'}, base: {repo: {default_branch: 'main'}}}, ''), /Refusing/);
   github.rest.pulls.get = async () => ({data: {...pr, mergeable: null, mergeable_state: 'unknown'}});
   await assert.rejects(details(github, {}, async () => {}), /six attempts/);
