@@ -7,7 +7,7 @@ It wires:
 - docs-ci (markdownlint + lychee + build)
 - optional pages deploy (only on main)
 - optional readme-sync (only on pull_request)
-- optional label-conflicts
+- optional label-conflicts (calls the existing conflicted-PRs workflow)
 
 ## When to use it
 
