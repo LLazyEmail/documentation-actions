@@ -12,6 +12,24 @@ on:
         type: boolean
         required: false
         default: false
+      docusaurus-root:
+        description: >
+          Optional path relative to the workspace (for example `website`).
+          When set, appends --root-dir $GITHUB_WORKSPACE/<value>,
+          --fallback-extensions md,mdx, and --index-files index.md,index.mdx,.
+          Empty (default) leaves args unchanged.
+        type: string
+        required: false
+        default: ''
+      config-file:
+        description: >
+          Optional lychee config path. When set and the file exists, pass
+          --config <path>. lychee only auto-loads lychee.toml, so a file
+          named .lychee.toml needs this. Empty (default) does not pass
+          --config.
+        type: string
+        required: false
+        default: ''
       issue-title:
         type: string
         required: false
@@ -36,6 +54,8 @@ jobs:
         uses: LLazyEmail/documentation-actions/actions/lychee-link-check@main
         with:
           args: ${{ inputs.args }}
+          docusaurus-root: ${{ inputs.docusaurus-root }}
+          config-file: ${{ inputs.config-file }}
           create-issue: ${{ inputs.create-issue && 'true' || 'false' }}
           issue-title: ${{ inputs.issue-title }}
           update-existing-issue: ${{ inputs.update-existing-issue && 'true' || 'false' }}

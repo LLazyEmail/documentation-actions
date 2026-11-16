@@ -42,15 +42,45 @@ inputs:
     description: Token for lychee and optional issue creation
     required: false
     default: ${{ github.token }}
+  docusaurus-root:
+    description: >
+      Optional path relative to the workspace (for example `website`). When
+      set, appends --root-dir $GITHUB_WORKSPACE/<value>, --fallback-extensions
+      md,mdx, and --index-files index.md,index.mdx,. so Docusaurus
+      root-relative and extensionless links resolve to Markdown sources.
+      Empty (default) leaves args unchanged.
+    required: false
+    default: ''
+  config-file:
+    description: >
+      Optional lychee config path. When set and the file exists, prepends
+      --config <path>. lychee only auto-loads lychee.toml, so a file named
+      .lychee.toml needs this. Empty (default) does not pass --config.
+    required: false
+    default: ''
 
 runs:
   using: composite
   steps:
+    - name: Build lychee args
+      id: build-args
+      shell: bash
+      env:
+        BASE_ARGS: ${{ inputs.args }}
+        CONFIG_FILE: ${{ inputs.config-file }}
+        DOCUSAURUS_ROOT: ${{ inputs.docusaurus-root }}
+      run: |
+        {
+          echo "args<<__LYCHEE_ARGS__"
+          "$GITHUB_ACTION_PATH/build-args.sh"
+          echo "__LYCHEE_ARGS__"
+        } >> "$GITHUB_OUTPUT"
+
     - name: Link check
       id: lychee
       uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2.9.0
       with:
-        args: ${{ inputs.args }}
+        args: ${{ steps.build-args.outputs.args }}
         fail: ${{ inputs.fail }}
         format: markdown
         output: ${{ inputs.output }}

@@ -30,5 +30,8 @@ jobs:
         CHANGELOG.md
         'website/docs/**/*.md'
         'website/docs/**/*.mdx'
+      # Opt in for Docusaurus sites (both default to empty):
+      # docusaurus-root: website
+      # config-file: .lychee.toml
       create-issue: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
     secrets: inherit
