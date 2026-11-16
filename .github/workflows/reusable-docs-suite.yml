@@ -94,5 +94,5 @@ jobs:
 
   label-conflicts:
     if: inputs.run-label-conflicts
-    uses: ./.github/workflows/reusable-label-conflicts.yml
+    uses: ./.github/workflows/reusable-label-conflicted-prs.yml
     secrets: inherit
