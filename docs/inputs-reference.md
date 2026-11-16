@@ -23,5 +23,6 @@ Common inputs used across documentation-actions composites and reusable workflow
 | `base-url` | `/` or `/v-school/` | build-image-check | Path prefix, not full origin |
 | `mode` | `fail` or `warn` | build-image-check | |
 | `allowlist` | path to text file | build-image-check | Optional |
+| `merge-fallback` | `false` / `true` | auto-rebase, reusable-auto-rebase-prs | With `rebase-conflicts`, merge update instead of failing when the rebase conflicts but GitHub says mergeable |
 
 Always copy from `examples/` and adjust only what differs. Prefer `@v1` (or full SHA) after release.

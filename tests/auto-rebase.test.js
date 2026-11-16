@@ -44,6 +44,39 @@ const {parseNumbers, details, run, gitRebase} = require('../actions/auto-rebase/
   gh2.rest.repos.compareCommits = async () => {throw Error('clean PRs must not be compared');};
   await run({github: gh2, context: {repo: {}}, core, numbers: '351'});
   assert.equal(updates, 1);
+  // rebase-conflicts mode: a dirty PR that already contains main (behind_by 0) is a no-op success.
+  const dirty = {...pr, mergeable: false, mergeable_state: 'dirty', base: {ref: 'main'}, head: {sha: 'abc', label: 'fork:feat'}};
+  let rebases = 0, merges = 0, behind = 0, fresh = {...dirty, mergeable: true};
+  const conflict = () => {rebases++; return {ok: false, files: ['README.md'], message: 'Rebase conflicts (aborted):\n- README.md'};};
+  const gh3 = {rest: {pulls: {get: async () => ({data: rebases ? fresh : dirty}), updateBranch: async p => {merges++; assert.equal(p.expected_head_sha, 'abc');}},
+    issues: {createComment: async () => {}}, repos: {compareCommits: async () => ({data: {behind_by: behind}})}}};
+  failure = false;
+  await run({github: gh3, context: {repo: {}}, core, numbers: '420', mode: true, rebase: conflict});
+  assert.equal(failure, false);
+  assert.equal(rebases, 0);
+  assert.equal(merges, 0);
+  // Behind + rebase conflict without merge-fallback still fails (unchanged default).
+  behind = 3;
+  await run({github: gh3, context: {repo: {}}, core, numbers: '420', mode: true, rebase: conflict});
+  assert.equal(failure, true);
+  assert.equal(rebases, 1);
+  assert.equal(merges, 0);
+  // merge-fallback: conflict + GitHub says mergeable -> non-force merge update, no failure.
+  failure = false; rebases = 0;
+  await run({github: gh3, context: {repo: {}}, core, numbers: '420', mode: true, mergeFallback: true, rebase: conflict});
+  assert.equal(failure, false);
+  assert.equal(merges, 1);
+  // merge-fallback but GitHub says not mergeable -> fails, no merge update.
+  rebases = 0; fresh = {...dirty, mergeable: false};
+  await run({github: gh3, context: {repo: {}}, core, numbers: '420', mode: true, mergeFallback: true, rebase: conflict});
+  assert.equal(failure, true);
+  assert.equal(merges, 1);
+  // compare API error -> warn and attempt the rebase as before.
+  failure = false; rebases = 0;
+  gh3.rest.repos.compareCommits = async () => {throw Error('boom');};
+  await run({github: gh3, context: {repo: {}}, core, numbers: '420', mode: true, rebase: () => {rebases++; return {ok: true, message: 'ok'};}});
+  assert.equal(rebases, 1);
+  assert.equal(failure, false);
   github.rest.pulls.get = async () => ({data: {...pr, mergeable: null, mergeable_state: 'unknown'}});
   await assert.rejects(details(github, {}, async () => {}), /six attempts/);
   console.log('targeted auto-rebase tests: ok');

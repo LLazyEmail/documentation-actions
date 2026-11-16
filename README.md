@@ -96,6 +96,20 @@ action at `@main`, so fixes to it apply without a new release.
 
 Detailed reference: [docs/actions/](docs/actions/).
 
+### Auto-rebase open PRs
+
+`reusable-auto-rebase-prs.yml` keeps open PRs current (schedule, push to `main`
+or manual dispatch). Full guide: [docs/auto-rebase.md](docs/auto-rebase.md).
+
+| Input | Default | What it does |
+| --- | --- | --- |
+| `pr-numbers` | empty (all open PRs) | Comma-separated PRs to update |
+| `rebase-conflicts` | `false` | Real git rebase + force-push with SHA lease for conflicting PRs (owner approval). Skips PRs that are already up to date with `main` |
+| `report-conflicts` | `false` | Without `rebase-conflicts`, one comment per head SHA listing conflicting files |
+| `comment-on-update` | `true` | Comment after a successful update |
+| `merge-fallback` | `false` | With `rebase-conflicts`, do a non-force merge update when the rebase conflicts but GitHub says the PR is mergeable |
+| secret `AUTO_REBASE_TOKEN` | unset | Token so updated branches re-run CI |
+
 ## Skills
 
 Reusable checklists under [skills/](skills/):
