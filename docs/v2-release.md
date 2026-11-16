@@ -1,10 +1,10 @@
-# v2 release notes (draft)
+# v2 release notes
 
 ## What changes in v2
 
-- Short-name aliases become the preferred public surface.
+- Short-name aliases are the preferred public surface.
 - Long names remain available but are marked deprecated.
-- Examples and agent docs already prefer the short names.
+- Examples and agent docs prefer the short names.
 - No behavior changes. Callers using the long names continue to work.
 
 ## Recommended pin
