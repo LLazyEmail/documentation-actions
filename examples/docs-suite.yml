@@ -1,0 +1,23 @@
+name: Docs suite
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  suite:
+    uses: LLazyEmail/documentation-actions/.github/workflows/reusable-docs-suite.yml@v2
+    with:
+      working-directory: website
+      run-pages-deploy: true
+      run-readme-sync: true
+    secrets: inherit

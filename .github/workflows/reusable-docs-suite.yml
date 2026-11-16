@@ -1,0 +1,98 @@
+name: Reusable docs suite (recommended entry)
+
+# One workflow_call for greenfield sites. Prefer this over composing multiple
+# reusable workflows by hand. Triggers and permissions stay on the caller.
+
+on:
+  workflow_call:
+    inputs:
+      working-directory:
+        type: string
+        required: false
+        default: website
+      node-version:
+        type: string
+        required: false
+        default: '22'
+      cache-dependency-path:
+        type: string
+        required: false
+        default: website/package-lock.json
+      run-markdownlint:
+        type: boolean
+        required: false
+        default: true
+      markdownlint-globs:
+        type: string
+        required: false
+        default: |
+          README.md
+          website/docs/**/*.md
+      run-lychee:
+        type: boolean
+        required: false
+        default: true
+      lychee-args:
+        type: string
+        required: false
+        default: >-
+          --verbose --no-progress --max-concurrency 8
+          --accept 200,204,206,403,429 --timeout 20
+          README.md 'website/docs/**/*.md'
+      run-build:
+        type: boolean
+        required: false
+        default: true
+      run-pages-deploy:
+        type: boolean
+        required: false
+        default: false
+      run-readme-sync:
+        type: boolean
+        required: false
+        default: false
+      run-label-conflicts:
+        type: boolean
+        required: false
+        default: false
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  docs-ci:
+    uses: ./.github/workflows/reusable-docs-ci.yml
+    with:
+      working-directory: ${{ inputs.working-directory }}
+      node-version: ${{ inputs.node-version }}
+      cache-dependency-path: ${{ inputs.cache-dependency-path }}
+      run-markdownlint: ${{ inputs.run-markdownlint }}
+      markdownlint-globs: ${{ inputs.markdownlint-globs }}
+      run-lychee: ${{ inputs.run-lychee }}
+      lychee-args: ${{ inputs.lychee-args }}
+      run-build: ${{ inputs.run-build }}
+    secrets: inherit
+
+  pages-deploy:
+    if: inputs.run-pages-deploy && github.ref == 'refs/heads/main'
+    needs: docs-ci
+    uses: ./.github/workflows/reusable-pages-deploy.yml
+    with:
+      working-directory: ${{ inputs.working-directory }}
+      node-version: ${{ inputs.node-version }}
+      cache-dependency-path: ${{ inputs.cache-dependency-path }}
+    secrets: inherit
+
+  readme-sync:
+    if: inputs.run-readme-sync && github.event_name == 'pull_request'
+    uses: ./.github/workflows/reusable-readme-sync.yml
+    secrets: inherit
+
+  label-conflicts:
+    if: inputs.run-label-conflicts
+    uses: ./.github/workflows/reusable-label-conflicted-prs.yml
+    secrets: inherit

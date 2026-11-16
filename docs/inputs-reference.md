@@ -18,6 +18,7 @@ Common inputs used across documentation-actions composites and reusable workflow
 | `annotate-log` | `true` (default) | docusaurus-build, test-deploy | Emits annotations + summary |
 | `pr-comment` | `false` | test-deploy | Needs `pull-requests: write` |
 | `commit-paths` | space-separated | git-push-retry, changelog, docs-index | |
+| `max-attempts` | `5` (default) | git-push-retry | Push attempts; between attempts it runs `git pull --rebase --autostash origin main` |
 | `build-dir` | `build` or `website/build` | build-image-check | Relative to repo root |
 | `base-url` | `/` or `/v-school/` | build-image-check | Path prefix, not full origin |
 | `mode` | `fail` or `warn` | build-image-check | |
