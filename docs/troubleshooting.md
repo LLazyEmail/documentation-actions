@@ -22,6 +22,33 @@ Common issues when adopting or working on documentation-actions.
 | Org-owned fork PR cannot be updated by maintainers even with "Allow edits" | GitHub does not allow maintainer pushes to forks owned by an organization | Open a superseding PR from a branch in the base repo, keep the author's `Co-authored-by` trailer, and add `Closes #N` |
 | A skipped check is named `docs-ci / inputs.npm-check-job-name` | GitHub prints the raw `name:` expression for a job skipped by `if:`; happens when `run-npm-check` is off (the default) | Harmless and left as is; see [docs-ci](actions/docs-ci.md#why-a-skipped-check-is-called-inputsnpm-check-job-name). For a clean check list call `reusable-npm-script-check.yml` directly |
 
+## Agent mistakes
+
+Mistakes AI agents (and humans copying YAML) make most often.
+
+| Symptom | Cause | Fix |
+| --- | --- | --- |
+| yamllint `line too long` | A line over 140 characters (often inside `script: \|`) | Break long strings; build messages from arrays or concatenation |
+| YAML syntax error inside a `github-script` step | A multi-line JavaScript template literal confuses the YAML block | Use string concatenation or `[...].join('\n')` |
+| `Unable to find reusable workflow` / workflow not found | Wrong path, typo in the name, or a short name used on a tag older than the alias | Use the exact file name under `.github/workflows/`, pin `@v2`, and check `docs/naming.md` for the short names |
+| Commit-back, pages or star job fails with 403 | Caller did not grant the permissions or `secrets: inherit` | Copy the permissions from the table below onto the calling job |
+| The same bot comment appears on every push | Comment step has no idempotency marker | Reuse the marker pattern from `reusable-comment-readme-only.yml` / `docusaurus-pr-comment` |
+
+## Permissions the caller must grant
+
+A reusable workflow can only use permissions the calling job grants. Grant at least these on the job that has the `uses:` line:
+
+| Workflow (long or short name) | Caller permissions |
+| --- | --- |
+| `reusable-docs-ci`, `reusable-docusaurus-test-deploy` / `reusable-test-deploy` | `contents: read`, plus `pull-requests: write` and `issues: write` when `pr-comment: true` |
+| `reusable-docusaurus-pages-deploy` / `reusable-pages-deploy` | `contents: write`, `pages: write`, `id-token: write` |
+| `reusable-changelog`, `reusable-docs-index`, `reusable-catalog-api` | `contents: write` and `secrets: inherit` |
+| `reusable-label-conflicted-prs` / `reusable-label-conflicts` | `pull-requests: write` |
+| `reusable-pr-status-report` / `reusable-pr-report` | `issues: write`, `pull-requests: read` |
+| `reusable-readme-docs-sync-check` / `reusable-readme-sync` | `pull-requests: write` (checkout with full history is handled inside) |
+| `reusable-comment-readme-only` / `reusable-readme-only` | `pull-requests: write` |
+| `reusable-star-request` | `pull-requests: write` |
+
 ## In this repository
 
 | Symptom | Cause | Fix |
