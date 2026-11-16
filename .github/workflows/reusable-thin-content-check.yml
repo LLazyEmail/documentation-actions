@@ -83,7 +83,7 @@ jobs:
           persist-credentials: false
           lfs: ${{ inputs.lfs }}
       - name: Build site
-        uses: LLazyEmail/documentation-actions/actions/docusaurus-build@9734333b8aebc1c70c1503f798954a1ce6c7ec13 # main
+        uses: LLazyEmail/documentation-actions/actions/docusaurus-build@main
         with:
           working-directory: ${{ inputs.working-directory }}
           node-version: ${{ inputs.node-version }}
@@ -92,7 +92,7 @@ jobs:
           build-command: ${{ inputs.build-command }}
           prebuild-command: ${{ inputs.prebuild-command }}
       - name: Check page content
-        uses: LLazyEmail/documentation-actions/actions/thin-content-check@9734333b8aebc1c70c1503f798954a1ce6c7ec13 # main
+        uses: LLazyEmail/documentation-actions/actions/thin-content-check@main
         with:
           build-dir: ${{ inputs.build-dir }}
           base-url: ${{ inputs.base-url }}

@@ -38,7 +38,7 @@ jobs:
       cancel-in-progress: false
     steps:
       - name: Attempt to update branches of open PRs
-        uses: LLazyEmail/documentation-actions/actions/auto-rebase@9734333b8aebc1c70c1503f798954a1ce6c7ec13 # main
+        uses: LLazyEmail/documentation-actions/actions/auto-rebase@main
         with:
           pr-numbers: ${{ inputs.pr-numbers }}
           rebase-conflicts: ${{ inputs.rebase-conflicts }}
