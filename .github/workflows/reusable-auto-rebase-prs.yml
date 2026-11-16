@@ -20,7 +20,7 @@ on:
         type: boolean
         default: true
       merge-fallback:
-        description: With rebase-conflicts, fall back to a non-force merge update when the rebase conflicts but GitHub reports the PR as mergeable
+        description: With rebase-conflicts, merge-update (no force-push) when the rebase conflicts but GitHub says mergeable
         type: boolean
         default: false
     secrets:

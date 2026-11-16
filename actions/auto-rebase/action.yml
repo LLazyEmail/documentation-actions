@@ -23,7 +23,7 @@ inputs:
     description: Comment on PRs after a successful branch update
     default: 'true'
   merge-fallback:
-    description: With rebase-conflicts, when the git rebase conflicts but GitHub reports the PR as mergeable, do a non-force merge update instead of failing
+    description: With rebase-conflicts, merge-update (no force-push) when the rebase conflicts but GitHub says mergeable
     default: 'false'
 runs:
   using: composite
