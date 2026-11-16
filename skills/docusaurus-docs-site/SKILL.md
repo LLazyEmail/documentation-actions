@@ -218,7 +218,7 @@ permissions:
   - Gate PRs with `npm-script-check` running the sync checker.
 - [ ] PR template should ask authors whether EN/UK (or other) copies were updated together.
 - [ ] Link-check both locale trees when they contain unique URLs.
-- [ ] With `onBrokenLinks: 'throw'` and more than one locale, write internal links as `/docs/...` routes (or relative `.md` file links). Hard-coded locale paths or URLs to the deployed site break the build of the other locale.
+- [ ] With `onBrokenLinks: 'throw'` and more than one locale, write internal links as `/docs/...` routes or relative `.md` file links, then build every locale before merging. Found while building LLazyEmail/v-school (see #47); check the locale build output for broken-link warnings.
 
 ---
 
