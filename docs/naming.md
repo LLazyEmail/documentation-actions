@@ -10,25 +10,25 @@
 
 Several reusable workflows and paths are longer than necessary. This increases typing, reduces scanability in consumer YAML, and makes agent generation more error-prone.
 
-### Proposed shorter names (for v2)
+### Short-name aliases (available)
 
-| Current | Proposed (alias available) | Notes |
-|---------|----------------------------|-------|
-| `reusable-docusaurus-pages-deploy` | `reusable-pages-deploy` | Alias added |
-| `reusable-docusaurus-test-deploy` | `reusable-test-deploy` | Planned |
-| `reusable-readme-docs-sync-check` | `reusable-readme-sync` | Alias added |
-| `reusable-comment-readme-only` | `reusable-readme-only` | Planned |
-| `reusable-label-conflicted-prs` | `reusable-label-conflicts` | Planned |
-| `reusable-pr-status-report` | `reusable-pr-report` | Planned |
-| `reusable-thin-content-check` | `reusable-thin-content` | Planned |
-| `reusable-build-image-check` | `reusable-image-check` | Planned |
-| `reusable-awesome-entry-format-check` | `reusable-entry-format` | Planned |
+| Long name (still works) | Prefer |
+|-------------------------|--------|
+| `reusable-docusaurus-pages-deploy` | `reusable-pages-deploy` |
+| `reusable-docusaurus-test-deploy` | `reusable-test-deploy` |
+| `reusable-readme-docs-sync-check` | `reusable-readme-sync` |
+| `reusable-comment-readme-only` | `reusable-readme-only` |
+| `reusable-label-conflicted-prs` | `reusable-label-conflicts` |
+| `reusable-pr-status-report` | `reusable-pr-report` |
+| `reusable-thin-content-check` | `reusable-thin-content` |
+| `reusable-build-image-check` | `reusable-image-check` |
+| `reusable-awesome-entry-format-check` | `reusable-entry-format` |
 
 Short-name aliases are thin wrappers that call the original workflows. Both names work. Prefer the short name in new callers.
 
 ## Migration plan for v2
 
-1. Introduce the shorter names as aliases (started).
+1. Introduce the shorter names as aliases (done).
 2. Keep the old names working for one major version with deprecation notices.
 3. Update all examples and docs to the short names.
 4. Consumers pin `@v2` when ready.
@@ -41,4 +41,4 @@ Short-name aliases are thin wrappers that call the original workflows. Both name
 - Keep the `reusable-` prefix for workflows so they are easy to identify.
 - Action directory names should stay short and kebab-case.
 
-See also `docs/actions-index.md` (append-only inventory).
+See also `docs/actions-index.md` and `docs/deprecation.md`.
