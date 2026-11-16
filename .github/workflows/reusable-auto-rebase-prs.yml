@@ -19,6 +19,10 @@ on:
         description: Comment on PRs after a successful branch update
         type: boolean
         default: true
+      merge-fallback:
+        description: With rebase-conflicts, fall back to a non-force merge update when the rebase conflicts but GitHub reports the PR as mergeable
+        type: boolean
+        default: false
     secrets:
       AUTO_REBASE_TOKEN:
         description: Optional PAT/App token so updated branches re-trigger CI (GITHUB_TOKEN pushes do not)
@@ -44,4 +48,5 @@ jobs:
           rebase-conflicts: ${{ inputs.rebase-conflicts }}
           report-conflicts: ${{ inputs.report-conflicts }}
           comment-on-update: ${{ inputs.comment-on-update }}
+          merge-fallback: ${{ inputs.merge-fallback }}
           github-token: ${{ secrets.AUTO_REBASE_TOKEN || github.token }}

@@ -63,6 +63,7 @@ jobs:
 | --- | --- | --- |
 | `report-conflicts` | `false` | When `rebase-conflicts` is off, a conflicting PR gets a trial rebase in a throwaway clone (never pushed) and **one** comment per head SHA listing the conflicting files. The job does not fail for reported conflicts. |
 | `comment-on-update` | `true` | Set `false` on push runs to avoid a "branch updated" comment on every merge. |
+| `merge-fallback` | `false` | Only with `rebase-conflicts: true`. When the git rebase conflicts (for example the branch already merged `main` and the replayed commit clashes with adjacent lines) but GitHub reports the PR as mergeable, request a normal merge update (update-branch API, no force-push) instead of failing. Needs the DA release that adds it: on an older tag the caller run fails with an invalid-input error, so pass it only after the `@v2` tag includes it. |
 | secret `AUTO_REBASE_TOKEN` | unset | Optional fine-grained PAT or GitHub App token. Branch updates made with the default `GITHUB_TOKEN` do **not** re-trigger `pull_request` CI, so required checks can look stale. Add the secret yourself in repo settings; the workflow falls back to `GITHUB_TOKEN`. |
 
 Notes:
@@ -75,6 +76,15 @@ Notes:
   even when it is also behind. For those two states the action compares the
   branch with its base and requests a branch update when it is behind, since
   the failure may already be fixed on the base. `clean` PRs are still left alone.
+- In `rebase-conflicts` mode the action first compares the branch with its
+  base. If the branch is not behind (`behind_by: 0`, e.g. `main` was already
+  merged in), it logs "Already up to date with main; no rebase needed" and
+  succeeds without rebasing. If the comparison API fails it warns and tries the
+  rebase as before. This check is always on and applies to every caller.
+- With `merge-fallback: true`, a conflicting rebase re-reads the PR; if GitHub
+  says it is mergeable the action calls update-branch with the current head SHA
+  (a merge commit, history is not rewritten). If GitHub says it is not
+  mergeable the PR still fails with the conflicting files listed.
 - After a conflict comment, fix the files manually or dispatch the workflow
   with `pr-numbers` and `rebase-conflicts: true` (owner approval required).
 - Concurrent runs are serialized per repository; a burst of merges queues at

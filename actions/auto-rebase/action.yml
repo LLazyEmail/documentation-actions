@@ -22,6 +22,9 @@ inputs:
   comment-on-update:
     description: Comment on PRs after a successful branch update
     default: 'true'
+  merge-fallback:
+    description: With rebase-conflicts, when the git rebase conflicts but GitHub reports the PR as mergeable, do a non-force merge update instead of failing
+    default: 'false'
 runs:
   using: composite
   steps:
@@ -34,6 +37,7 @@ runs:
         FORK_BLOCKED_MESSAGE: ${{ inputs.fork-blocked-message }}
         REPORT_CONFLICTS: ${{ inputs.report-conflicts }}
         COMMENT_ON_UPDATE: ${{ inputs.comment-on-update }}
+        MERGE_FALLBACK: ${{ inputs.merge-fallback }}
         REBASE_TOKEN: ${{ inputs.github-token }}
       with:
         github-token: ${{ inputs.github-token }}
@@ -46,4 +50,5 @@ runs:
             mode: process.env.REBASE_CONFLICTS === 'true',
             report: process.env.REPORT_CONFLICTS === 'true',
             commentOnUpdate: process.env.COMMENT_ON_UPDATE !== 'false',
+            mergeFallback: process.env.MERGE_FALLBACK === 'true',
             token: process.env.REBASE_TOKEN});

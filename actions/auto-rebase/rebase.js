@@ -60,6 +60,19 @@ async function behindWhileFailing(github, repo, pr, core) {
     return false;
   }
 }
+// Before a git rebase, ask GitHub whether the head already contains the base.
+// A PR whose branch has main merged in can still fail a replay-style rebase on
+// adjacent lines, so "behind_by: 0" means there is nothing to do. On API errors
+// return null and keep the previous behavior (attempt the rebase).
+async function behindBy(github, repo, pr, core) {
+  try {
+    const {data} = await github.rest.repos.compareCommits({...repo, basehead: `${pr.base.ref}...${pr.head.label}`});
+    return data.behind_by;
+  } catch (err) {
+    core.warning(`#${pr.number}: could not compare with ${pr.base.ref}: ${err.message}`);
+    return null;
+  }
+}
 const MARKER = sha => `<!-- auto-rebase-conflicts:${sha} -->`;
 // One comment per head SHA, so push-triggered runs do not repeat themselves.
 async function reportConflicts(github, repo, pr, result) {
@@ -74,7 +87,7 @@ async function reportConflicts(github, repo, pr, result) {
     body: `⚠️ Auto-rebase: this PR conflicts with \`${pr.base.ref}\` and needs a manual or opt-in rebase.\n\n${list}\n\n${marker}`});
   return true;
 }
-async function run({github, context, core, numbers = '', mode = false, report = false, commentOnUpdate = true, token, successMessage = 'Automatically updated this PR branch.', forkBlockedMessage = 'Check fork write permissions.'}) {
+async function run({github, context, core, numbers = '', mode = false, report = false, mergeFallback = false, rebase = gitRebase, commentOnUpdate = true, token, successMessage = 'Automatically updated this PR branch.', forkBlockedMessage = 'Check fork write permissions.'}) {
   const repo = {...context.repo};
   const explicit = parseNumbers(numbers);
   const selected = explicit || (await github.paginate(github.rest.pulls.list, {...repo, state: 'open', per_page: 100})).map(pr => pr.number);
@@ -109,10 +122,24 @@ async function run({github, context, core, numbers = '', mode = false, report = 
           continue;
         }
         if (!mode) throw new Error('Conflicts require opt-in rebase-conflicts mode');
-        const result = gitRebase(pr, token);
-        if (!result.ok) throw new Error(result.message);
-        message = result.message;
-        updated = true;
+        if (await behindBy(github, repo, pr, core) === 0) {
+          message = `Already up to date with ${pr.base.ref}; no rebase needed`;
+        } else {
+          const result = rebase(pr, token);
+          if (result.ok) {
+            message = result.message;
+            updated = true;
+          } else {
+            if (!mergeFallback) throw new Error(result.message);
+            // Opt-in: rebase replay conflicted, but GitHub may still be able to merge the
+            // base into the branch. Re-read mergeability and do a non-force merge update.
+            const fresh = await details(github, {...repo, pull_number: number});
+            if (fresh.mergeable !== true) throw new Error(`${result.message}\nMerge fallback skipped: GitHub reports the PR as not mergeable`);
+            await github.rest.pulls.updateBranch({...repo, pull_number: number, expected_head_sha: fresh.head.sha});
+            message = `Rebase conflicted (${(result.files || []).join(', ') || 'see logs'}); merge-fallback requested a merge update (no force-push)`;
+            updated = true;
+          }
+        }
       } else {
         message = `No update required (state: ${pr.mergeable_state})`;
       }
@@ -131,4 +158,4 @@ async function run({github, context, core, numbers = '', mode = false, report = 
   }
   if (failed) core.setFailed('One or more PR updates failed; see per-PR summary');
 }
-module.exports = {parseNumbers, details, gitRebase, reportConflicts, behindWhileFailing, run};
+module.exports = {parseNumbers, details, gitRebase, reportConflicts, behindWhileFailing, behindBy, run};
