@@ -40,7 +40,7 @@ Start here:
 - [docs/examples-guide.md](docs/examples-guide.md) — when to copy which example
 - [docs/inputs-reference.md](docs/inputs-reference.md) — common inputs table
 - [docs/pinning.md](docs/pinning.md) — SHA and `@v1` rules
-- [docs/troubleshooting.md](docs/troubleshooting.md) — symptom / cause / fix
+- [docs/troubleshooting.md](docs/troubleshooting.md) — symptom / cause / fix, common agent mistakes, and the permissions each caller must grant
 - [skills/](skills/) — focused checklists (see [skills/README.md](skills/README.md))
 - Copy from [examples/](examples/) — never invent job YAML from scratch
 
