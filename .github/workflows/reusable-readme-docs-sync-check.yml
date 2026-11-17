@@ -30,7 +30,8 @@ on:
       pass-if-links-in-docs:
         description: >-
           Opt-in. Pass a README-only PR when every link it adds to README.md
-          already appears in a docs file matching docs-glob. Off by default.
+          already appears in a docs file matching docs-glob, or when it adds
+          no links at all (prose or table edits). Off by default.
         type: boolean
         required: false
         default: false
@@ -90,6 +91,10 @@ jobs:
                   echo "Every link added to README.md is already in $DOCS_DIR; docs are in sync."
                   MISSING=false
                 fi
+              else
+                # Prose/table-only README edit: no new links, nothing to mirror.
+                echo "No links added to README.md; nothing to sync to $DOCS_DIR."
+                MISSING=false
               fi
             fi
           fi
