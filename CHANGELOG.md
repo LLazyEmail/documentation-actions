@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.5.1] - 2026-11-17
+
+### Fixed
+
+- `readme-docs-sync-check` / `readme-sync`: with the opt-in `pass-if-links-in-docs: true`, a README-only PR that adds no links (prose or table edits, e.g. a CI section) now passes instead of failing with "README.md changed but no matching docs file was updated". Callers without the input are unchanged.
+
 ## [2.5.0] - 2026-11-17
 
 ### Added
@@ -393,6 +399,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Reusable JSON API regenerate workflow (`reusable-catalog-api`).
 - Awesome-list checks: entry-format, duplicates, sorted-sections (`actions/awesome-list-checks`).
 
+[2.5.1]: https://github.com/LLazyEmail/documentation-actions/compare/v2.5.0...v2.5.1
 [2.5.0]: https://github.com/LLazyEmail/documentation-actions/compare/v2.4.0...v2.5.0
 [2.4.0]: https://github.com/LLazyEmail/documentation-actions/compare/v2.3.0...v2.4.0
 [2.3.0]: https://github.com/LLazyEmail/documentation-actions/compare/v2.2.0...v2.3.0
