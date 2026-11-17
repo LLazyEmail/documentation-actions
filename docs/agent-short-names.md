@@ -5,7 +5,7 @@ When writing or updating a caller:
 1. Check `docs/naming.md` for an alias.
 2. Prefer the short name in `uses:`.
 3. Keep triggers and permissions on the caller.
-4. Pin `@v1` (or a SHA) after release.
+4. Pin `@v2` (or a SHA) after release.
 5. Do not invent new long names.
 
 ## Available short names

@@ -24,7 +24,11 @@ Several reusable workflows and paths are longer than necessary. This increases t
 | `reusable-build-image-check` | `reusable-image-check` |
 | `reusable-awesome-entry-format-check` | `reusable-entry-format` |
 
-Short-name aliases are thin wrappers that call the original workflows. Both names work. Prefer the short name in new callers.
+Short-name aliases are thin wrappers that call the original workflows (or, for `reusable-test-deploy`, the same `reusable-docs-ci.yml` the long name calls). Both names work and accept the same inputs. Prefer the short name in new callers.
+
+`tests/short-name-aliases.test.sh` reads this table and fails CI if a listed workflow file is missing or an alias does not accept every input of its long name. Add a row here when you add an alias.
+
+> Until the release that includes this note, `reusable-test-deploy`, `reusable-readme-only` and `reusable-pr-report` were listed here but the files did not exist, so callers using them failed with "workflow not found". Use the long names on tags older than that release.
 
 ## Migration plan for v2
 

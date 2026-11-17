@@ -59,7 +59,7 @@ flowchart TD
 - **Composite actions** for shared steps inside custom jobs.
 - **Examples** are the source of truth for thin callers.
 - Inventory is append-only in [docs/actions-index.md](docs/actions-index.md).
-- Prefer short-name aliases when available (`reusable-pages-deploy`, `reusable-readme-sync`). See [docs/naming.md](docs/naming.md).
+- Prefer short-name aliases: all nine listed in [docs/naming.md](docs/naming.md) exist (`reusable-pages-deploy`, `reusable-test-deploy`, `reusable-readme-sync`, `reusable-readme-only`, `reusable-label-conflicts`, `reusable-pr-report`, `reusable-thin-content`, `reusable-image-check`, `reusable-entry-format`). Each accepts the same inputs as its long name, and `tests/short-name-aliases.test.sh` keeps it that way.
 
 ## Quick start
 
