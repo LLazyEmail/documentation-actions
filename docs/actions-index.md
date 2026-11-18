@@ -5,7 +5,8 @@ Append-only. Each action PR adds **exactly one new line** at the end of the tabl
 | Action | Path | One-line description |
 | --- | --- | --- |
 | `star-request` | `actions/star-request` | Thank contributors and ask for a star |
-| `auto-rebase` | `actions/auto-rebase` | Update behind open PR branches |
+| `auto-rebase` | `actions/auto-rebase` | Update behind open PR branches; opt-in supersede PRs for fork PRs |
+| `close-superseded` | `actions/close-superseded` | Close PRs named in a merged PR's `Supersedes #N` line |
 | `markdownlint` | `actions/markdownlint` | Run markdownlint-cli2 on docs |
 | `lychee-link-check` | `actions/lychee-link-check` | Soft-fail lychee link check with summary |
 | `docusaurus-build` | `actions/docusaurus-build` | Install, optional prebuild, and Docusaurus build |
@@ -23,6 +24,7 @@ Append-only. Each action PR adds **exactly one new line** at the end of the tabl
 | `build-image-check` | `actions/build-image-check` | Validate built HTML/CSS image references with annotations and summary |
 | `thin-content-check` | `actions/thin-content-check` | List built pages with little main content (word count, image-only, placeholders) |
 | `label-conflicted-prs` | `.github/workflows/reusable-label-conflicted-prs.yml` | Label open PRs that have conflicts |
+| `close-superseded-prs` | `.github/workflows/reusable-close-superseded-prs.yml` | Close superseded PRs when the superseding PR merges |
 | `pr-status-report` | `.github/workflows/reusable-pr-status-report.yml` | Weekly open-PR summary tracking issue |
 | `readme-docs-sync-check` | `.github/workflows/reusable-readme-docs-sync-check.yml` | Fail when README changes without matching docs |
 | `comment-readme-only` | `.github/workflows/reusable-comment-readme-only.yml` | One-time comment when PR only changes README.md |

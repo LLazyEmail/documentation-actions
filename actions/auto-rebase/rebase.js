@@ -2,6 +2,7 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const {execFileSync} = require('node:child_process');
+const {isFork, parsePaths, supersedePr, reportSupersedeFailure} = require('./supersede');
 
 function parseNumbers(value) {
   if (!value.trim()) return null;
@@ -48,13 +49,21 @@ function gitRebase(pr, token, {push = true} = {}) {
     return {ok: true, message: 'Rebased onto base and pushed with an explicit SHA lease'};
   } finally { fs.rmSync(dir, {recursive: true, force: true}); }
 }
+// Compare the PR head with its base branch. Uses compareCommitsWithBasehead:
+// in the Octokit bundled with actions/github-script v7, compareCommits expects
+// separate `base` and `head` params, so passing `basehead` to it requested
+// `/compare/...` and always returned 404 Not Found. Comparing against the head
+// SHA (not `owner:branch`) also works for fork PRs and branch names with "/".
+async function compare(github, repo, pr) {
+  const {data} = await github.rest.repos.compareCommitsWithBasehead({...repo, basehead: `${pr.base.ref}...${pr.head.sha}`});
+  return data;
+}
 // GitHub reports "unstable" (failing checks) or "blocked" ahead of "behind", so a PR that
 // is behind its base and also failing is never marked "behind". Compare directly for those.
 async function behindWhileFailing(github, repo, pr, core) {
   if (!['unstable', 'blocked'].includes(pr.mergeable_state)) return false;
   try {
-    const {data} = await github.rest.repos.compareCommits({...repo, basehead: `${pr.base.ref}...${pr.head.label}`});
-    return data.behind_by > 0;
+    return (await compare(github, repo, pr)).behind_by > 0;
   } catch (err) {
     core.warning(`#${pr.number}: could not compare with ${pr.base.ref}: ${err.message}`);
     return false;
@@ -66,8 +75,7 @@ async function behindWhileFailing(github, repo, pr, core) {
 // return null and keep the previous behavior (attempt the rebase).
 async function behindBy(github, repo, pr, core) {
   try {
-    const {data} = await github.rest.repos.compareCommits({...repo, basehead: `${pr.base.ref}...${pr.head.label}`});
-    return data.behind_by;
+    return (await compare(github, repo, pr)).behind_by;
   } catch (err) {
     core.warning(`#${pr.number}: could not compare with ${pr.base.ref}: ${err.message}`);
     return null;
@@ -87,8 +95,16 @@ async function reportConflicts(github, repo, pr, result) {
     body: `⚠️ Auto-rebase: this PR conflicts with \`${pr.base.ref}\` and needs a manual or opt-in rebase.\n\n${list}\n\n${marker}`});
   return true;
 }
-async function run({github, context, core, numbers = '', mode = false, report = false, mergeFallback = false, rebase = gitRebase, commentOnUpdate = true, token, successMessage = 'Automatically updated this PR branch.', forkBlockedMessage = 'Check fork write permissions.'}) {
+async function run({github, context, core, numbers = '', mode = false, report = false, mergeFallback = false, rebase = gitRebase, commentOnUpdate = true, token, successMessage = 'Automatically updated this PR branch.', forkBlockedMessage = 'Check fork write permissions.', supersedeForks = false, supersedeUnionPaths = '', supersedeDraft = true, supersede = supersedePr}) {
   const repo = {...context.repo};
+  const unionPaths = parsePaths(supersedeUnionPaths);
+  // Opt-in: replay a fork PR's commits into a base-repo branch and open a new PR.
+  const supersedeOne = async pr => {
+    const result = await supersede({github, repo, pr, token, draft: supersedeDraft, unionPaths});
+    if (result.ok) return result.message;
+    await reportSupersedeFailure(github, repo, pr, result);
+    throw new Error(`Supersede failed: ${result.message}`);
+  };
   const explicit = parseNumbers(numbers);
   const selected = explicit || (await github.paginate(github.rest.pulls.list, {...repo, state: 'open', per_page: 100})).map(pr => pr.number);
   let failed = false;
@@ -100,9 +116,19 @@ async function run({github, context, core, numbers = '', mode = false, report = 
       const pr = await details(github, {...repo, pull_number: number});
       if (pr.state !== 'open') throw new Error('PR is not open');
       if (pr.mergeable_state === 'behind' || await behindWhileFailing(github, repo, pr, core)) {
-        await github.rest.pulls.updateBranch({...repo, pull_number: number, expected_head_sha: pr.head.sha});
-        message = 'Branch update requested (merge-base update, not git rebase)';
-        updated = true;
+        try {
+          await github.rest.pulls.updateBranch({...repo, pull_number: number, expected_head_sha: pr.head.sha});
+          message = 'Branch update requested (merge-base update, not git rebase)';
+          updated = true;
+        } catch (err) {
+          // The token cannot write to the fork (or edits from maintainers are off).
+          if (!(supersedeForks && isFork(pr))) throw err;
+          message = `Branch update failed (${err.message}); ${await supersedeOne(pr)}`;
+        }
+      } else if (pr.mergeable_state === 'dirty' && supersedeForks && isFork(pr)) {
+        // A conflicting fork PR can neither be rebased (no push access to forks)
+        // nor merge-updated (GitHub refuses conflicts), so supersede it.
+        message = await supersedeOne(pr);
       } else if (pr.mergeable_state === 'dirty') {
         if (!mode && report) {
           const trial = gitRebase(pr, token, {push: false});
@@ -158,4 +184,4 @@ async function run({github, context, core, numbers = '', mode = false, report = 
   }
   if (failed) core.setFailed('One or more PR updates failed; see per-PR summary');
 }
-module.exports = {parseNumbers, details, gitRebase, reportConflicts, behindWhileFailing, behindBy, run};
+module.exports = {parseNumbers, details, gitRebase, reportConflicts, behindWhileFailing, behindBy, compare, run};

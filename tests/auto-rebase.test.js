@@ -32,16 +32,16 @@ const {parseNumbers, details, run, gitRebase} = require('../actions/auto-rebase/
   let updates = 0;
   const unstable = {...pr, mergeable_state: 'unstable', base: {ref: 'main'}, head: {sha: 'abc', label: 'test:feat'}};
   const gh2 = {rest: {pulls: {get: async () => ({data: unstable}), updateBranch: async () => {updates++;}},
-    issues: {createComment: async () => {}}, repos: {compareCommits: async () => ({data: {behind_by: 5}})}}};
+    issues: {createComment: async () => {}}, repos: {compareCommitsWithBasehead: async () => ({data: {behind_by: 5}})}}};
   failure = false;
   await run({github: gh2, context: {repo: {}}, core, numbers: '351'});
   assert.equal(updates, 1);
   assert.equal(failure, false);
-  gh2.rest.repos.compareCommits = async () => ({data: {behind_by: 0}});
+  gh2.rest.repos.compareCommitsWithBasehead = async () => ({data: {behind_by: 0}});
   await run({github: gh2, context: {repo: {}}, core, numbers: '351'});
   assert.equal(updates, 1);
   gh2.rest.pulls.get = async () => ({data: {...unstable, mergeable_state: 'clean'}});
-  gh2.rest.repos.compareCommits = async () => {throw Error('clean PRs must not be compared');};
+  gh2.rest.repos.compareCommitsWithBasehead = async () => {throw Error('clean PRs must not be compared');};
   await run({github: gh2, context: {repo: {}}, core, numbers: '351'});
   assert.equal(updates, 1);
   // rebase-conflicts mode: a dirty PR that already contains main (behind_by 0) is a no-op success.
@@ -49,7 +49,7 @@ const {parseNumbers, details, run, gitRebase} = require('../actions/auto-rebase/
   let rebases = 0, merges = 0, behind = 0, fresh = {...dirty, mergeable: true};
   const conflict = () => {rebases++; return {ok: false, files: ['README.md'], message: 'Rebase conflicts (aborted):\n- README.md'};};
   const gh3 = {rest: {pulls: {get: async () => ({data: rebases ? fresh : dirty}), updateBranch: async p => {merges++; assert.equal(p.expected_head_sha, 'abc');}},
-    issues: {createComment: async () => {}}, repos: {compareCommits: async () => ({data: {behind_by: behind}})}}};
+    issues: {createComment: async () => {}}, repos: {compareCommitsWithBasehead: async () => ({data: {behind_by: behind}})}}};
   failure = false;
   await run({github: gh3, context: {repo: {}}, core, numbers: '420', mode: true, rebase: conflict});
   assert.equal(failure, false);
@@ -73,7 +73,7 @@ const {parseNumbers, details, run, gitRebase} = require('../actions/auto-rebase/
   assert.equal(merges, 1);
   // compare API error -> warn and attempt the rebase as before.
   failure = false; rebases = 0;
-  gh3.rest.repos.compareCommits = async () => {throw Error('boom');};
+  gh3.rest.repos.compareCommitsWithBasehead = async () => {throw Error('boom');};
   await run({github: gh3, context: {repo: {}}, core, numbers: '420', mode: true, rebase: () => {rebases++; return {ok: true, message: 'ok'};}});
   assert.equal(rebases, 1);
   assert.equal(failure, false);

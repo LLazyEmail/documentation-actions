@@ -108,7 +108,16 @@ or manual dispatch). Full guide: [docs/auto-rebase.md](docs/auto-rebase.md).
 | `report-conflicts` | `false` | Without `rebase-conflicts`, one comment per head SHA listing conflicting files |
 | `comment-on-update` | `true` | Comment after a successful update |
 | `merge-fallback` | `false` | With `rebase-conflicts`, do a non-force merge update when the rebase conflicts but GitHub says the PR is mergeable |
+| `supersede-fork-prs` | `false` | Fork PRs that conflict or can't be updated get a new base-repo PR (`supersede/pr-N`, body starts with `Supersedes #N`); never pushes to the fork |
+| `supersede-union-paths` | empty | Globs (e.g. `README.md website/docs/**/*.md`) where an addition-only conflict keeps both sides |
+| `supersede-draft` | `true` | Open supersede PRs as drafts |
 | secret `AUTO_REBASE_TOKEN` | unset | Token so updated branches re-run CI |
+
+Pair `supersede-fork-prs` with
+[`reusable-close-superseded-prs.yml`](.github/workflows/reusable-close-superseded-prs.yml)
+([example](examples/close-superseded-prs.yml)): when a PR whose body says
+`Supersedes #N` merges, #N is closed with a thank-you comment (GitHub's
+`Closes #N` keyword does not close PRs).
 
 ## Skills
 

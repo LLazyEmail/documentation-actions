@@ -23,6 +23,18 @@ on:
         description: With rebase-conflicts, merge-update (no force-push) when the rebase conflicts but GitHub says mergeable
         type: boolean
         default: false
+      supersede-fork-prs:
+        description: 'Opt in. Replay conflicting or non-updatable fork PRs into supersede/pr-N and open a PR starting with "Supersedes #N"'
+        type: boolean
+        default: false
+      supersede-union-paths:
+        description: Globs where addition-only conflicts keep both sides (e.g. README.md website/docs/**/*.md)
+        type: string
+        default: ''
+      supersede-draft:
+        description: Open supersede PRs as drafts
+        type: boolean
+        default: true
     secrets:
       AUTO_REBASE_TOKEN:
         description: Optional PAT/App token so updated branches re-trigger CI (GITHUB_TOKEN pushes do not)
@@ -49,4 +61,7 @@ jobs:
           report-conflicts: ${{ inputs.report-conflicts }}
           comment-on-update: ${{ inputs.comment-on-update }}
           merge-fallback: ${{ inputs.merge-fallback }}
+          supersede-fork-prs: ${{ inputs.supersede-fork-prs }}
+          supersede-union-paths: ${{ inputs.supersede-union-paths }}
+          supersede-draft: ${{ inputs.supersede-draft }}
           github-token: ${{ secrets.AUTO_REBASE_TOKEN || github.token }}
