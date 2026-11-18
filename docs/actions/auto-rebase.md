@@ -40,4 +40,5 @@ jobs:
 
 - Requires `contents: write` + `pull-requests: write`.
 - Conflict rebases are opt-in and abort on failure with comments.
-- Before any conflict rebase the action checks `compareCommits`; a branch that is not behind its base is reported as already up to date and left alone.
+- Before any conflict rebase the action compares the branch with its base (`compareCommitsWithBasehead`, `<base>...<head SHA>`); a branch that is not behind its base is reported as already up to date and left alone.
+- Opt-in `supersede-fork-prs` replays conflicting or non-updatable fork PRs into `supersede/pr-<N>` and opens a PR starting with `Supersedes #N` (never pushes to the fork, never force-pushes). Pair it with [`close-superseded`](close-superseded.md). Details: [docs/auto-rebase.md](../auto-rebase.md#contributor-fork-prs-supersede-instead-of-rebase).

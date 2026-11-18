@@ -89,3 +89,100 @@ Notes:
   with `pr-numbers` and `rebase-conflicts: true` (owner approval required).
 - Concurrent runs are serialized per repository; a burst of merges queues at
   most one pending run.
+
+## Contributor (fork) PRs: supersede instead of rebase
+
+A PR from a fork is often impossible to fix in place:
+
+- the default `GITHUB_TOKEN` (and most App tokens) cannot push to a fork, even
+  with "Allow edits from maintainers" on, so `rebase-conflicts` fails there;
+- when the fork PR conflicts, GitHub's update-branch API refuses it and
+  `merge-fallback` is skipped ("GitHub reports the PR as not mergeable").
+
+`supersede-fork-prs: true` (opt-in, off by default) handles those PRs by opening
+a new PR in the base repository instead:
+
+1. It fetches the PR commits from the **base** repo's `refs/pull/<N>/head`
+   (the fork is never contacted, nothing from the PR is executed, git hooks are off).
+2. It creates `supersede/pr-<N>` from the base branch and cherry-picks the
+   contributor's non-merge commits with `-x`. The original commit authors are
+   kept and the PR author is credited with
+   `Co-authored-by: <login> <<id>+<login>@users.noreply.github.com>`.
+3. It opens a PR (a draft unless `supersede-draft: false`) titled
+   `<original title> (supersedes #N)`, whose body starts with `Supersedes #N`, and comments
+   on #N with a link. The close-superseded workflow below closes #N when the new PR merges.
+4. On later runs it reuses the open supersede PR. New commits pushed to #N are
+   fast-forwarded onto `supersede/pr-<N>`, and a behind supersede PR gets a merge update.
+   It never force-pushes. A hidden `<!-- supersede-of:#N head:SHA -->` marker in the body
+   records which contributor commit is already included.
+
+Conflicts: by default any cherry-pick conflict stops the flow. Nothing is pushed,
+the original PR gets **one** comment per head SHA with the conflicting files,
+and the run fails so a person looks at it. Awesome lists conflict mostly because
+two PRs append to the same list, so `supersede-union-paths` (for example
+`README.md website/docs/**/*.md`) resolves a conflict by keeping both sides,
+**only** when the contributor's change to that file adds lines and deletes none.
+Edits to existing lines are never auto-resolved.
+
+When it runs: for fork PRs only (same-repo branches keep the normal behavior),
+when the PR is `dirty` (conflicting), or when it is behind and update-branch
+is refused. It works in scheduled sweeps as well as targeted dispatches.
+
+Requirements: "Allow GitHub Actions to create and approve pull requests" must
+be enabled (repository or organization Actions settings), or PR creation fails
+with a clear error. PRs opened with the default `GITHUB_TOKEN` do not start
+`pull_request` CI. Set `AUTO_REBASE_TOKEN` so checks run, or push an empty
+commit to the supersede branch.
+
+```yaml
+jobs:
+  rebase:
+    uses: LLazyEmail/documentation-actions/.github/workflows/reusable-auto-rebase-prs.yml@v2
+    with:
+      merge-fallback: true
+      supersede-fork-prs: true
+      supersede-union-paths: 'README.md website/docs/**/*.md'
+    secrets: inherit
+```
+
+The new inputs need the DA release that adds them. On an older `@v2` tag,
+passing them fails the caller with an invalid-input error.
+
+## Close superseded PRs when the new PR merges
+
+GitHub's `Closes #N` keyword closes **issues**, not pull requests. To close the
+superseded PR automatically, add
+[`examples/close-superseded-prs.yml`](../examples/close-superseded-prs.yml):
+
+```yaml
+on:
+  pull_request_target:
+    types: [closed]
+permissions:
+  pull-requests: write
+jobs:
+  close:
+    if: github.event.pull_request.merged == true
+    uses: LLazyEmail/documentation-actions/.github/workflows/reusable-close-superseded-prs.yml@v2
+```
+
+When a merged PR has a line that starts with `Supersedes` (for example
+`Supersedes #421`, `**Supersedes:** #1, #2`, or a same-repo PR URL), every
+open PR named on that line gets a thank-you comment and is closed. Issues,
+already closed PRs and the merged PR itself are skipped. The job reads only
+the event payload and calls the API. It never checks out PR code, so
+`pull_request_target` is safe here. Optional input: `comment`
+(`{merged}` and `{author}` placeholders).
+
+## Why `could not compare with main: Not Found` (fixed)
+
+Before this change every comparison logged
+`could not compare with main: Not Found`. The Octokit bundled with
+`actions/github-script` v7 maps `repos.compareCommits` to
+`/compare/{base}...{head}`, and the action passed a single `basehead` value, so
+it requested `/compare/...`. As a result, `unstable` or `blocked` PRs that were
+behind `main` (for example a PR whose only red check is fixed on `main`) were
+never updated, and the "already up to date" skip never fired. The action now
+calls `compareCommitsWithBasehead` with `<base>...<head SHA>`, which also
+works for fork PRs and branch names that contain `/`. The action loads from
+`@main`, so the fix applies to every caller without a new release.

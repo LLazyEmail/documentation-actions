@@ -24,5 +24,9 @@ Common inputs used across documentation-actions composites and reusable workflow
 | `mode` | `fail` or `warn` | build-image-check | |
 | `allowlist` | path to text file | build-image-check | Optional |
 | `merge-fallback` | `false` / `true` | auto-rebase, reusable-auto-rebase-prs | With `rebase-conflicts`, merge update instead of failing when the rebase conflicts but GitHub says mergeable |
+| `supersede-fork-prs` | `false` / `true` | auto-rebase, reusable-auto-rebase-prs | Fork PRs that conflict or can't be updated: replay into `supersede/pr-N` and open a PR starting with `Supersedes #N` |
+| `supersede-union-paths` | `''` / `README.md website/docs/**/*.md` | auto-rebase, reusable-auto-rebase-prs | Addition-only conflicts in these globs keep both sides |
+| `supersede-draft` | `true` / `false` | auto-rebase, reusable-auto-rebase-prs | Open supersede PRs as drafts |
+| `comment` | thank-you text | close-superseded, reusable-close-superseded-prs | Comment before closing; `{merged}` and `{author}` placeholders |
 
 Always copy from `examples/` and adjust only what differs. Prefer `@v1` (or full SHA) after release.

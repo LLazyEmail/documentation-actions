@@ -27,7 +27,9 @@ superseded PRs.
 
 - [ ] A combined PR lists every PR it replaces as `Closes #N`, one per line,
       in the body. GitHub then closes the originals when the combined PR merges,
-      so no one has to close them by hand.
+      so no one has to close them by hand. (GitHub only does this for
+      *issues*; for replaced **PRs** also add `Supersedes #N` lines and the
+      `close-superseded-prs.yml` workflow.)
 - [ ] Keep the original authors' `Co-authored-by` trailers.
 - [ ] Do not close the originals before the combined PR merges.
 
@@ -41,6 +43,17 @@ superseded PRs.
       auto-closes the PR.
 - [ ] With the push trigger enabled (see `docs/auto-rebase.md`), behind PRs
       update themselves; only conflict comments need attention.
+
+## Contributor (fork) PRs that conflict or can't be pushed to
+
+- [ ] Never push or force-push to a contributor fork.
+- [ ] Rebase the work into a new base-repo branch `supersede/pr-<N>` (or let
+      the auto-rebase `supersede-fork-prs` input do it), keeping the original
+      commit authors and adding the contributor's noreply `Co-authored-by` trailer.
+- [ ] The new PR body starts with `Supersedes #N` and links #N; comment on #N
+      with a link to the new PR. Do not close #N by hand.
+- [ ] The repo's `close-superseded-prs.yml` closes #N with a thank-you when
+      the new PR merges (GitHub's `Closes #N` only closes issues, not PRs).
 
 ## Never
 
