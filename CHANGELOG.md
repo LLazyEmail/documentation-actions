@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.7.0] - 2026-11-20
+
+### Added
+
+- auto-rebase: opt-in `delegate-bot-rebase` input (action and `reusable-auto-rebase-prs.yml`). Renovate and Dependabot PRs that are behind or conflicting are handed back to the bot (Renovate's rebase checkbox is ticked, or `@dependabot rebase` is commented once per head commit) instead of a git rebase that cannot regenerate lockfiles. They are reported as delegated, not failed. Off by default.
+
 ## [2.6.0] - 2026-11-18
 
 ### Added
@@ -409,6 +415,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Reusable JSON API regenerate workflow (`reusable-catalog-api`).
 - Awesome-list checks: entry-format, duplicates, sorted-sections (`actions/awesome-list-checks`).
 
+[2.7.0]: https://github.com/LLazyEmail/documentation-actions/compare/v2.6.0...v2.7.0
 [2.6.0]: https://github.com/LLazyEmail/documentation-actions/compare/v2.5.1...v2.6.0
 [2.5.1]: https://github.com/LLazyEmail/documentation-actions/compare/v2.5.0...v2.5.1
 [2.5.0]: https://github.com/LLazyEmail/documentation-actions/compare/v2.4.0...v2.5.0
