@@ -1,0 +1,13 @@
+name: Reusable entry format (short name)
+
+# Short-name alias for reusable-awesome-entry-format-check.yml.
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    uses: ./.github/workflows/reusable-awesome-entry-format-check.yml

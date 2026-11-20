@@ -1,6 +1,7 @@
 name: Reusable test-deploy (short name)
 
 # Short-name alias for reusable-docusaurus-test-deploy.yml.
+# Same inputs and behavior: both call reusable-docs-ci.yml with run-build: true.
 # Prefer this name in new callers.
 
 on:
@@ -31,18 +32,24 @@ on:
         required: false
         default: ''
       fetch-depth:
+        description: "Accepted for compatibility; docs-ci always checks out with fetch-depth 0"
         type: number
         required: false
         default: 0
       lfs:
+        description: "Pass lfs: true to actions/checkout (Git LFS docs repos)"
         type: boolean
         required: false
         default: false
       annotate-log:
+        description: Surface broken-link/warning lines as annotations + job summary
         type: boolean
         required: false
         default: true
       pr-comment:
+        description: >
+          Upsert a PR comment with build warning/error counts (pull_request only).
+          Caller should grant pull-requests: write when enabling.
         type: boolean
         required: false
         default: false
@@ -54,7 +61,7 @@ permissions:
 
 jobs:
   test-deploy:
-    uses: ./.github/workflows/reusable-docusaurus-test-deploy.yml
+    uses: ./.github/workflows/reusable-docs-ci.yml
     with:
       working-directory: ${{ inputs.working-directory }}
       node-version: ${{ inputs.node-version }}
@@ -62,7 +69,7 @@ jobs:
       install-command: ${{ inputs.install-command }}
       build-command: ${{ inputs.build-command }}
       prebuild-command: ${{ inputs.prebuild-command }}
-      fetch-depth: ${{ inputs.fetch-depth }}
       lfs: ${{ inputs.lfs }}
+      run-build: true
       annotate-log: ${{ inputs.annotate-log }}
       pr-comment: ${{ inputs.pr-comment }}

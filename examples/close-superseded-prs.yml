@@ -1,0 +1,16 @@
+# Close a PR automatically when the PR that supersedes it is merged.
+# The merged PR's body must contain a line like "Supersedes #421".
+# pull_request_target is safe here: the job never checks out PR code.
+name: Close superseded PRs
+
+on:
+  pull_request_target:
+    types: [closed]
+
+permissions:
+  pull-requests: write
+
+jobs:
+  close:
+    if: github.event.pull_request.merged == true
+    uses: LLazyEmail/documentation-actions/.github/workflows/reusable-close-superseded-prs.yml@v2

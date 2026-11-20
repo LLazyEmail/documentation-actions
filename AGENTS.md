@@ -45,7 +45,7 @@ Full inventory (append-only): [`docs/actions-index.md`](docs/actions-index.md).
 3. Awesome-list validators ship scripts inside this repo — consumers do not need local copies once adopted.
 4. Docusaurus inputs must match the consumer: `working-directory` (`website` vs `.`), Node version, package-manager cache path, and any `prebuild-command`.
 5. Never invent new job YAML from scratch. Copy an example, adjust inputs and triggers, keep permissions minimal.
-6. Prefer short-name aliases (`reusable-pages-deploy`, `reusable-readme-sync`) when they exist. Both names work.
+6. Prefer short-name aliases (see the table in `docs/naming.md`; e.g. `reusable-pages-deploy`, `reusable-test-deploy`, `reusable-pr-report`). Both names work and take the same inputs. When adding an alias, add its row to `docs/naming.md`; `tests/short-name-aliases.test.sh` fails if the file is missing or drops an input.
 
 ## Required caller setup
 
@@ -96,7 +96,7 @@ Short user-facing summary.
 | Editing `CHANGELOG.md` by hand | Use `.changelog/` fragments only |
 | Reordering `docs/actions-index.md` | Append-only — stacked PRs will conflict |
 | Forgetting path filters on callers | Keep triggers + path filters on the consumer workflow |
-| Using long workflow names when a short alias exists | Prefer `reusable-pages-deploy` / `reusable-readme-sync` |
+| Using long workflow names when a short alias exists | Prefer the short name from `docs/naming.md` (e.g. `reusable-pages-deploy`, `reusable-test-deploy`) |
 
 ## Reference
 
@@ -121,7 +121,7 @@ Full checklist: [`skills/pr-hygiene/SKILL.md`](skills/pr-hygiene/SKILL.md). Cons
 
 1. **Same file → same PR.** Edits to the same file go in one PR; do not open a second PR touching a file another open PR edits.
 2. **`Merge after #X`.** A PR that depends on another starts its body with `Merge after #X`.
-3. **`Closes #N`.** A combined PR lists every PR it replaces as `Closes #N`, so GitHub closes them on merge.
+3. **`Closes #N`.** A combined PR lists every PR it replaces as `Closes #N`, so GitHub closes them on merge. Note: GitHub only auto-closes *issues* this way. Also add a `Supersedes #N` line for replaced PRs so [`close-superseded`](docs/actions/close-superseded.md) closes them.
 4. **Grouped dependency updates.** Use weekly grouped Dependabot ([`examples/dependabot.yml`](examples/dependabot.yml)) or Renovate.
 5. **AI fixes only on failure.** See [`docs/ai-fix-step.md`](docs/ai-fix-step.md) (design note).
 
@@ -131,3 +131,21 @@ When a rebase is requested, first dispatch the shared rebase workflow with the
 target `pr-numbers`. Only fall back to a manual rebase if the workflow cannot
 resolve the conflicts, with the owner's approval for any history replacement.
 Do not dispatch an untargeted bulk workflow for a targeted request.
+
+### Contributor (fork) PRs that conflict or can't be pushed to
+
+Never force-push (or push at all) to a contributor's fork. Instead:
+
+1. Create `supersede/pr-<N>` in the base repo from `main`, cherry-pick the
+   contributor's commits (keep their authorship) and resolve the conflict so both
+   `main`'s content and the contribution survive (for awesome lists, also mirror
+   the entry on the matching docs page).
+2. Credit the contributor with `Co-authored-by: <login> <<id>+<login>@users.noreply.github.com>`.
+3. Open a draft PR whose body **starts with `Supersedes #N`** and links the original.
+   Comment on #N with a link to the new PR. Do not close #N.
+4. When the new PR merges, [`close-superseded`](docs/actions/close-superseded.md)
+   closes #N with a thank-you comment. `Closes #N` does not close PRs.
+
+Repositories that opt in to `supersede-fork-prs: true` get steps 1–3 from the
+auto-rebase workflow; do them by hand only when the workflow reports a conflict
+that needs a person.

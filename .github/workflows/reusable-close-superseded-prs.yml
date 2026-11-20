@@ -1,0 +1,27 @@
+name: Reusable close superseded PRs
+
+# Call from a `pull_request_target: types: [closed]` (or `pull_request`) caller.
+# Only reads the event payload and the API; never checks out PR code.
+
+on:
+  workflow_call:
+    inputs:
+      comment:
+        description: 'Comment posted before closing; {merged} is the merged PR number, {author} the closed PR author'
+        type: string
+        default: 'Closed in favour of #{merged}, which superseded this PR and has been merged. Thank you for the contribution, @{author}!'
+
+permissions:
+  pull-requests: write
+
+jobs:
+  close:
+    name: close-superseded
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: 'Close PRs named in "Supersedes #N"'
+        uses: LLazyEmail/documentation-actions/actions/close-superseded@main
+        with:
+          comment: ${{ inputs.comment }}

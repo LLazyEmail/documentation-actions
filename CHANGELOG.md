@@ -5,6 +5,168 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.8.0] - 2026-11-20
+
+### Added
+
+- Added short-name alias reusable-pr-report that calls the existing PR status report workflow.
+- Added short-name alias reusable-readme-only that calls the existing comment-readme-only workflow.
+
+## [2.7.0] - 2026-11-20
+
+### Added
+
+- auto-rebase: opt-in `delegate-bot-rebase` input (action and `reusable-auto-rebase-prs.yml`). Renovate and Dependabot PRs that are behind or conflicting are handed back to the bot (Renovate's rebase checkbox is ticked, or `@dependabot rebase` is commented once per head commit) instead of a git rebase that cannot regenerate lockfiles. They are reported as delegated, not failed. Off by default.
+
+## [2.6.0] - 2026-11-18
+
+### Added
+
+- auto-rebase: opt-in `supersede-fork-prs` (with `supersede-union-paths` and `supersede-draft`). It replays conflicting or non-updatable fork PRs into a `supersede/pr-N` branch and opens a PR that starts with `Supersedes #N`. It never pushes to the fork. New `close-superseded` action and `reusable-close-superseded-prs.yml` workflow close the superseded PR when the new one merges.
+
+### Fixed
+
+- auto-rebase: comparing a PR with its base no longer fails with `Not Found` (it now uses `compareCommitsWithBasehead` with the head SHA). Behind PRs whose checks are red now get a branch update, and the "already up to date" skip works for every PR, fork PRs included.
+
+## [2.5.1] - 2026-11-17
+
+### Fixed
+
+- `readme-docs-sync-check` / `readme-sync`: with the opt-in `pass-if-links-in-docs: true`, a README-only PR that adds no links (prose or table edits, e.g. a CI section) now passes instead of failing with "README.md changed but no matching docs file was updated". Callers without the input are unchanged.
+
+## [2.5.0] - 2026-11-17
+
+### Added
+
+- Added the documented short-name aliases `reusable-test-deploy`, `reusable-readme-only` and `reusable-pr-report`, which docs/naming.md listed as available but did not exist, plus a test that every alias in docs/naming.md exists and accepts its long name's inputs.
+
+### Changed
+
+- Documented common agent mistakes and the caller permissions for each reusable workflow in docs/troubleshooting.md, and updated quickstart-for-agents to use short names and pin `@v2`.
+
+## [2.4.0] - 2026-11-16
+
+### Added
+
+- `auto-rebase`: in `rebase-conflicts` mode a PR is first compared with its base, and a branch that is not behind (`behind_by: 0`, e.g. it already merged `main`) is reported as "already up to date" instead of being replayed and failing on adjacent-line conflicts. New opt-in `merge-fallback` input (default `false`) on the action and `reusable-auto-rebase-prs.yml`: when the rebase conflicts but GitHub reports the PR as mergeable, request a non-force merge update (update-branch API) instead of failing.
+
+### Changed
+
+- Documented that docs-suite label-conflicts calls the existing conflicted-PRs workflow.
+
+## [2.3.0] - 2026-11-16
+
+### Added
+
+- Added reusable-docs-suite as the recommended one-call entry point for greenfield Docusaurus sites.
+
+### Changed
+
+- `docs/actions/docs-ci.md` now lists every input, the check name each job produces, and explains the skipped `inputs.npm-check-job-name` check (GitHub does not evaluate `name:` on a job skipped by `if:`) and why it is left unchanged. Docs only.
+- Made reusable-docs-suite the recommended starting point in llms.txt and updated the v2 migration checklist.
+- `skills/docusaurus-docs-site` covers gaps found while adopting real sites: bootstrapping an empty repo, lychee config loading and Docusaurus local-link flags, auto-changelog 2.7.0 `output` refusal, MD025 with front-matter titles, i18n internal links with `onBrokenLinks: throw`, and build-only sites without Pages.
+
+### Fixed
+
+- Fixed reusable-docs-suite to call the existing label-conflicted workflow and added the short alias reusable-label-conflicts.
+- `git-push-retry` (used by the changelog, docs-index and catalog-api reusable workflows) now rebases with `--autostash` when a push to `main` is rejected, so unrelated unstaged files no longer abort the retry with "cannot pull with rebase: You have unstaged changes". It also stops pulling and sleeping after the final failed attempt. Runs whose first push succeeds are unchanged.
+
+## [2.2.0] - 2026-11-16
+
+### Added
+
+- `lychee-link-check` and `reusable-link-check.yml` accept optional `docusaurus-root` and `config-file` inputs. When `docusaurus-root` is set, the check appends `--root-dir`, `--fallback-extensions md,mdx`, and `--index-files index.md,index.mdx,.` so Docusaurus root-relative and extensionless links resolve to Markdown sources. When `config-file` is set and the file exists, it passes `--config`. Both default to empty, so existing callers are unchanged.
+
+### Changed
+
+- Troubleshooting guide now covers failures seen on caller repos: auto-changelog 2.7.0 refusing an unsafe `.auto-changelog` `output`, lychee local-link noise on Docusaurus sites, `.lychee.toml` not being auto-loaded, fork PR comment 403s, auto-rebase skipping `unstable` PRs, the `pull_request_target` brownout, and org-owned fork PRs.
+
+## [2.1.0] - 2026-11-16
+
+### Added
+
+- `lychee-link-check` and `reusable-link-check.yml` accept an opt-in `update-existing-issue` input. When set with `create-issue`, the report updates the newest open issue with the same title instead of opening a new issue every run. Default `false` keeps the current behavior.
+
+## [2.0.1] - 2026-11-16
+
+### Fixed
+
+- auto-rebase now updates pull requests that GitHub marks `unstable` or `blocked` when they are behind their base branch. GitHub reports failing checks ahead of `behind`, so these PRs were skipped before. `clean` PRs are still left alone.
+
+## [2.0.0] - 2026-11-16
+
+### Changed
+
+- Prefer short-name aliases as the public surface. Long names remain supported but are deprecated and will be removed in v3. No behavior changes.
+- Updated the consumer adoption guide with a before/after example for short names + @v2.
+
+### Fixed
+
+- `reusable-comment-readme-only` and `reusable-readme-docs-sync-check` no longer crash when they cannot comment on a pull request from a fork, where the token is read-only. They log a warning and put the guidance in the job summary instead.
+
+## [1.18.1] - 2026-11-16
+
+### Added
+
+- Added draft v2 release notes and consumer adoption guide.
+
+### Changed
+
+- Updated llms.txt to prefer short names and reference the v2 release notes.
+
+## [1.18.0] - 2026-11-16
+
+### Added
+
+- `reusable-readme-docs-sync-check` (and the `reusable-readme-sync` alias) has a new opt-in input, `pass-if-links-in-docs`. When it is true, a PR that changes only `README.md` passes if every link it adds is already in a docs file matching `docs-glob`. It defaults to false, so existing callers behave as before.
+
+## [1.17.1] - 2026-11-16
+
+### Changed
+
+- Added deprecation comments at the top of long-named reusable workflows pointing to short aliases.
+- Updated key examples to prefer short-name aliases and pin @v1.
+- Updated naming guide and v2 migration checklist to mark all short-name aliases as available.
+- Marked examples and deprecation steps complete in the v2 migration checklist.
+
+## [1.17.0] - 2026-11-16
+
+### Added
+
+- Added docs/agent-short-names.md with a short checklist for agents preferring short workflow names.
+- Added docs/deprecation.md listing long workflow names and their preferred short aliases.
+- Added short-name alias reusable-entry-format that calls the existing awesome-entry-format-check workflow.
+- Added short-name alias reusable-image-check that calls the existing build-image-check workflow.
+- Added short-name alias reusable-thin-content that calls the existing thin-content-check workflow.
+
+## [1.16.4] - 2026-11-16
+
+### Changed
+
+- Updated examples guide to prefer short-name aliases.
+
+## [1.16.3] - 2026-11-16
+
+### Added
+
+- Added docs/v2-migration.md with a checklist for the short-name migration.
+
+### Changed
+
+- Updated llms.txt to prefer short-name aliases.
+
+## [1.16.2] - 2026-11-16
+
+### Fixed
+
+- The open PRs status report now lists issues with `issues.listForRepo`, fixing the 404 on scheduled runs. Scheduled auto-rebase sweeps now skip conflicting PRs with a warning instead of failing the run and commenting on the PR each time; targeted runs still fail on conflicts.
+
+## [1.16.1] - 2026-11-16
+
+### Fixed
+
+- Renovate no longer pins this repo's own actions to a commit SHA, and labels its PRs `dependencies` so the changelog check skips them.
+
 ## [1.16.0] - 2026-11-14
 
 ### Added
@@ -260,6 +422,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Reusable JSON API regenerate workflow (`reusable-catalog-api`).
 - Awesome-list checks: entry-format, duplicates, sorted-sections (`actions/awesome-list-checks`).
 
+[2.8.0]: https://github.com/LLazyEmail/documentation-actions/compare/v2.7.0...v2.8.0
+[2.7.0]: https://github.com/LLazyEmail/documentation-actions/compare/v2.6.0...v2.7.0
+[2.6.0]: https://github.com/LLazyEmail/documentation-actions/compare/v2.5.1...v2.6.0
+[2.5.1]: https://github.com/LLazyEmail/documentation-actions/compare/v2.5.0...v2.5.1
+[2.5.0]: https://github.com/LLazyEmail/documentation-actions/compare/v2.4.0...v2.5.0
+[2.4.0]: https://github.com/LLazyEmail/documentation-actions/compare/v2.3.0...v2.4.0
+[2.3.0]: https://github.com/LLazyEmail/documentation-actions/compare/v2.2.0...v2.3.0
+[2.2.0]: https://github.com/LLazyEmail/documentation-actions/compare/v2.1.0...v2.2.0
+[2.1.0]: https://github.com/LLazyEmail/documentation-actions/compare/v2.0.1...v2.1.0
+[2.0.1]: https://github.com/LLazyEmail/documentation-actions/compare/v2.0.0...v2.0.1
+[2.0.0]: https://github.com/LLazyEmail/documentation-actions/compare/v1.18.1...v2.0.0
+[1.18.1]: https://github.com/LLazyEmail/documentation-actions/compare/v1.18.0...v1.18.1
+[1.18.0]: https://github.com/LLazyEmail/documentation-actions/compare/v1.17.1...v1.18.0
+[1.17.1]: https://github.com/LLazyEmail/documentation-actions/compare/v1.17.0...v1.17.1
+[1.17.0]: https://github.com/LLazyEmail/documentation-actions/compare/v1.16.4...v1.17.0
+[1.16.4]: https://github.com/LLazyEmail/documentation-actions/compare/v1.16.3...v1.16.4
+[1.16.3]: https://github.com/LLazyEmail/documentation-actions/compare/v1.16.2...v1.16.3
+[1.16.2]: https://github.com/LLazyEmail/documentation-actions/compare/v1.16.1...v1.16.2
+[1.16.1]: https://github.com/LLazyEmail/documentation-actions/compare/v1.16.0...v1.16.1
 [1.16.0]: https://github.com/LLazyEmail/documentation-actions/compare/v1.15.2...v1.16.0
 [1.15.2]: https://github.com/LLazyEmail/documentation-actions/compare/v1.15.1...v1.15.2
 [1.15.1]: https://github.com/LLazyEmail/documentation-actions/compare/v1.15.0...v1.15.1

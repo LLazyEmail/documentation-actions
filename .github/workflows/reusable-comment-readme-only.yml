@@ -51,7 +51,7 @@ jobs:
 
       - name: Post guidance comment
         if: steps.files.outputs.readme_only == 'true'
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7.0.1
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7.1.0
         env:
           COMMENT_BODY: ${{ inputs.comment-body }}
         with:
@@ -65,10 +65,17 @@ jobs:
             });
             const existing = comments.find(c => c.body && c.body.includes(marker));
             if (!existing) {
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: context.issue.number,
-                body
-              });
+              try {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: context.issue.number,
+                  body
+                });
+              } catch (err) {
+                // PRs from forks get a read-only token; don't fail the run over a comment.
+                if (err.status !== 403) throw err;
+                core.warning('Could not comment (read-only token on a fork PR); guidance is in the job summary.');
+                await core.summary.addRaw(process.env.COMMENT_BODY).write();
+              }
             }

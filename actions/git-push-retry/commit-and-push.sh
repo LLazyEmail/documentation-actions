@@ -21,8 +21,14 @@ for attempt in $(seq 1 "${max}"); do
   if git push origin "${REMOTE_REF}"; then
     exit 0
   fi
+  if [ "${attempt}" -ge "${max}" ]; then
+    break
+  fi
   echo "push rejected (attempt ${attempt}); rebasing onto origin/main"
-  git pull --rebase origin main
+  # --autostash: generators (npm ci, LFS smudge, build output) can leave
+  # unstaged files that are not in COMMIT_PATHS; without it the rebase
+  # aborts with "cannot pull with rebase: You have unstaged changes".
+  git pull --rebase --autostash origin main
   sleep $((attempt * 2))
 done
 
