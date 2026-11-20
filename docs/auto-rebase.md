@@ -124,9 +124,22 @@ a new PR in the base repository instead:
    head and, if needed, the base branch, so the push is still a fast-forward and the
    PR diff shows exactly the contributor's current change. Files the contributor
    dropped are dropped. The commit keeps the contributor as author plus the
-   `Co-authored-by` trailer. The marker is updated, and #N and the supersede PR each get one
-   comment per head SHA. If the rewritten change no longer applies cleanly, nothing
-   is pushed and #N gets the "needs a maintainer" comment (see below).
+   `Co-authored-by` trailer. The marker is updated. If the rewritten change no longer
+   applies cleanly, nothing is pushed and #N gets the "needs a maintainer" comment (see below).
+6. Whenever new or rewritten contributor commits are synced (steps 4 and 5), the
+   contributor gets **one** thank-you comment on #N per head SHA, and the supersede PR
+   gets a short technical note. The thank-you text is the `supersede-sync-message`
+   input. Default:
+
+   > Thanks for the update @{author}! Your updated branch ({sha}) was synced into
+   > #{supersede}, and you're still credited as co-author. Nothing to do on your side;
+   > this PR will be closed when #{supersede} merges.
+
+   Placeholders: `{author}` (PR author login), `{sha}` (short contributor head SHA),
+   `{supersede}` (supersede PR number), `{number}` (original PR number). An empty value
+   uses the default. When the supersede PR is first created, #N gets the existing
+   welcome comment ("Thanks @author! … Nothing to do on your side …"). Runs that push
+   nothing post nothing.
 
 Conflicts: by default any cherry-pick conflict stops the flow for that PR. Nothing is
 pushed, the original PR gets **one** comment per head SHA with the conflicting files,

@@ -39,6 +39,15 @@ inputs:
   supersede-draft:
     description: Open supersede PRs as drafts
     default: 'true'
+  supersede-sync-message:
+    description: >-
+      With supersede-fork-prs, thank-you comment posted on the contributor's PR (once per
+      head SHA) when their new or rewritten commits are synced into the supersede PR.
+      Placeholders: {author}, {sha}, {supersede}, {number}. Empty uses the default.
+    default: >-
+      Thanks for the update @{author}! Your updated branch ({sha}) was synced into #{supersede},
+      and you're still credited as co-author. Nothing to do on your side; this PR will be closed
+      when #{supersede} merges.
   delegate-bot-rebase:
     description: >-
       Opt in. For Renovate and Dependabot PRs that are behind or conflicting, ask the bot
@@ -62,6 +71,7 @@ runs:
         SUPERSEDE_FORK_PRS: ${{ inputs.supersede-fork-prs }}
         SUPERSEDE_UNION_PATHS: ${{ inputs.supersede-union-paths }}
         SUPERSEDE_DRAFT: ${{ inputs.supersede-draft }}
+        SUPERSEDE_SYNC_MESSAGE: ${{ inputs.supersede-sync-message }}
         DELEGATE_BOT_REBASE: ${{ inputs.delegate-bot-rebase }}
       with:
         github-token: ${{ inputs.github-token }}
@@ -78,5 +88,6 @@ runs:
             supersedeForks: process.env.SUPERSEDE_FORK_PRS === 'true',
             supersedeUnionPaths: process.env.SUPERSEDE_UNION_PATHS,
             supersedeDraft: process.env.SUPERSEDE_DRAFT !== 'false',
+            supersedeSyncMessage: process.env.SUPERSEDE_SYNC_MESSAGE,
             delegateBots: process.env.DELEGATE_BOT_REBASE === 'true',
             token: process.env.REBASE_TOKEN});

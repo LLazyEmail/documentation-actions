@@ -111,6 +111,7 @@ or manual dispatch). Full guide: [docs/auto-rebase.md](docs/auto-rebase.md).
 | `supersede-fork-prs` | `false` | Fork PRs that conflict or can't be updated get a new base-repo PR (`supersede/pr-N`, body starts with `Supersedes #N`); never pushes to the fork. If the contributor force-pushes, their current change is synced in as one fast-forward commit. States that need a maintainer are commented on the PR and logged as warnings, not failures |
 | `supersede-union-paths` | empty | Globs (e.g. `README.md website/docs/**/*.md`) where an addition-only conflict keeps both sides |
 | `supersede-draft` | `true` | Open supersede PRs as drafts |
+| `supersede-sync-message` | thank-you text | With `supersede-fork-prs`, the comment posted on the contributor's PR (once per head SHA) when their new or rewritten commits are synced into the supersede PR. Placeholders `{author}`, `{sha}`, `{supersede}`, `{number}` |
 | `delegate-bot-rebase` | `false` | Renovate/Dependabot PRs that are behind or conflicting: ask the bot to rebase (tick Renovate's rebase checkbox, or comment `@dependabot rebase`) instead of a git rebase; logged as delegated, never a failure |
 | secret `AUTO_REBASE_TOKEN` | unset | Token so updated branches re-run CI |
 

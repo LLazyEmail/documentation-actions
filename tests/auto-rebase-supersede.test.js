@@ -229,6 +229,30 @@ const summary = {addHeading() {return this;}, addCodeBlock() {return this;}, add
     assert.deepEqual(posted.map(c => c.issue).sort(), [7, 99]);
     await run({github, context: {repo: {owner: 'o', repo: 'r'}}, core, numbers: '', supersedeForks: true, supersede: args => S.supersedePr({...args, git: syncGit})});
     assert.equal(posted.length, 2, 'sync comments are not repeated for the same head');
+    // Default thank-you on the contributor's PR; technical note on the supersede PR.
+    const thanks = posted.find(c => c.issue === 7).body;
+    assert.match(thanks, new RegExp(`^Thanks for the update @contrib! Your updated branch \\(${head4.slice(0, 7)}\\) was synced into #99, and you're still credited as co-author\\. Nothing to do on your side; this PR will be closed when #99 merges\\.`));
+    assert.match(thanks, new RegExp(`<!-- supersede-sync:#7 head:${head4} -->`));
+    assert.match(posted.find(c => c.issue === 99).body, /contributor rewrote their branch/);
+
+    // Fast-forward sync (new commits, not a rewrite) also thanks the contributor, with a custom template.
+    posted = [];
+    const ffGit = () => ({ok: true, pushed: true, message: 'Pushed 1 commit(s)'});
+    await run({github, context: {repo: {owner: 'o', repo: 'r'}}, core, numbers: '', supersedeForks: true,
+      supersedeSyncMessage: 'Merci {author}: {sha} is in #{supersede} (from #{number}).',
+      supersede: args => S.supersedePr({...args, git: ffGit})});
+    assert.equal(posted.find(c => c.issue === 7).body.split('\n')[0], `Merci contrib: ${head4.slice(0, 7)} is in #99 (from #7).`);
+    assert.match(posted.find(c => c.issue === 99).body, /new commits up to/);
+
+    // Nothing pushed (branch already matches): no comments.
+    posted = [];
+    await run({github, context: {repo: {owner: 'o', repo: 'r'}}, core, numbers: '', supersedeForks: true,
+      supersede: args => S.supersedePr({...args, git: () => ({ok: true, pushed: false, synced: true, message: 'already matches'})})});
+    assert.equal(posted.length, 0);
+
+    // Template rendering: empty falls back to the default; unknown placeholders are left alone.
+    assert.equal(S.renderSyncMessage('', {author: 'a', sha: 'abc1234', supersede: 2, number: 1}), S.DEFAULT_SYNC_MESSAGE.replace('{author}', 'a').replace('{sha}', 'abc1234').replaceAll('{supersede}', '2'));
+    assert.equal(S.renderSyncMessage('{author} {other} #{number}', {author: 'a', sha: 's', supersede: 2, number: 1}), 'a {other} #1');
     console.log('auto-rebase supersede tests: ok');
   } finally {
     fs.rmSync(root, {recursive: true, force: true});

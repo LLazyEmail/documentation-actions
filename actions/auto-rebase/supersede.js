@@ -13,6 +13,15 @@ const {execFileSync} = require('node:child_process');
 const LOGIN = /^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})$/;
 const branchFor = number => `supersede/pr-${number}`;
 const sourceMarker = (number, sha) => `<!-- supersede-of:#${number} head:${sha} -->`;
+// Default thank-you posted on the contributor's PR after their new or rewritten
+// commits are synced into the supersede PR. Placeholders: {author}, {sha}
+// (short head SHA), {supersede} (supersede PR number), {number} (original PR).
+const DEFAULT_SYNC_MESSAGE = "Thanks for the update @{author}! Your updated branch ({sha}) was synced into #{supersede}, and you're still credited as co-author. Nothing to do on your side; this PR will be closed when #{supersede} merges.";
+function renderSyncMessage(template, {author, sha, supersede, number}) {
+  const text = String(template || '').trim() || DEFAULT_SYNC_MESSAGE;
+  const values = {author, sha, supersede: String(supersede), number: String(number)};
+  return text.replace(/\{(author|sha|supersede|number)\}/g, (_, key) => values[key]);
+}
 const linkMarker = number => `<!-- supersede-link:#${number} -->`;
 
 function isFork(pr) {
@@ -172,7 +181,7 @@ function supersedeBody(pr, trailer) {
   ].join('\n');
 }
 
-async function supersedePr({github, repo, pr, token, draft = true, unionPaths = [], git = supersedeGit}) {
+async function supersedePr({github, repo, pr, token, draft = true, unionPaths = [], syncMessage = DEFAULT_SYNC_MESSAGE, git = supersedeGit}) {
   const branch = branchFor(pr.number);
   const trailer = coAuthorTrailer(pr.user);
   const trailers = trailer ? [trailer] : [];
@@ -191,7 +200,8 @@ async function supersedePr({github, repo, pr, token, draft = true, unionPaths = 
     if (!result.ok) return {...result, number: existing.number};
     await github.rest.pulls.update({...repo, pull_number: existing.number,
       body: (existing.body || '').replace(sourceMarker(source.number, source.sha), sourceMarker(pr.number, pr.head.sha))});
-    if (result.synced) await commentSync(github, repo, pr, existing.number);
+    // New commits (fast-forward) or a rewritten branch (sync commit) were pushed: thank the contributor.
+    if (result.pushed) await commentSync(github, repo, pr, existing.number, {rewritten: Boolean(result.synced), syncMessage});
     return {ok: true, number: existing.number, message: `Updated supersede PR #${existing.number}: ${result.message}`};
   }
   const result = git(pr, token, {unionPaths, trailers});
@@ -212,12 +222,17 @@ async function supersedePr({github, repo, pr, token, draft = true, unionPaths = 
   return {ok: true, number: created.number, message: `Superseded by #${created.number} (${result.message})`};
 }
 
-// After a rewritten contributor branch is synced, tell both PRs (once per head SHA).
-async function commentSync(github, repo, pr, number) {
+// After the contributor's new or rewritten commits are synced, comment on both PRs
+// (at most once per contributor head SHA): a templated thank-you on the original PR,
+// and a short technical note on the supersede PR.
+async function commentSync(github, repo, pr, number, {rewritten = false, syncMessage = DEFAULT_SYNC_MESSAGE} = {}) {
   const marker = `<!-- supersede-sync:#${pr.number} head:${pr.head.sha} -->`;
+  const sha = pr.head.sha.slice(0, 7);
   const notes = [
-    [pr.number, `Thanks for the update @${pr.user.login}! Your rewritten branch (${pr.head.sha.slice(0, 7)}) was synced into #${number}, with you still credited as co-author. Nothing to do on your side.`],
-    [number, `Synced with #${pr.number} after the contributor rewrote their branch: this PR now carries their current change (${pr.head.sha.slice(0, 7)}) as one sync commit on top of the earlier history (no force-push).`],
+    [pr.number, renderSyncMessage(syncMessage, {author: pr.user.login, sha, supersede: number, number: pr.number})],
+    [number, rewritten
+      ? `Synced with #${pr.number} after the contributor rewrote their branch: this PR now carries their current change (${sha}) as one sync commit on top of the earlier history (no force-push).`
+      : `Synced with #${pr.number}: the contributor's new commits up to ${sha} were added to this PR (fast-forward, no force-push).`],
   ];
   for (const [issue, text] of notes) {
     const comments = await github.paginate(github.rest.issues.listComments, {...repo, issue_number: issue, per_page: 100});
@@ -239,4 +254,4 @@ async function reportSupersedeFailure(github, repo, pr, result) {
   return true;
 }
 
-module.exports = {isFork, coAuthorTrailer, globToRegExp, parsePaths, readSource, supersedeGit, supersedeBody, supersedePr, reportSupersedeFailure, commentSync, branchFor};
+module.exports = {isFork, coAuthorTrailer, globToRegExp, parsePaths, readSource, supersedeGit, supersedeBody, supersedePr, reportSupersedeFailure, commentSync, renderSyncMessage, DEFAULT_SYNC_MESSAGE, branchFor};

@@ -132,12 +132,12 @@ async function reportConflicts(github, repo, pr, result) {
     body: `⚠️ Auto-rebase: this PR conflicts with \`${pr.base.ref}\` and needs a manual or opt-in rebase.\n\n${list}\n\n${marker}`});
   return true;
 }
-async function run({github, context, core, numbers = '', mode = false, report = false, mergeFallback = false, rebase = gitRebase, commentOnUpdate = true, token, successMessage = 'Automatically updated this PR branch.', forkBlockedMessage = 'Check fork write permissions.', supersedeForks = false, supersedeUnionPaths = '', supersedeDraft = true, supersede = supersedePr, delegateBots = false}) {
+async function run({github, context, core, numbers = '', mode = false, report = false, mergeFallback = false, rebase = gitRebase, commentOnUpdate = true, token, successMessage = 'Automatically updated this PR branch.', forkBlockedMessage = 'Check fork write permissions.', supersedeForks = false, supersedeUnionPaths = '', supersedeDraft = true, supersedeSyncMessage = '', supersede = supersedePr, delegateBots = false}) {
   const repo = {...context.repo};
   const unionPaths = parsePaths(supersedeUnionPaths);
   // Opt-in: replay a fork PR's commits into a base-repo branch and open a new PR.
   const supersedeOne = async pr => {
-    const result = await supersede({github, repo, pr, token, draft: supersedeDraft, unionPaths});
+    const result = await supersede({github, repo, pr, token, draft: supersedeDraft, unionPaths, ...(supersedeSyncMessage ? {syncMessage: supersedeSyncMessage} : {})});
     if (result.ok) return result.message;
     await reportSupersedeFailure(github, repo, pr, result);
     // A per-PR state that needs a maintainer (conflict, leftover branch) is commented on
