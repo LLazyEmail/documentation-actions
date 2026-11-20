@@ -111,6 +111,7 @@ or manual dispatch). Full guide: [docs/auto-rebase.md](docs/auto-rebase.md).
 | `supersede-fork-prs` | `false` | Fork PRs that conflict or can't be updated get a new base-repo PR (`supersede/pr-N`, body starts with `Supersedes #N`); never pushes to the fork |
 | `supersede-union-paths` | empty | Globs (e.g. `README.md website/docs/**/*.md`) where an addition-only conflict keeps both sides |
 | `supersede-draft` | `true` | Open supersede PRs as drafts |
+| `delegate-bot-rebase` | `false` | Renovate/Dependabot PRs that are behind or conflicting: ask the bot to rebase (tick Renovate's rebase checkbox, or comment `@dependabot rebase`) instead of a git rebase; logged as delegated, never a failure |
 | secret `AUTO_REBASE_TOKEN` | unset | Token so updated branches re-run CI |
 
 Pair `supersede-fork-prs` with

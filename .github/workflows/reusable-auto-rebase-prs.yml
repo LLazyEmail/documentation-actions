@@ -35,6 +35,10 @@ on:
         description: Open supersede PRs as drafts
         type: boolean
         default: true
+      delegate-bot-rebase:
+        description: 'Opt in. Ask Renovate/Dependabot to rebase their own behind or conflicting PRs instead of updating the branch'
+        type: boolean
+        default: false
     secrets:
       AUTO_REBASE_TOKEN:
         description: Optional PAT/App token so updated branches re-trigger CI (GITHUB_TOKEN pushes do not)
@@ -64,4 +68,5 @@ jobs:
           supersede-fork-prs: ${{ inputs.supersede-fork-prs }}
           supersede-union-paths: ${{ inputs.supersede-union-paths }}
           supersede-draft: ${{ inputs.supersede-draft }}
+          delegate-bot-rebase: ${{ inputs.delegate-bot-rebase }}
           github-token: ${{ secrets.AUTO_REBASE_TOKEN || github.token }}

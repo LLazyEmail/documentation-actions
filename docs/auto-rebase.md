@@ -148,6 +148,53 @@ jobs:
 The new inputs need the DA release that adds them. On an older `@v2` tag,
 passing them fails the caller with an invalid-input error.
 
+## Renovate and Dependabot PRs: delegate the rebase
+
+A plain git rebase is the wrong tool for dependency-bot PRs. A typical case
+(LLazyEmail/markdown-regex, November 2026): four Renovate PRs each added lines
+to `minimumReleaseAgeExclude` in `pnpm-workspace.yaml`. `main` already had every
+one of those lines, in a different position, so each replay stopped with
+`Rebase conflicts (aborted): pnpm-workspace.yaml` and the run went red. Even
+past that file, `pnpm-lock.yaml` has to be regenerated, not merged line by line.
+
+`delegate-bot-rebase: true` (opt-in, off by default) asks the bot to do it:
+
+| PR author | What the action does |
+| --- | --- |
+| Renovate (`renovate[bot]`, or any login containing `renovate`, with the `<!-- rebase-check -->` checkbox in the body) | Ticks the "rebase/retry" checkbox. Only that checkbox changes; the rest of the body is untouched. If it is already ticked, nothing is edited. |
+| Dependabot (`dependabot[bot]`) | Comments `@dependabot rebase`, once per head commit (a later sweep sees the earlier command and waits). |
+
+When it applies: the PR is `dirty` (conflicting), `behind`, or `unstable`/`blocked`
+and behind its base. Behind bot PRs are delegated too, because a merge commit
+from `github-actions[bot]` makes Renovate treat the branch as edited and stop
+updating it. Clean bot PRs are left alone.
+
+The result is logged as `Delegated to Renovate: ...` / `Delegated to Dependabot: ...`.
+A delegated PR is never counted as a failure and gets no "branch updated"
+comment; the bot pushes the rebase itself (Renovate on its next run, usually
+within minutes for the hosted app). It works in scheduled sweeps,
+`report-conflicts` sweeps (instead of the conflict comment) and targeted
+dispatches with `rebase-conflicts: true`.
+
+Fallback: a Renovate PR without the checkbox (for example `rebaseWhen: never`)
+and PRs from anyone else go through the normal path unchanged.
+
+Dependabot only acts on commands from accounts with write access. If it ignores
+comments from `github-actions[bot]`, set the `AUTO_REBASE_TOKEN` secret.
+
+```yaml
+jobs:
+  rebase:
+    uses: LLazyEmail/documentation-actions/.github/workflows/reusable-auto-rebase-prs.yml@v2
+    with:
+      report-conflicts: true
+      delegate-bot-rebase: true
+    secrets: inherit
+```
+
+Needs the DA release that adds the input. On an older `@v2` tag, passing it
+fails the caller with an invalid-input error.
+
 ## Close superseded PRs when the new PR merges
 
 GitHub's `Closes #N` keyword closes **issues**, not pull requests. To close the
