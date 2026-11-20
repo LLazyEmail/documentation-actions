@@ -81,6 +81,43 @@ async function behindBy(github, repo, pr, core) {
     return null;
   }
 }
+// Opt-in "delegate-bot-rebase": Renovate and Dependabot regenerate lockfiles and
+// their own config edits when they rebase, which a plain git rebase cannot do
+// (both sides adding the same lines conflicts). Ask the bot to rebase instead.
+const RENOVATE_UNCHECKED = /^(\s*[-*] )\[ \](\s*<!-- rebase-check -->)/m;
+const RENOVATE_CHECKED = /^\s*[-*] \[[xX]\]\s*<!-- rebase-check -->/m;
+const DEPENDABOT_COMMAND = '@dependabot rebase';
+function botKind(pr) {
+  const login = (pr.user && pr.user.login) || '';
+  if (/^dependabot(-preview)?\[bot\]$/.test(login)) return 'dependabot';
+  if (/renovate/i.test(login) && /<!-- rebase-check -->/.test(pr.body || '')) return 'renovate';
+  return null;
+}
+// Returns a summary message, or null when the bot offers no rebase hook
+// (the caller then falls back to the normal update/rebase path).
+async function delegateBotRebase(github, repo, pr) {
+  const kind = botKind(pr);
+  if (kind === 'renovate') {
+    const body = pr.body || '';
+    if (RENOVATE_CHECKED.test(body)) return 'Delegated to Renovate: rebase checkbox already ticked; waiting for Renovate';
+    if (!RENOVATE_UNCHECKED.test(body)) return null;
+    // Only the checkbox changes; the rest of the body is left byte-for-byte.
+    await github.rest.pulls.update({...repo, pull_number: pr.number, body: body.replace(RENOVATE_UNCHECKED, '$1[x]$2')});
+    return 'Delegated to Renovate: ticked the rebase/retry checkbox; Renovate rebases and regenerates the lockfile on its next run';
+  }
+  if (kind === 'dependabot') {
+    // One command per head commit, so scheduled sweeps do not repeat it.
+    const {data: commit} = await github.rest.git.getCommit({...repo, commit_sha: pr.head.sha});
+    const since = Date.parse(commit.committer && commit.committer.date) || 0;
+    const comments = await github.paginate(github.rest.issues.listComments, {...repo, issue_number: pr.number, per_page: 100});
+    if (comments.some(c => (c.body || '').trim() === DEPENDABOT_COMMAND && Date.parse(c.created_at) >= since)) {
+      return 'Delegated to Dependabot: rebase already requested for this head; waiting for Dependabot';
+    }
+    await github.rest.issues.createComment({...repo, issue_number: pr.number, body: DEPENDABOT_COMMAND});
+    return 'Delegated to Dependabot: commented "@dependabot rebase"';
+  }
+  return null;
+}
 const MARKER = sha => `<!-- auto-rebase-conflicts:${sha} -->`;
 // One comment per head SHA, so push-triggered runs do not repeat themselves.
 async function reportConflicts(github, repo, pr, result) {
@@ -95,7 +132,7 @@ async function reportConflicts(github, repo, pr, result) {
     body: `⚠️ Auto-rebase: this PR conflicts with \`${pr.base.ref}\` and needs a manual or opt-in rebase.\n\n${list}\n\n${marker}`});
   return true;
 }
-async function run({github, context, core, numbers = '', mode = false, report = false, mergeFallback = false, rebase = gitRebase, commentOnUpdate = true, token, successMessage = 'Automatically updated this PR branch.', forkBlockedMessage = 'Check fork write permissions.', supersedeForks = false, supersedeUnionPaths = '', supersedeDraft = true, supersede = supersedePr}) {
+async function run({github, context, core, numbers = '', mode = false, report = false, mergeFallback = false, rebase = gitRebase, commentOnUpdate = true, token, successMessage = 'Automatically updated this PR branch.', forkBlockedMessage = 'Check fork write permissions.', supersedeForks = false, supersedeUnionPaths = '', supersedeDraft = true, supersede = supersedePr, delegateBots = false}) {
   const repo = {...context.repo};
   const unionPaths = parsePaths(supersedeUnionPaths);
   // Opt-in: replay a fork PR's commits into a base-repo branch and open a new PR.
@@ -115,6 +152,15 @@ async function run({github, context, core, numbers = '', mode = false, report = 
     try {
       const pr = await details(github, {...repo, pull_number: number});
       if (pr.state !== 'open') throw new Error('PR is not open');
+      if (delegateBots && botKind(pr) && (['dirty', 'behind'].includes(pr.mergeable_state) || await behindWhileFailing(github, repo, pr, core))) {
+        // Delegated PRs are neither updated nor failed; the bot pushes the rebase itself.
+        const delegated = await delegateBotRebase(github, repo, pr);
+        if (delegated) {
+          core.info(`#${number}: ${delegated}`);
+          await core.summary.addHeading(`#${number}`, 3).addCodeBlock(delegated, 'text').write();
+          continue;
+        }
+      }
       if (pr.mergeable_state === 'behind' || await behindWhileFailing(github, repo, pr, core)) {
         try {
           await github.rest.pulls.updateBranch({...repo, pull_number: number, expected_head_sha: pr.head.sha});
@@ -184,4 +230,4 @@ async function run({github, context, core, numbers = '', mode = false, report = 
   }
   if (failed) core.setFailed('One or more PR updates failed; see per-PR summary');
 }
-module.exports = {parseNumbers, details, gitRebase, reportConflicts, behindWhileFailing, behindBy, compare, run};
+module.exports = {botKind, delegateBotRebase, parseNumbers, details, gitRebase, reportConflicts, behindWhileFailing, behindBy, compare, run};

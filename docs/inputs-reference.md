@@ -27,6 +27,7 @@ Common inputs used across documentation-actions composites and reusable workflow
 | `supersede-fork-prs` | `false` / `true` | auto-rebase, reusable-auto-rebase-prs | Fork PRs that conflict or can't be updated: replay into `supersede/pr-N` and open a PR starting with `Supersedes #N` |
 | `supersede-union-paths` | `''` / `README.md website/docs/**/*.md` | auto-rebase, reusable-auto-rebase-prs | Addition-only conflicts in these globs keep both sides |
 | `supersede-draft` | `true` / `false` | auto-rebase, reusable-auto-rebase-prs | Open supersede PRs as drafts |
+| `delegate-bot-rebase` | `false` / `true` | auto-rebase, reusable-auto-rebase-prs | Renovate/Dependabot PRs that are behind or conflicting: ask the bot to rebase instead of updating the branch |
 | `comment` | thank-you text | close-superseded, reusable-close-superseded-prs | Comment before closing; `{merged}` and `{author}` placeholders |
 
 Always copy from `examples/` and adjust only what differs. Prefer `@v1` (or full SHA) after release.

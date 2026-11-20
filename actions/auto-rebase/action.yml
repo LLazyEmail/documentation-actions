@@ -39,6 +39,12 @@ inputs:
   supersede-draft:
     description: Open supersede PRs as drafts
     default: 'true'
+  delegate-bot-rebase:
+    description: >-
+      Opt in. For Renovate and Dependabot PRs that are behind or conflicting, ask the bot
+      to rebase (tick Renovate's rebase checkbox / comment "@dependabot rebase") instead of
+      updating the branch; reported as delegated, never as a failure.
+    default: 'false'
 runs:
   using: composite
   steps:
@@ -56,6 +62,7 @@ runs:
         SUPERSEDE_FORK_PRS: ${{ inputs.supersede-fork-prs }}
         SUPERSEDE_UNION_PATHS: ${{ inputs.supersede-union-paths }}
         SUPERSEDE_DRAFT: ${{ inputs.supersede-draft }}
+        DELEGATE_BOT_REBASE: ${{ inputs.delegate-bot-rebase }}
       with:
         github-token: ${{ inputs.github-token }}
         script: |
@@ -71,4 +78,5 @@ runs:
             supersedeForks: process.env.SUPERSEDE_FORK_PRS === 'true',
             supersedeUnionPaths: process.env.SUPERSEDE_UNION_PATHS,
             supersedeDraft: process.env.SUPERSEDE_DRAFT !== 'false',
+            delegateBots: process.env.DELEGATE_BOT_REBASE === 'true',
             token: process.env.REBASE_TOKEN});
