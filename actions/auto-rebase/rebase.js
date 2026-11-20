@@ -2,6 +2,7 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const {execFileSync} = require('node:child_process');
+const {isFork, parsePaths, supersedePr, reportSupersedeFailure} = require('./supersede');
 
 function parseNumbers(value) {
   if (!value.trim()) return null;
@@ -48,6 +49,75 @@ function gitRebase(pr, token, {push = true} = {}) {
     return {ok: true, message: 'Rebased onto base and pushed with an explicit SHA lease'};
   } finally { fs.rmSync(dir, {recursive: true, force: true}); }
 }
+// Compare the PR head with its base branch. Uses compareCommitsWithBasehead:
+// in the Octokit bundled with actions/github-script v7, compareCommits expects
+// separate `base` and `head` params, so passing `basehead` to it requested
+// `/compare/...` and always returned 404 Not Found. Comparing against the head
+// SHA (not `owner:branch`) also works for fork PRs and branch names with "/".
+async function compare(github, repo, pr) {
+  const {data} = await github.rest.repos.compareCommitsWithBasehead({...repo, basehead: `${pr.base.ref}...${pr.head.sha}`});
+  return data;
+}
+// GitHub reports "unstable" (failing checks) or "blocked" ahead of "behind", so a PR that
+// is behind its base and also failing is never marked "behind". Compare directly for those.
+async function behindWhileFailing(github, repo, pr, core) {
+  if (!['unstable', 'blocked'].includes(pr.mergeable_state)) return false;
+  try {
+    return (await compare(github, repo, pr)).behind_by > 0;
+  } catch (err) {
+    core.warning(`#${pr.number}: could not compare with ${pr.base.ref}: ${err.message}`);
+    return false;
+  }
+}
+// Before a git rebase, ask GitHub whether the head already contains the base.
+// A PR whose branch has main merged in can still fail a replay-style rebase on
+// adjacent lines, so "behind_by: 0" means there is nothing to do. On API errors
+// return null and keep the previous behavior (attempt the rebase).
+async function behindBy(github, repo, pr, core) {
+  try {
+    return (await compare(github, repo, pr)).behind_by;
+  } catch (err) {
+    core.warning(`#${pr.number}: could not compare with ${pr.base.ref}: ${err.message}`);
+    return null;
+  }
+}
+// Opt-in "delegate-bot-rebase": Renovate and Dependabot regenerate lockfiles and
+// their own config edits when they rebase, which a plain git rebase cannot do
+// (both sides adding the same lines conflicts). Ask the bot to rebase instead.
+const RENOVATE_UNCHECKED = /^(\s*[-*] )\[ \](\s*<!-- rebase-check -->)/m;
+const RENOVATE_CHECKED = /^\s*[-*] \[[xX]\]\s*<!-- rebase-check -->/m;
+const DEPENDABOT_COMMAND = '@dependabot rebase';
+function botKind(pr) {
+  const login = (pr.user && pr.user.login) || '';
+  if (/^dependabot(-preview)?\[bot\]$/.test(login)) return 'dependabot';
+  if (/renovate/i.test(login) && /<!-- rebase-check -->/.test(pr.body || '')) return 'renovate';
+  return null;
+}
+// Returns a summary message, or null when the bot offers no rebase hook
+// (the caller then falls back to the normal update/rebase path).
+async function delegateBotRebase(github, repo, pr) {
+  const kind = botKind(pr);
+  if (kind === 'renovate') {
+    const body = pr.body || '';
+    if (RENOVATE_CHECKED.test(body)) return 'Delegated to Renovate: rebase checkbox already ticked; waiting for Renovate';
+    if (!RENOVATE_UNCHECKED.test(body)) return null;
+    // Only the checkbox changes; the rest of the body is left byte-for-byte.
+    await github.rest.pulls.update({...repo, pull_number: pr.number, body: body.replace(RENOVATE_UNCHECKED, '$1[x]$2')});
+    return 'Delegated to Renovate: ticked the rebase/retry checkbox; Renovate rebases and regenerates the lockfile on its next run';
+  }
+  if (kind === 'dependabot') {
+    // One command per head commit, so scheduled sweeps do not repeat it.
+    const {data: commit} = await github.rest.git.getCommit({...repo, commit_sha: pr.head.sha});
+    const since = Date.parse(commit.committer && commit.committer.date) || 0;
+    const comments = await github.paginate(github.rest.issues.listComments, {...repo, issue_number: pr.number, per_page: 100});
+    if (comments.some(c => (c.body || '').trim() === DEPENDABOT_COMMAND && Date.parse(c.created_at) >= since)) {
+      return 'Delegated to Dependabot: rebase already requested for this head; waiting for Dependabot';
+    }
+    await github.rest.issues.createComment({...repo, issue_number: pr.number, body: DEPENDABOT_COMMAND});
+    return 'Delegated to Dependabot: commented "@dependabot rebase"';
+  }
+  return null;
+}
 const MARKER = sha => `<!-- auto-rebase-conflicts:${sha} -->`;
 // One comment per head SHA, so push-triggered runs do not repeat themselves.
 async function reportConflicts(github, repo, pr, result) {
@@ -62,9 +132,18 @@ async function reportConflicts(github, repo, pr, result) {
     body: `⚠️ Auto-rebase: this PR conflicts with \`${pr.base.ref}\` and needs a manual or opt-in rebase.\n\n${list}\n\n${marker}`});
   return true;
 }
-async function run({github, context, core, numbers = '', mode = false, report = false, commentOnUpdate = true, token, successMessage = 'Automatically updated this PR branch.', forkBlockedMessage = 'Check fork write permissions.'}) {
+async function run({github, context, core, numbers = '', mode = false, report = false, mergeFallback = false, rebase = gitRebase, commentOnUpdate = true, token, successMessage = 'Automatically updated this PR branch.', forkBlockedMessage = 'Check fork write permissions.', supersedeForks = false, supersedeUnionPaths = '', supersedeDraft = true, supersede = supersedePr, delegateBots = false}) {
   const repo = {...context.repo};
-  const selected = parseNumbers(numbers) || (await github.paginate(github.rest.pulls.list, {...repo, state: 'open', per_page: 100})).map(pr => pr.number);
+  const unionPaths = parsePaths(supersedeUnionPaths);
+  // Opt-in: replay a fork PR's commits into a base-repo branch and open a new PR.
+  const supersedeOne = async pr => {
+    const result = await supersede({github, repo, pr, token, draft: supersedeDraft, unionPaths});
+    if (result.ok) return result.message;
+    await reportSupersedeFailure(github, repo, pr, result);
+    throw new Error(`Supersede failed: ${result.message}`);
+  };
+  const explicit = parseNumbers(numbers);
+  const selected = explicit || (await github.paginate(github.rest.pulls.list, {...repo, state: 'open', per_page: 100})).map(pr => pr.number);
   let failed = false;
   await core.summary.addHeading('PR branch updates').write();
   for (const number of selected) {
@@ -73,10 +152,29 @@ async function run({github, context, core, numbers = '', mode = false, report = 
     try {
       const pr = await details(github, {...repo, pull_number: number});
       if (pr.state !== 'open') throw new Error('PR is not open');
-      if (pr.mergeable_state === 'behind') {
-        await github.rest.pulls.updateBranch({...repo, pull_number: number, expected_head_sha: pr.head.sha});
-        message = 'Branch update requested (merge-base update, not git rebase)';
-        updated = true;
+      if (delegateBots && botKind(pr) && (['dirty', 'behind'].includes(pr.mergeable_state) || await behindWhileFailing(github, repo, pr, core))) {
+        // Delegated PRs are neither updated nor failed; the bot pushes the rebase itself.
+        const delegated = await delegateBotRebase(github, repo, pr);
+        if (delegated) {
+          core.info(`#${number}: ${delegated}`);
+          await core.summary.addHeading(`#${number}`, 3).addCodeBlock(delegated, 'text').write();
+          continue;
+        }
+      }
+      if (pr.mergeable_state === 'behind' || await behindWhileFailing(github, repo, pr, core)) {
+        try {
+          await github.rest.pulls.updateBranch({...repo, pull_number: number, expected_head_sha: pr.head.sha});
+          message = 'Branch update requested (merge-base update, not git rebase)';
+          updated = true;
+        } catch (err) {
+          // The token cannot write to the fork (or edits from maintainers are off).
+          if (!(supersedeForks && isFork(pr))) throw err;
+          message = `Branch update failed (${err.message}); ${await supersedeOne(pr)}`;
+        }
+      } else if (pr.mergeable_state === 'dirty' && supersedeForks && isFork(pr)) {
+        // A conflicting fork PR can neither be rebased (no push access to forks)
+        // nor merge-updated (GitHub refuses conflicts), so supersede it.
+        message = await supersedeOne(pr);
       } else if (pr.mergeable_state === 'dirty') {
         if (!mode && report) {
           const trial = gitRebase(pr, token, {push: false});
@@ -86,11 +184,34 @@ async function run({github, context, core, numbers = '', mode = false, report = 
           await core.summary.addHeading(`#${number}`, 3).addCodeBlock(message, 'text').write();
           continue;
         }
+        if (!mode && !explicit) {
+          // Scheduled sweeps skip conflicting PRs quietly instead of failing the run
+          // and commenting on the same PR every few hours.
+          message = 'Skipped: conflicts need a manual rebase or a dispatch with rebase-conflicts: true';
+          core.warning(`#${number}: ${message}`);
+          core.info(`#${number}: ${message}`);
+          await core.summary.addHeading(`#${number}`, 3).addCodeBlock(message, 'text').write();
+          continue;
+        }
         if (!mode) throw new Error('Conflicts require opt-in rebase-conflicts mode');
-        const result = gitRebase(pr, token);
-        if (!result.ok) throw new Error(result.message);
-        message = result.message;
-        updated = true;
+        if (await behindBy(github, repo, pr, core) === 0) {
+          message = `Already up to date with ${pr.base.ref}; no rebase needed`;
+        } else {
+          const result = rebase(pr, token);
+          if (result.ok) {
+            message = result.message;
+            updated = true;
+          } else {
+            if (!mergeFallback) throw new Error(result.message);
+            // Opt-in: rebase replay conflicted, but GitHub may still be able to merge the
+            // base into the branch. Re-read mergeability and do a non-force merge update.
+            const fresh = await details(github, {...repo, pull_number: number});
+            if (fresh.mergeable !== true) throw new Error(`${result.message}\nMerge fallback skipped: GitHub reports the PR as not mergeable`);
+            await github.rest.pulls.updateBranch({...repo, pull_number: number, expected_head_sha: fresh.head.sha});
+            message = `Rebase conflicted (${(result.files || []).join(', ') || 'see logs'}); merge-fallback requested a merge update (no force-push)`;
+            updated = true;
+          }
+        }
       } else {
         message = `No update required (state: ${pr.mergeable_state})`;
       }
@@ -109,4 +230,4 @@ async function run({github, context, core, numbers = '', mode = false, report = 
   }
   if (failed) core.setFailed('One or more PR updates failed; see per-PR summary');
 }
-module.exports = {parseNumbers, details, gitRebase, reportConflicts, run};
+module.exports = {botKind, delegateBotRebase, parseNumbers, details, gitRebase, reportConflicts, behindWhileFailing, behindBy, compare, run};

@@ -14,6 +14,8 @@ Update behind open PR branches (and optionally rebase conflicts).
 - `rebase-conflicts` — opt-in true rebase (with SHA lease)
 - `report-conflicts` — comment conflicting files once per head SHA instead of failing
 - `comment-on-update` — set `false` on push runs to skip update comments
+- `merge-fallback` — with `rebase-conflicts`, fall back to a non-force merge update when the rebase conflicts but GitHub reports the PR as mergeable (default `false`)
+- `delegate-bot-rebase` — Renovate/Dependabot PRs that are behind or conflicting are handed back to the bot (Renovate rebase checkbox ticked, or `@dependabot rebase`) instead of a git rebase; reported as delegated, not failed (default `false`). Details: [docs/auto-rebase.md](../auto-rebase.md#renovate-and-dependabot-prs-delegate-the-rebase)
 - secret `AUTO_REBASE_TOKEN` — optional token so updated branches re-run CI
 
 ## Example
@@ -39,3 +41,5 @@ jobs:
 
 - Requires `contents: write` + `pull-requests: write`.
 - Conflict rebases are opt-in and abort on failure with comments.
+- Before any conflict rebase the action compares the branch with its base (`compareCommitsWithBasehead`, `<base>...<head SHA>`); a branch that is not behind its base is reported as already up to date and left alone.
+- Opt-in `supersede-fork-prs` replays conflicting or non-updatable fork PRs into `supersede/pr-<N>` and opens a PR starting with `Supersedes #N` (never pushes to the fork, never force-pushes). Pair it with [`close-superseded`](close-superseded.md). Details: [docs/auto-rebase.md](../auto-rebase.md#contributor-fork-prs-supersede-instead-of-rebase).

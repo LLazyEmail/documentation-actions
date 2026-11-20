@@ -40,7 +40,7 @@ Start here:
 - [docs/examples-guide.md](docs/examples-guide.md) — when to copy which example
 - [docs/inputs-reference.md](docs/inputs-reference.md) — common inputs table
 - [docs/pinning.md](docs/pinning.md) — SHA and `@v1` rules
-- [docs/troubleshooting.md](docs/troubleshooting.md) — symptom / cause / fix
+- [docs/troubleshooting.md](docs/troubleshooting.md) — symptom / cause / fix, common agent mistakes, and the permissions each caller must grant
 - [skills/](skills/) — focused checklists (see [skills/README.md](skills/README.md))
 - Copy from [examples/](examples/) — never invent job YAML from scratch
 
@@ -59,7 +59,7 @@ flowchart TD
 - **Composite actions** for shared steps inside custom jobs.
 - **Examples** are the source of truth for thin callers.
 - Inventory is append-only in [docs/actions-index.md](docs/actions-index.md).
-- Prefer short-name aliases when available (`reusable-pages-deploy`, `reusable-readme-sync`). See [docs/naming.md](docs/naming.md).
+- Prefer short-name aliases: all nine listed in [docs/naming.md](docs/naming.md) exist (`reusable-pages-deploy`, `reusable-test-deploy`, `reusable-readme-sync`, `reusable-readme-only`, `reusable-label-conflicts`, `reusable-pr-report`, `reusable-thin-content`, `reusable-image-check`, `reusable-entry-format`). Each accepts the same inputs as its long name, and `tests/short-name-aliases.test.sh` keeps it that way.
 
 ## Quick start
 
@@ -83,7 +83,42 @@ More callers live in [examples/](examples/).
 
 See the append-only inventory: [docs/actions-index.md](docs/actions-index.md).
 
+### Commit-back workflows (changelog, docs-index, catalog-api)
+
+These run on push to `main`, regenerate a file, and commit it back to `main`.
+Several can fire after the same merge, so they push through
+[`git-push-retry`](docs/actions/git-push-retry.md): if `main` moved, the push is
+rejected, the job runs `git pull --rebase --autostash origin main`, and tries
+again (`max-attempts`, default 5). `--autostash` keeps unrelated unstaged files
+(LFS-smudged media, build output) from aborting the retry. Callers need
+`permissions: contents: write`; nothing else to configure. The workflows use the
+action at `@main`, so fixes to it apply without a new release.
+
 Detailed reference: [docs/actions/](docs/actions/).
+
+### Auto-rebase open PRs
+
+`reusable-auto-rebase-prs.yml` keeps open PRs current (schedule, push to `main`
+or manual dispatch). Full guide: [docs/auto-rebase.md](docs/auto-rebase.md).
+
+| Input | Default | What it does |
+| --- | --- | --- |
+| `pr-numbers` | empty (all open PRs) | Comma-separated PRs to update |
+| `rebase-conflicts` | `false` | Real git rebase + force-push with SHA lease for conflicting PRs (owner approval). Skips PRs that are already up to date with `main` |
+| `report-conflicts` | `false` | Without `rebase-conflicts`, one comment per head SHA listing conflicting files |
+| `comment-on-update` | `true` | Comment after a successful update |
+| `merge-fallback` | `false` | With `rebase-conflicts`, do a non-force merge update when the rebase conflicts but GitHub says the PR is mergeable |
+| `supersede-fork-prs` | `false` | Fork PRs that conflict or can't be updated get a new base-repo PR (`supersede/pr-N`, body starts with `Supersedes #N`); never pushes to the fork |
+| `supersede-union-paths` | empty | Globs (e.g. `README.md website/docs/**/*.md`) where an addition-only conflict keeps both sides |
+| `supersede-draft` | `true` | Open supersede PRs as drafts |
+| `delegate-bot-rebase` | `false` | Renovate/Dependabot PRs that are behind or conflicting: ask the bot to rebase (tick Renovate's rebase checkbox, or comment `@dependabot rebase`) instead of a git rebase; logged as delegated, never a failure |
+| secret `AUTO_REBASE_TOKEN` | unset | Token so updated branches re-run CI |
+
+Pair `supersede-fork-prs` with
+[`reusable-close-superseded-prs.yml`](.github/workflows/reusable-close-superseded-prs.yml)
+([example](examples/close-superseded-prs.yml)): when a PR whose body says
+`Supersedes #N` merges, #N is closed with a thank-you comment (GitHub's
+`Closes #N` keyword does not close PRs).
 
 ## Skills
 

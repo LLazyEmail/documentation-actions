@@ -1,0 +1,80 @@
+name: Reusable thin content (short name)
+
+# Short-name alias for reusable-thin-content-check.yml.
+
+on:
+  workflow_call:
+    inputs:
+      build-dir:
+        type: string
+        required: false
+        default: 'build'
+      base-url:
+        type: string
+        required: false
+        default: '/'
+      working-directory:
+        type: string
+        required: false
+        default: '.'
+      node-version:
+        type: string
+        required: false
+        default: '22'
+      cache-dependency-path:
+        type: string
+        required: false
+        default: 'package-lock.json'
+      install-command:
+        type: string
+        required: false
+        default: 'npm ci'
+      build-command:
+        type: string
+        required: false
+        default: 'npm run build'
+      prebuild-command:
+        type: string
+        required: false
+        default: ''
+      lfs:
+        type: boolean
+        required: false
+        default: false
+      site-url:
+        type: string
+        required: false
+        default: ''
+      min-words:
+        type: number
+        required: false
+        default: 150
+      allowlist:
+        type: string
+        required: false
+        default: ''
+      mode:
+        type: string
+        required: false
+        default: 'warn'
+
+permissions:
+  contents: read
+
+jobs:
+  thin-content:
+    uses: ./.github/workflows/reusable-thin-content-check.yml
+    with:
+      build-dir: ${{ inputs.build-dir }}
+      base-url: ${{ inputs.base-url }}
+      working-directory: ${{ inputs.working-directory }}
+      node-version: ${{ inputs.node-version }}
+      cache-dependency-path: ${{ inputs.cache-dependency-path }}
+      install-command: ${{ inputs.install-command }}
+      build-command: ${{ inputs.build-command }}
+      prebuild-command: ${{ inputs.prebuild-command }}
+      lfs: ${{ inputs.lfs }}
+      site-url: ${{ inputs.site-url }}
+      min-words: ${{ inputs.min-words }}
+      allowlist: ${{ inputs.allowlist }}
+      mode: ${{ inputs.mode }}
