@@ -6,20 +6,45 @@
     "schedule:weekly"
   ],
   "timezone": "Europe/Kyiv",
-  "schedule": ["before 6am on Monday"],
+  "schedule": [
+    "before 6am on Monday"
+  ],
   "packageRules": [
     {
+      "description": "Never pin this repo's own actions; reusable workflows call them at @main on purpose",
+      "matchManagers": [
+        "github-actions"
+      ],
+      "matchPackageNames": [
+        "LLazyEmail/documentation-actions",
+        "/^LLazyEmail\\/documentation-actions\\//"
+      ],
+      "enabled": false
+    },
+    {
       "description": "Automerge GitHub Actions digests, pins, patches, minors",
-      "matchManagers": ["github-actions"],
-      "matchUpdateTypes": ["digest", "pin", "patch", "minor"],
+      "matchManagers": [
+        "github-actions"
+      ],
+      "matchUpdateTypes": [
+        "digest",
+        "pin",
+        "patch",
+        "minor"
+      ],
       "automerge": true,
       "minimumReleaseAge": "3 days",
       "groupName": "GitHub Actions (non-major)"
     },
     {
       "description": "Major updates stay manual",
-      "matchUpdateTypes": ["major"],
+      "matchUpdateTypes": [
+        "major"
+      ],
       "automerge": false
     }
+  ],
+  "labels": [
+    "dependencies"
   ]
 }

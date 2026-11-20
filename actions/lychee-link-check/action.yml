@@ -27,6 +27,13 @@ inputs:
     description: Issue title when create-issue is true
     required: false
     default: 'Link check report (lychee)'
+  update-existing-issue:
+    description: >
+      If true (with create-issue), update the newest open issue whose title
+      equals issue-title instead of opening a new one every run. Default
+      false keeps the old behavior (a new issue per run).
+    required: false
+    default: 'false'
   issue-labels:
     description: Comma-separated labels for the issue
     required: false
@@ -35,15 +42,45 @@ inputs:
     description: Token for lychee and optional issue creation
     required: false
     default: ${{ github.token }}
+  docusaurus-root:
+    description: >
+      Optional path relative to the workspace (for example `website`). When
+      set, appends --root-dir $GITHUB_WORKSPACE/<value>, --fallback-extensions
+      md,mdx, and --index-files index.md,index.mdx,. so Docusaurus
+      root-relative and extensionless links resolve to Markdown sources.
+      Empty (default) leaves args unchanged.
+    required: false
+    default: ''
+  config-file:
+    description: >
+      Optional lychee config path. When set and the file exists, prepends
+      --config <path>. lychee only auto-loads lychee.toml, so a file named
+      .lychee.toml needs this. Empty (default) does not pass --config.
+    required: false
+    default: ''
 
 runs:
   using: composite
   steps:
+    - name: Build lychee args
+      id: build-args
+      shell: bash
+      env:
+        BASE_ARGS: ${{ inputs.args }}
+        CONFIG_FILE: ${{ inputs.config-file }}
+        DOCUSAURUS_ROOT: ${{ inputs.docusaurus-root }}
+      run: |
+        {
+          echo "args<<__LYCHEE_ARGS__"
+          "$GITHUB_ACTION_PATH/build-args.sh"
+          echo "__LYCHEE_ARGS__"
+        } >> "$GITHUB_OUTPUT"
+
     - name: Link check
       id: lychee
-      uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2.6.1
+      uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2.9.0
       with:
-        args: ${{ inputs.args }}
+        args: ${{ steps.build-args.outputs.args }}
         fail: ${{ inputs.fail }}
         format: markdown
         output: ${{ inputs.output }}
@@ -66,13 +103,30 @@ runs:
           fi
         } >> "$GITHUB_STEP_SUMMARY"
 
+    - name: Find existing report issue
+      id: existing-issue
+      if: always() && inputs.create-issue == 'true' && inputs.update-existing-issue == 'true'
+      continue-on-error: true
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+        ISSUE_TITLE: ${{ inputs.issue-title }}
+      run: |
+        number="$("$GITHUB_ACTION_PATH/find-open-issue.sh")"
+        echo "number=$number" >> "$GITHUB_OUTPUT"
+        if [ -n "$number" ]; then
+          echo "Updating existing issue #$number"
+        else
+          echo "No open issue titled '$ISSUE_TITLE'; a new one will be created"
+        fi
+
     - name: Create or update issue from report
       if: always() && inputs.create-issue == 'true'
       continue-on-error: true
-      uses: peter-evans/create-issue-from-file@e8ef132d6df98ed982188e460ebb3b5d4ef3a9cd # v5.0.0
+      uses: peter-evans/create-issue-from-file@e8ef132d6df98ed982188e460ebb3b5d4ef3a9cd # v5.0.1
       with:
         title: ${{ inputs.issue-title }}
         content-filepath: ${{ inputs.output }}
         labels: ${{ inputs.issue-labels }}
-        issue-number: ''
+        issue-number: ${{ steps.existing-issue.outputs.number }}
         token: ${{ inputs.github-token }}

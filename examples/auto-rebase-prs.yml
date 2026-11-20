@@ -32,4 +32,8 @@ jobs:
       rebase-conflicts: ${{ inputs.rebase-conflicts || false }}
       report-conflicts: true
       comment-on-update: ${{ github.event_name != 'push' }}
+      # Opt in: conflicting fork PRs get a new base-repo PR ("Supersedes #N").
+      # Pair with examples/close-superseded-prs.yml.
+      # supersede-fork-prs: true
+      # supersede-union-paths: 'README.md website/docs/**/*.md'
     secrets: inherit

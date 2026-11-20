@@ -1,19 +1,17 @@
-name: README ↔ Docs sync check
+name: README docs sync check
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
     paths:
       - 'README.md'
-      - 'website/docs/**/*.md'
+      - 'website/docs/**'
 
 permissions:
   contents: read
   pull-requests: write
 
 jobs:
-  check-sync:
-    uses: LLazyEmail/documentation-actions/.github/workflows/reusable-readme-docs-sync-check.yml@v1
+  check:
+    uses: LLazyEmail/documentation-actions/.github/workflows/reusable-readme-sync.yml@v1
     with:
       docs-glob: website/docs/**/*.md
-      fail-on-missing: true
