@@ -1,0 +1,3 @@
+semver: minor
+type: Changed
+auto-rebase `supersede-fork-prs`: when the contributor force-pushes (rewrites) their fork PR after a supersede PR exists, the action no longer fails with "close the supersede PR and delete the branch". Instead it re-applies the contributor's current net change on the base branch and pushes it as one `Sync with #N` commit on top of `supersede/pr-N`. That push is still a fast-forward, with no force-push. The contributor stays author and co-author, and both PRs get a comment. Per-PR supersede states that need a maintainer (conflicts, a leftover branch, changes already on base) are commented on the PR and logged as warnings instead of failing the whole run. Only callers that already set `supersede-fork-prs: true` are affected.

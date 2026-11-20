@@ -140,7 +140,12 @@ async function run({github, context, core, numbers = '', mode = false, report = 
     const result = await supersede({github, repo, pr, token, draft: supersedeDraft, unionPaths});
     if (result.ok) return result.message;
     await reportSupersedeFailure(github, repo, pr, result);
-    throw new Error(`Supersede failed: ${result.message}`);
+    // A per-PR state that needs a maintainer (conflict, leftover branch) is commented on
+    // the PR and logged as a warning; it does not turn the whole run red. Thrown errors
+    // (API, permissions, git failures) still fail the job.
+    const note = `Needs a maintainer (commented on #${pr.number}): ${result.message}`;
+    core.warning(`#${pr.number}: ${note}`);
+    return note;
   };
   const explicit = parseNumbers(numbers);
   const selected = explicit || (await github.paginate(github.rest.pulls.list, {...repo, state: 'open', per_page: 100})).map(pr => pr.number);

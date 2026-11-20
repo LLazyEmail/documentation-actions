@@ -115,10 +115,25 @@ a new PR in the base repository instead:
    fast-forwarded onto `supersede/pr-<N>`, and a behind supersede PR gets a merge update.
    It never force-pushes. A hidden `<!-- supersede-of:#N head:SHA -->` marker in the body
    records which contributor commit is already included.
+5. If the contributor **rewrites** #N (rebase, amend or squash, then force-push), the
+   old commits can no longer be fast-forwarded. The action takes the contributor's
+   current net change (PR head tree against its merge-base with the base branch),
+   applies it to the base branch (same `supersede-union-paths` rules), and records
+   the result as **one** `Sync with #N after the contributor rewrote the branch`
+   commit on top of `supersede/pr-<N>`. That commit's parents are the old supersede
+   head and, if needed, the base branch, so the push is still a fast-forward and the
+   PR diff shows exactly the contributor's current change. Files the contributor
+   dropped are dropped. The commit keeps the contributor as author plus the
+   `Co-authored-by` trailer. The marker is updated, and #N and the supersede PR each get one
+   comment per head SHA. If the rewritten change no longer applies cleanly, nothing
+   is pushed and #N gets the "needs a maintainer" comment (see below).
 
-Conflicts: by default any cherry-pick conflict stops the flow. Nothing is pushed,
-the original PR gets **one** comment per head SHA with the conflicting files,
-and the run fails so a person looks at it. Awesome lists conflict mostly because
+Conflicts: by default any cherry-pick conflict stops the flow for that PR. Nothing is
+pushed, the original PR gets **one** comment per head SHA with the conflicting files,
+and the run logs a warning (`Needs a maintainer (commented on #N): …`). States like this,
+which a re-run can't fix (a conflict, a leftover `supersede/pr-N` branch without a
+PR, changes already on the base), don't turn the run red, because the PR comment is the
+signal. Real errors (API or permission failures, a PR that can't be created) still fail the job. Awesome lists conflict mostly because
 two PRs append to the same list, so `supersede-union-paths` (for example
 `README.md website/docs/**/*.md`) resolves a conflict by keeping both sides,
 **only** when the contributor's change to that file adds lines and deletes none.
