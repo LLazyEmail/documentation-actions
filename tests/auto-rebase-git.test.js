@@ -21,6 +21,7 @@ if (args[0] === 'rev-parse') {
 }
 if (args[0] === 'rebase' && args[1] !== '--abort' && process.env.REBASE_TEST_MODE === 'conflict') process.exitCode = 1;
 if (args[0] === 'diff') console.log('README.md\\nwebsite/docs/tools.md');
+if (args[0] === 'status') console.log('UU README.md\\nUU website/docs/tools.md');
 `);
   fs.chmodSync(path.join(root, 'git'), 0o755);
   process.env.PATH = `${root}:${oldPath}`;

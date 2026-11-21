@@ -44,6 +44,24 @@ on:
           Thanks for the update @{author}! Your updated branch ({sha}) was synced into #{supersede},
           and you're still credited as co-author. Nothing to do on your side; this PR will be closed
           when #{supersede} merges.
+      resolve-deleted-on-main:
+        description: >-
+          Opt in. Accept base-branch deletions of files the PR only modified (within
+          resolve-deleted-paths) during rebase/merge-fallback; dropped files are listed on the PR
+        type: boolean
+        default: false
+      resolve-deleted-paths:
+        description: Globs where resolve-deleted-on-main may drop files
+        type: string
+        default: '.github/workflows/**'
+      fail-on-conflict:
+        description: Fail the job on unresolvable conflicts (false = warning; the PR still gets the report)
+        type: boolean
+        default: true
+      conflict-label:
+        description: Label for PRs with unresolvable conflicts (e.g. has-conflicts); empty disables
+        type: string
+        default: ''
       delegate-bot-rebase:
         description: 'Opt in. Ask Renovate/Dependabot to rebase their own behind or conflicting PRs instead of updating the branch'
         type: boolean
@@ -79,4 +97,8 @@ jobs:
           supersede-draft: ${{ inputs.supersede-draft }}
           supersede-sync-message: ${{ inputs.supersede-sync-message }}
           delegate-bot-rebase: ${{ inputs.delegate-bot-rebase }}
+          resolve-deleted-on-main: ${{ inputs.resolve-deleted-on-main }}
+          resolve-deleted-paths: ${{ inputs.resolve-deleted-paths }}
+          fail-on-conflict: ${{ inputs.fail-on-conflict }}
+          conflict-label: ${{ inputs.conflict-label }}
           github-token: ${{ secrets.AUTO_REBASE_TOKEN || github.token }}

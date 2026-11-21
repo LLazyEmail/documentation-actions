@@ -28,6 +28,10 @@ Common inputs used across documentation-actions composites and reusable workflow
 | `supersede-union-paths` | `''` / `README.md website/docs/**/*.md` | auto-rebase, reusable-auto-rebase-prs | Addition-only conflicts in these globs keep both sides |
 | `supersede-draft` | `true` / `false` | auto-rebase, reusable-auto-rebase-prs | Open supersede PRs as drafts |
 | `supersede-sync-message` | thank-you text | auto-rebase, reusable-auto-rebase-prs | Comment on the contributor's PR after a sync; `{author}`, `{sha}`, `{supersede}`, `{number}` placeholders; empty uses the default |
+| `resolve-deleted-on-main` | `false` / `true` | auto-rebase, reusable-auto-rebase-prs | Accept base-branch deletions of files the PR only modified (within `resolve-deleted-paths`) during rebase / merge-fallback |
+| `resolve-deleted-paths` | `.github/workflows/**` | auto-rebase, reusable-auto-rebase-prs | Globs for `resolve-deleted-on-main` |
+| `fail-on-conflict` | `true` / `false` | auto-rebase, reusable-auto-rebase-prs | `false`: unresolvable conflicts are a warning, not a failed job |
+| `conflict-label` | `''` / `has-conflicts` | auto-rebase, reusable-auto-rebase-prs | Label PRs with unresolvable conflicts; removed after an update |
 | `delegate-bot-rebase` | `false` / `true` | auto-rebase, reusable-auto-rebase-prs | Renovate/Dependabot PRs that are behind or conflicting: ask the bot to rebase instead of updating the branch |
 | `label` | `needs-docs-sync` | docs-sync-feedback, reusable-sync-feedback | Label while README changes lack docs; empty disables |
 | `post-comment` | `true` / `false` | reusable-readme-sync, reusable-readme-docs-sync-check | `false` leaves the comment to reusable-sync-feedback |

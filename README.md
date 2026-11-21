@@ -113,6 +113,10 @@ or manual dispatch). Full guide: [docs/auto-rebase.md](docs/auto-rebase.md).
 | `supersede-draft` | `true` | Open supersede PRs as drafts |
 | `supersede-sync-message` | thank-you text | With `supersede-fork-prs`, the comment posted on the contributor's PR (once per head SHA) when their new or rewritten commits are synced into the supersede PR. Placeholders `{author}`, `{sha}`, `{supersede}`, `{number}` |
 | `delegate-bot-rebase` | `false` | Renovate/Dependabot PRs that are behind or conflicting: ask the bot to rebase (tick Renovate's rebase checkbox, or comment `@dependabot rebase`) instead of a git rebase; logged as delegated, never a failure |
+| `resolve-deleted-on-main` | `false` | With `rebase-conflicts`, accept deletions made on `main` for files the PR only edited (within `resolve-deleted-paths`), if that's the only kind of conflict. With `merge-fallback`, also try a local merge when GitHub says "not mergeable". Dropped files are listed on the PR |
+| `resolve-deleted-paths` | `.github/workflows/**` | Globs where `resolve-deleted-on-main` may drop files |
+| `fail-on-conflict` | `true` | `false` turns unresolvable conflicts into a warning (job stays green); the PR still gets the conflict report |
+| `conflict-label` | empty | Label for PRs with unresolvable conflicts (e.g. `has-conflicts`, as `reusable-label-conflicts` uses); removed after an update |
 | secret `AUTO_REBASE_TOKEN` | unset | Token so updated branches re-run CI |
 
 Pair `supersede-fork-prs` with
