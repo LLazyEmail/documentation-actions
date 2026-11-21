@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.9.0] - 2026-11-21
+
+### Changed
+
+- auto-rebase `supersede-fork-prs`: when the contributor force-pushes (rewrites) their fork PR after a supersede PR exists, the action no longer fails with "close the supersede PR and delete the branch". Instead it re-applies the contributor's current net change on the base branch and pushes it as one `Sync with #N` commit on top of `supersede/pr-N`. That push is still a fast-forward, with no force-push. The contributor stays author and co-author, and both PRs get a comment. Per-PR supersede states that need a maintainer (conflicts, a leftover branch, changes already on base) are commented on the PR and logged as warnings instead of failing the whole run. Only callers that already set `supersede-fork-prs: true` are affected. New optional `supersede-sync-message` input (action and reusable workflow): after new or rewritten contributor commits are synced, the contributor gets a templated thank-you on their PR, once per head SHA. Placeholders are `{author}`, `{sha}`, `{supersede}` and `{number}`, and there's a friendly default.
+
 ## [2.8.0] - 2026-11-20
 
 ### Added
@@ -422,6 +428,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Reusable JSON API regenerate workflow (`reusable-catalog-api`).
 - Awesome-list checks: entry-format, duplicates, sorted-sections (`actions/awesome-list-checks`).
 
+[2.9.0]: https://github.com/LLazyEmail/documentation-actions/compare/v2.8.0...v2.9.0
 [2.8.0]: https://github.com/LLazyEmail/documentation-actions/compare/v2.7.0...v2.8.0
 [2.7.0]: https://github.com/LLazyEmail/documentation-actions/compare/v2.6.0...v2.7.0
 [2.6.0]: https://github.com/LLazyEmail/documentation-actions/compare/v2.5.1...v2.6.0
