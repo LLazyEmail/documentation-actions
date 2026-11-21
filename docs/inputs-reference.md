@@ -29,6 +29,8 @@ Common inputs used across documentation-actions composites and reusable workflow
 | `supersede-draft` | `true` / `false` | auto-rebase, reusable-auto-rebase-prs | Open supersede PRs as drafts |
 | `supersede-sync-message` | thank-you text | auto-rebase, reusable-auto-rebase-prs | Comment on the contributor's PR after a sync; `{author}`, `{sha}`, `{supersede}`, `{number}` placeholders; empty uses the default |
 | `delegate-bot-rebase` | `false` / `true` | auto-rebase, reusable-auto-rebase-prs | Renovate/Dependabot PRs that are behind or conflicting: ask the bot to rebase instead of updating the branch |
+| `label` | `needs-docs-sync` | docs-sync-feedback, reusable-sync-feedback | Label while README changes lack docs; empty disables |
+| `post-comment` | `true` / `false` | reusable-readme-sync, reusable-readme-docs-sync-check | `false` leaves the comment to reusable-sync-feedback |
 | `comment` | thank-you text | close-superseded, reusable-close-superseded-prs | Comment before closing; `{merged}` and `{author}` placeholders |
 
 Always copy from `examples/` and adjust only what differs. Prefer `@v1` (or full SHA) after release.

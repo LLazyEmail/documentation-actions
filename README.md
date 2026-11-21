@@ -121,6 +121,17 @@ Pair `supersede-fork-prs` with
 `Supersedes #N` merges, #N is closed with a thank-you comment (GitHub's
 `Closes #N` keyword does not close PRs).
 
+### Docs sync feedback for contributors
+
+`reusable-sync-feedback.yml` is opt-in. Call it from a `pull_request_target` caller
+([example](examples/sync-feedback.yml)) next to `reusable-readme-sync`. When a PR, forks
+included, changes `README.md` without the matching docs page, it adds a `needs-docs-sync`
+label and posts **one** comment. The comment names the docs file, section, neighbouring entry
+and the exact line to add, and is edited in place on later pushes. When the PR is in sync,
+the label is removed and the comment says "resolved". The job never checks out PR code.
+Set `post-comment: false` on `reusable-readme-sync` to avoid its older generic comment.
+Guide: [docs/actions/docs-sync-feedback.md](docs/actions/docs-sync-feedback.md).
+
 ## Skills
 
 Reusable checklists under [skills/](skills/):

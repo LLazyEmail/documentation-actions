@@ -19,5 +19,6 @@ When writing or updating a caller:
 - `reusable-thin-content`
 - `reusable-image-check`
 - `reusable-entry-format`
+- `reusable-sync-feedback` (new, no long name)
 
 Both long and short names work. New code should use short names.
