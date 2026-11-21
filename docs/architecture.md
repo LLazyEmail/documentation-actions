@@ -41,3 +41,5 @@ Start at `llms.txt` or `AGENTS.md`. Copy an example. Follow `docs/yaml-ai-rules.
 ## Next major (v2)
 
 See `docs/naming.md` for proposed shorter names. A v2 release can introduce cleaner paths while keeping v1 working.
+
+> Update (Nov 2026): v2 shipped with the short names in `docs/naming.md`. Reusable workflows still call the actions at `@main`, so a `@v1`/`@v2` pin fixes the input list but not the action code. See [`docs/reorganization-proposal.md`](reorganization-proposal.md) for the proposed restructure and its options.

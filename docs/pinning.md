@@ -16,6 +16,8 @@ Renovate keeps these current. Never leave them on a floating tag or branch.
 - Draft adoption PRs may use `@main` only during the adoption window.
 - Prefer SHA + Renovate for the strongest guarantee.
 
+> Note (Nov 2026): new callers pin `@v2`; `v1` is frozen at v1.18.1. Reusable workflows reference the composite actions at `@main`, so a tag or SHA pin fixes the workflow inputs but not the action code. See `docs/reorganization-proposal.md` (section 2.3) for the proposed fix.
+
 ## Why it matters for agents
 
 - Floating tags can change under you.
