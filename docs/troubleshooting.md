@@ -1,6 +1,6 @@
 # Troubleshooting
 
-Common issues when adopting or working on documentation-actions.
+Common failures when adopting or extending documentation-actions.
 
 ## Adoption failures
 
@@ -33,6 +33,10 @@ Mistakes AI agents (and humans copying YAML) make most often.
 | `Unable to find reusable workflow` / workflow not found | Wrong path, typo in the name, or a short name used on a tag older than the alias | Use the exact file name under `.github/workflows/`, pin `@v2`, and check `docs/naming.md` for the short names |
 | Commit-back, pages or star job fails with 403 | Caller did not grant the permissions or `secrets: inherit` | Copy the permissions from the table below onto the calling job |
 | The same bot comment appears on every push | Comment step has no idempotency marker | Reuse the marker pattern from `reusable-comment-readme-only.yml` / `docusaurus-pr-comment` |
+| Unpinned action fails CI | `actions/...@vN` | Pin to full SHA + `# vX.Y.Z` |
+| Missing secrets | Forgot `secrets: inherit` | Add it on commit-back / pages / star workflows |
+| Wrong working directory | Layout mismatch | Set `working-directory` to `website` or `.` |
+| Duplicate PR comments | No marker | Use the marker pattern from readme-only |
 
 ## Permissions the caller must grant
 
@@ -49,12 +53,16 @@ A reusable workflow can only use permissions the calling job grants. Grant at le
 | `reusable-comment-readme-only` / `reusable-readme-only` | `pull-requests: write` |
 | `reusable-star-request` | `pull-requests: write` |
 
-## In this repository
+## Workflow-specific
 
-| Symptom | Cause | Fix |
-| --- | --- | --- |
-| Changelog check fails | Missing `.changelog/` file | Add fragment or label `skip-changelog` |
-| Stacked PR conflict on index | Edited existing row | Append only one new row |
-| YAML lint fails | Unpinned third-party action | Pin to full SHA with `# vX.Y.Z` |
+- **docs-ci / test-deploy**: Check Node version and lockfile path.
+- **pages-deploy**: Needs `pages: write` + `id-token: write`.
+- **label-conflicts**: Needs `pull-requests: write`.
+- **pr-report**: Needs `issues: write`.
+- **readme-sync**: Needs `pull-requests: write` and fetch-depth 0 (handled inside).
 
-See also the skill at `skills/troubleshooting/SKILL.md` and `docs/ai-agent-guide.md`.
+## Short names
+
+Prefer short aliases when available (`reusable-pages-deploy`, `reusable-test-deploy`, `reusable-readme-sync`, `reusable-label-conflicts`, `reusable-pr-report`, `reusable-readme-only`). Both names work.
+
+See also `docs/yaml-ai-rules.md` and `docs/naming.md`.
