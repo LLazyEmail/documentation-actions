@@ -85,6 +85,47 @@ const summary = {addHeading() {return this;}, addCodeBlock() {return this;}, add
     sh(root, '--git-dir', bare, 'merge-base', '--is-ancestor', branchSha, branchSha2);
     assert.equal(sh(root, '--git-dir', bare, 'show', `${branchSha2}:NOTES.md`), 'more');
 
+    // The contributor rewrites (force-pushes) their branch: rebased on main, entry renamed,
+    // NOTES.md dropped, a docs page added. The supersede branch gets one sync commit on top.
+    sh(work, 'checkout', '-q', '-b', 'rewrite', 'main');
+    write('README.md', '# List\n\n* a\n* b\n* main entry\n* fork entry v2\n\n## Next\n');
+    fs.mkdirSync(path.join(work, 'docs'), {recursive: true});
+    write('docs/tools.md', 'tool page\n');
+    sh(work, 'add', '.');
+    sh(work, '-c', 'user.name=Contributor', '-c', 'user.email=c@example.com', 'commit', '-qm', 'Add fork entry v2 (README + docs page)');
+    const head4 = sh(work, 'rev-parse', 'HEAD');
+    sh(work, 'push', '-q', '-f', 'origin', 'HEAD:refs/pull/7/head');
+    const rewrittenPr = {...pr, head: {...pr.head, sha: head4}};
+    result = S.supersedeGit(rewrittenPr, '', {trailers, remoteUrl, existingSha: branchSha2, previousHead: head2});
+    assert.equal(result.ok, true, result.message);
+    assert.equal(result.synced, true);
+    assert.equal(result.pushed, true);
+    const branchSha3 = sh(root, '--git-dir', bare, 'rev-parse', 'refs/heads/supersede/pr-7');
+    sh(root, '--git-dir', bare, 'merge-base', '--is-ancestor', branchSha2, branchSha3); // fast-forward only
+    assert.equal(sh(root, '--git-dir', bare, 'show', `${branchSha3}:README.md`), '# List\n\n* a\n* b\n* main entry\n* fork entry v2\n\n## Next');
+    assert.equal(sh(root, '--git-dir', bare, 'show', `${branchSha3}:docs/tools.md`), 'tool page');
+    assert.throws(() => sh(root, '--git-dir', bare, 'show', `${branchSha3}:NOTES.md`), 'dropped files are dropped');
+    assert.equal(sh(root, '--git-dir', bare, 'diff', '--name-only', `main...${branchSha3}`), 'README.md\ndocs/tools.md');
+    assert.equal(sh(root, '--git-dir', bare, 'log', '-1', '--format=%an <%ae>', branchSha3), 'Contributor <c@example.com>');
+    const syncMsg = sh(root, '--git-dir', bare, 'log', '-1', '--format=%B', branchSha3);
+    assert.match(syncMsg, /^Sync with #7 after the contributor rewrote the branch/);
+    assert.match(syncMsg, /Co-authored-by: contrib <42\+contrib@users\.noreply\.github\.com>/);
+    // Running again is a no-op.
+    result = S.supersedeGit(rewrittenPr, '', {trailers, remoteUrl, existingSha: branchSha3, previousHead: head2});
+    assert.equal(result.ok, true, result.message);
+    assert.equal(result.pushed, false);
+    assert.equal(sh(root, '--git-dir', bare, 'rev-parse', 'refs/heads/supersede/pr-7'), branchSha3);
+    // A rewrite whose change no longer applies: reported, nothing pushed.
+    sh(work, 'checkout', '-q', '-b', 'rewrite-bad', 'main~1');
+    write('README.md', '# List\n\n* a\n* b (rewritten)\n\n## Next\n');
+    sh(work, '-c', 'user.name=Contributor', '-c', 'user.email=c@example.com', 'commit', '-qam', 'Rewrite b');
+    const head5 = sh(work, 'rev-parse', 'HEAD');
+    sh(work, 'push', '-q', '-f', 'origin', 'HEAD:refs/pull/7/head');
+    result = S.supersedeGit({...pr, head: {...pr.head, sha: head5}}, '', {trailers, remoteUrl, existingSha: branchSha3, previousHead: head4});
+    assert.equal(result.ok, false);
+    assert.match(result.message, /rewrote the PR branch[\s\S]*README\.md/);
+    assert.equal(sh(root, '--git-dir', bare, 'rev-parse', 'refs/heads/supersede/pr-7'), branchSha3);
+
     // A conflict that edits existing lines is never auto-resolved.
     sh(work, 'checkout', '-q', '-b', 'edit', 'main~1');
     write('README.md', '# List\n\n* a\n* b (edited)\n\n## Next\n');
@@ -142,13 +183,13 @@ const summary = {addHeading() {return this;}, addCodeBlock() {return this;}, add
     await run({github, context: {repo: {owner: 'o', repo: 'r'}}, core, numbers: '', supersedeForks: true, supersede});
     assert.deepEqual(calls, []);
 
-    // A conflict the flow cannot resolve: comment on the original PR and fail the run; no PR.
+    // A conflict the flow cannot resolve: comment on the original PR and warn (run stays green); no PR.
     calls = []; failed = false;
     github.paginate = async (fn, params) => fn === github.rest.pulls.list && params.head ? [] : fn === github.rest.issues.listComments ? [] : [{number: 7}];
     github.rest.pulls.get = async () => ({data: dirtyFork});
     await run({github, context: {repo: {owner: 'o', repo: 'r'}}, core, numbers: '', supersedeForks: true,
       supersede: args => S.supersedePr({...args, git: () => ({ok: false, files: ['README.md'], message: 'Conflicts that need a person:\n- README.md'})})});
-    assert.equal(failed, true);
+    assert.equal(failed, false);
     assert(!calls.some(c => c[0] === 'create'));
     assert(calls.some(c => c[0] === 'comment' && c[1] === 7));
 
@@ -159,6 +200,59 @@ const summary = {addHeading() {return this;}, addCodeBlock() {return this;}, add
     await run({github, context: {repo: {owner: 'o', repo: 'r'}}, core, numbers: '', supersedeForks: true, supersede});
     assert.equal(failed, false);
     assert(calls.some(c => c[0] === 'create'));
+    // Thrown errors (API/permissions) still fail the run.
+    failed = false;
+    github.rest.pulls.get = async () => ({data: dirtyFork});
+    await run({github, context: {repo: {owner: 'o', repo: 'r'}}, core, numbers: '', supersedeForks: true,
+      supersede: async () => { throw new Error('boom'); }});
+    assert.equal(failed, true);
+
+    // Rewritten contributor branch: existing supersede PR is synced, marker updated, both PRs commented once.
+    calls = []; failed = false;
+    const bodies = [];
+    const oldBody = `Supersedes #7\n<!-- supersede-of:#7 head:${head2} -->`;
+    let posted = [];
+    github.paginate = async (fn, params) => fn === github.rest.pulls.list && params.head
+      ? [{number: 99, head: {ref: 'supersede/pr-7', sha: branchSha2}, body: oldBody}]
+      : fn === github.rest.issues.listComments ? posted.filter(c => c.issue === params.issue_number) : [{number: 7}];
+    github.rest.pulls.get = async () => ({data: {...dirtyFork, head: {...dirtyFork.head, sha: head4}}});
+    github.rest.pulls.update = async params => { bodies.push(params.body); };
+    github.rest.issues.createComment = async params => { posted.push({issue: params.issue_number, body: params.body}); };
+    let gitArgs;
+    const syncGit = (p, t, opts) => { gitArgs = opts; return {ok: true, pushed: true, synced: true, message: 'Synced'}; };
+    await run({github, context: {repo: {owner: 'o', repo: 'r'}}, core, numbers: '', supersedeForks: true, supersede: args => S.supersedePr({...args, git: syncGit})});
+    assert.equal(failed, false);
+    assert.equal(gitArgs.existingSha, branchSha2);
+    assert.equal(gitArgs.previousHead, head2);
+    assert.equal(bodies.length, 1);
+    assert.match(bodies[0], new RegExp(`supersede-of:#7 head:${head4}`));
+    assert.deepEqual(posted.map(c => c.issue).sort(), [7, 99]);
+    await run({github, context: {repo: {owner: 'o', repo: 'r'}}, core, numbers: '', supersedeForks: true, supersede: args => S.supersedePr({...args, git: syncGit})});
+    assert.equal(posted.length, 2, 'sync comments are not repeated for the same head');
+    // Default thank-you on the contributor's PR; technical note on the supersede PR.
+    const thanks = posted.find(c => c.issue === 7).body;
+    assert.match(thanks, new RegExp(`^Thanks for the update @contrib! Your updated branch \\(${head4.slice(0, 7)}\\) was synced into #99, and you're still credited as co-author\\. Nothing to do on your side; this PR will be closed when #99 merges\\.`));
+    assert.match(thanks, new RegExp(`<!-- supersede-sync:#7 head:${head4} -->`));
+    assert.match(posted.find(c => c.issue === 99).body, /contributor rewrote their branch/);
+
+    // Fast-forward sync (new commits, not a rewrite) also thanks the contributor, with a custom template.
+    posted = [];
+    const ffGit = () => ({ok: true, pushed: true, message: 'Pushed 1 commit(s)'});
+    await run({github, context: {repo: {owner: 'o', repo: 'r'}}, core, numbers: '', supersedeForks: true,
+      supersedeSyncMessage: 'Merci {author}: {sha} is in #{supersede} (from #{number}).',
+      supersede: args => S.supersedePr({...args, git: ffGit})});
+    assert.equal(posted.find(c => c.issue === 7).body.split('\n')[0], `Merci contrib: ${head4.slice(0, 7)} is in #99 (from #7).`);
+    assert.match(posted.find(c => c.issue === 99).body, /new commits up to/);
+
+    // Nothing pushed (branch already matches): no comments.
+    posted = [];
+    await run({github, context: {repo: {owner: 'o', repo: 'r'}}, core, numbers: '', supersedeForks: true,
+      supersede: args => S.supersedePr({...args, git: () => ({ok: true, pushed: false, synced: true, message: 'already matches'})})});
+    assert.equal(posted.length, 0);
+
+    // Template rendering: empty falls back to the default; unknown placeholders are left alone.
+    assert.equal(S.renderSyncMessage('', {author: 'a', sha: 'abc1234', supersede: 2, number: 1}), S.DEFAULT_SYNC_MESSAGE.replace('{author}', 'a').replace('{sha}', 'abc1234').replaceAll('{supersede}', '2'));
+    assert.equal(S.renderSyncMessage('{author} {other} #{number}', {author: 'a', sha: 's', supersede: 2, number: 1}), 'a {other} #1');
     console.log('auto-rebase supersede tests: ok');
   } finally {
     fs.rmSync(root, {recursive: true, force: true});

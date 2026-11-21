@@ -35,6 +35,15 @@ on:
         description: Open supersede PRs as drafts
         type: boolean
         default: true
+      supersede-sync-message:
+        description: >-
+          Thank-you comment on the contributor PR after a sync; placeholders
+          {author} {sha} {supersede} {number}; empty uses the default
+        type: string
+        default: >-
+          Thanks for the update @{author}! Your updated branch ({sha}) was synced into #{supersede},
+          and you're still credited as co-author. Nothing to do on your side; this PR will be closed
+          when #{supersede} merges.
       delegate-bot-rebase:
         description: 'Opt in. Ask Renovate/Dependabot to rebase their own behind or conflicting PRs instead of updating the branch'
         type: boolean
@@ -68,5 +77,6 @@ jobs:
           supersede-fork-prs: ${{ inputs.supersede-fork-prs }}
           supersede-union-paths: ${{ inputs.supersede-union-paths }}
           supersede-draft: ${{ inputs.supersede-draft }}
+          supersede-sync-message: ${{ inputs.supersede-sync-message }}
           delegate-bot-rebase: ${{ inputs.delegate-bot-rebase }}
           github-token: ${{ secrets.AUTO_REBASE_TOKEN || github.token }}

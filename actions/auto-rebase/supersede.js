@@ -13,6 +13,15 @@ const {execFileSync} = require('node:child_process');
 const LOGIN = /^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})$/;
 const branchFor = number => `supersede/pr-${number}`;
 const sourceMarker = (number, sha) => `<!-- supersede-of:#${number} head:${sha} -->`;
+// Default thank-you posted on the contributor's PR after their new or rewritten
+// commits are synced into the supersede PR. Placeholders: {author}, {sha}
+// (short head SHA), {supersede} (supersede PR number), {number} (original PR).
+const DEFAULT_SYNC_MESSAGE = "Thanks for the update @{author}! Your updated branch ({sha}) was synced into #{supersede}, and you're still credited as co-author. Nothing to do on your side; this PR will be closed when #{supersede} merges.";
+function renderSyncMessage(template, {author, sha, supersede, number}) {
+  const text = String(template || '').trim() || DEFAULT_SYNC_MESSAGE;
+  const values = {author, sha, supersede: String(supersede), number: String(number)};
+  return text.replace(/\{(author|sha|supersede|number)\}/g, (_, key) => values[key]);
+}
 const linkMarker = number => `<!-- supersede-link:#${number} -->`;
 
 function isFork(pr) {
@@ -45,7 +54,37 @@ function supersedeGit(pr, token, {existingSha = null, previousHead = null, union
   const env = {...process.env, GIT_TERMINAL_PROMPT: '0', GIT_EDITOR: 'true'};
   if (token) Object.assign(env, {GIT_CONFIG_COUNT: '1', GIT_CONFIG_KEY_0: 'http.https://github.com/.extraheader',
     GIT_CONFIG_VALUE_0: `AUTHORIZATION: basic ${Buffer.from(`x-access-token:${token}`).toString('base64')}`});
-  const git = (...args) => execFileSync('git', ['-c', 'core.hooksPath=/dev/null', ...args], {cwd: dir, env, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe']});
+  const gitEnv = (extra, ...args) => execFileSync('git', ['-c', 'core.hooksPath=/dev/null', ...args], {cwd: dir, env: {...env, ...extra}, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe']});
+  const git = (...args) => gitEnv({}, ...args);
+  // Cherry-pick one commit; addition-only conflicts in unionPaths keep both sides.
+  // Returns null on success, or a failure result (the cherry-pick is aborted).
+  const pick = commit => {
+    try { git('cherry-pick', '-x', '--allow-empty', commit); return null; } catch {
+      const files = git('diff', '--name-only', '--diff-filter=U').trim().split('\n').filter(Boolean);
+      const resolvable = files.length > 0 && files.every(file => unionPaths.some(re => re.test(file))
+        && git('diff', '--numstat', `${commit}^`, commit, '--', file).trim().split('\n').every(line => line.split('\t')[1] === '0'));
+      if (!resolvable) {
+        try { git('cherry-pick', '--abort'); } catch { /* nothing to abort */ }
+        return {ok: false, files, message: files.length ? `Conflicts that need a person:\n${files.map(f => `- ${f}`).join('\n')}` : 'Cherry-pick failed; inspect workflow logs'};
+      }
+      // Addition-only changes to list files (README entries): keep both sides.
+      for (const file of files) {
+        const stage = n => {
+          const p = path.join(os.tmpdir(), `${path.basename(dir)}-stage${n}`);
+          let text = '';
+          try { text = git('show', `:${n}:${file}`); } catch { /* added on both sides: empty base */ }
+          fs.writeFileSync(p, text);
+          return p;
+        };
+        const [ours, baseFile, theirs] = [stage(2), stage(1), stage(3)];
+        fs.writeFileSync(path.join(dir, file), git('merge-file', '-p', '--union', ours, baseFile, theirs));
+        [ours, baseFile, theirs].forEach(p => fs.rmSync(p));
+        git('add', '--', file);
+      }
+      git('-c', 'core.editor=true', 'cherry-pick', '--continue');
+      return null;
+    }
+  };
   try {
     git('init', '-q');
     git('config', 'user.name', 'github-actions[bot]');
@@ -62,8 +101,39 @@ function supersedeGit(pr, token, {existingSha = null, previousHead = null, union
       git('fetch', '-q', '--no-tags', 'base', `refs/heads/${branch}`);
       if (git('rev-parse', 'FETCH_HEAD').trim() !== existingSha) throw new Error('Supersede branch changed during the run; retry');
       git('checkout', '-q', '--detach', existingSha);
-      try { git('merge-base', '--is-ancestor', previousHead, pr.head.sha); } catch {
-        return {ok: false, files: [], message: `The contributor rewrote the PR branch since the supersede PR was created; close the supersede PR and delete \`${branch}\` to regenerate it`};
+      let rewritten = false;
+      try { git('merge-base', '--is-ancestor', previousHead, pr.head.sha); } catch { rewritten = true; }
+      if (rewritten) {
+        // The contributor force-pushed (rebased, amended or squashed). Their old
+        // commits cannot be fast-forwarded, so re-apply their current net change
+        // (PR head tree vs its merge-base) on the base branch, then record the
+        // result as one "sync" commit on top of the existing supersede branch.
+        // The branch only moves forward: no force-push.
+        git('checkout', '-q', '--detach', base);
+        const mergeBase = git('merge-base', base, pr.head.sha).trim();
+        const [name, email, subject] = git('log', '-1', '--format=%an%x00%ae%x00%s', pr.head.sha).trim().split('\0');
+        const author = {GIT_AUTHOR_NAME: name, GIT_AUTHOR_EMAIL: email};
+        const message = [`Sync with #${pr.number} after the contributor rewrote the branch`, '',
+          `Re-applies the net change of ${pr.head.sha} (against ${mergeBase.slice(0, 12)}) on ${pr.base.ref}.`,
+          `Latest contributor commit: ${subject}`, '', ...trailers].join('\n');
+        const squashed = gitEnv(author, 'commit-tree', `${pr.head.sha}^{tree}`, '-p', mergeBase, '-m', message).trim();
+        const failure = pick(squashed);
+        if (failure) return {...failure, message: `The contributor rewrote the PR branch and their current change does not apply cleanly to ${pr.base.ref}.\n${failure.message}`};
+        const tree = git('rev-parse', 'HEAD^{tree}').trim();
+        if (tree === git('rev-parse', `${base}^{tree}`).trim()) {
+          return {ok: false, files: [], message: `The contributor's changes are already on ${pr.base.ref}; nothing to supersede`};
+        }
+        if (tree === git('rev-parse', `${existingSha}^{tree}`).trim()) {
+          return {ok: true, pushed: false, synced: true, message: `${branch} already matches the contributor's rewritten branch`};
+        }
+        // Parents: the existing branch (fast-forward) and, if not already included, the
+        // base, so the PR diff against the base is exactly the contributor's change.
+        let baseIncluded = true;
+        try { git('merge-base', '--is-ancestor', base, existingSha); } catch { baseIncluded = false; }
+        const parents = ['-p', existingSha, ...(baseIncluded ? [] : ['-p', base])];
+        const sync = gitEnv(author, 'commit-tree', tree, ...parents, '-m', message).trim();
+        git('push', '-q', 'base', `${sync}:refs/heads/${branch}`);
+        return {ok: true, pushed: true, synced: true, message: `Synced ${branch} with the contributor's rewritten branch (one sync commit, no force-push)`};
       }
       from = previousHead;
     } else {
@@ -76,30 +146,8 @@ function supersedeGit(pr, token, {existingSha = null, previousHead = null, union
     const commits = git('rev-list', '--reverse', '--no-merges', `${from}..${pr.head.sha}`).trim().split('\n').filter(Boolean);
     if (!commits.length) return {ok: true, pushed: false, message: 'No new contributor commits to bring over'};
     for (const commit of commits) {
-      try { git('cherry-pick', '-x', '--allow-empty', commit); } catch {
-        const files = git('diff', '--name-only', '--diff-filter=U').trim().split('\n').filter(Boolean);
-        const resolvable = files.length > 0 && files.every(file => unionPaths.some(re => re.test(file))
-          && git('diff', '--numstat', `${commit}^`, commit, '--', file).trim().split('\n').every(line => line.split('\t')[1] === '0'));
-        if (!resolvable) {
-          try { git('cherry-pick', '--abort'); } catch { /* nothing to abort */ }
-          return {ok: false, files, message: files.length ? `Conflicts that need a person:\n${files.map(f => `- ${f}`).join('\n')}` : 'Cherry-pick failed; inspect workflow logs'};
-        }
-        // Addition-only changes to list files (README entries): keep both sides.
-        for (const file of files) {
-          const stage = n => {
-            const p = path.join(os.tmpdir(), `${path.basename(dir)}-stage${n}`);
-            let text = '';
-            try { text = git('show', `:${n}:${file}`); } catch { /* added on both sides: empty base */ }
-            fs.writeFileSync(p, text);
-            return p;
-          };
-          const [ours, baseFile, theirs] = [stage(2), stage(1), stage(3)];
-          fs.writeFileSync(path.join(dir, file), git('merge-file', '-p', '--union', ours, baseFile, theirs));
-          [ours, baseFile, theirs].forEach(p => fs.rmSync(p));
-          git('add', '--', file);
-        }
-        git('-c', 'core.editor=true', 'cherry-pick', '--continue');
-      }
+      const failure = pick(commit);
+      if (failure) return failure;
       const message = git('log', '-1', '--format=%B');
       const missing = trailers.filter(t => !message.includes(t));
       if (missing.length) git('commit', '-q', '--amend', '--no-edit', ...missing.flatMap(t => ['--trailer', t]));
@@ -133,7 +181,7 @@ function supersedeBody(pr, trailer) {
   ].join('\n');
 }
 
-async function supersedePr({github, repo, pr, token, draft = true, unionPaths = [], git = supersedeGit}) {
+async function supersedePr({github, repo, pr, token, draft = true, unionPaths = [], syncMessage = DEFAULT_SYNC_MESSAGE, git = supersedeGit}) {
   const branch = branchFor(pr.number);
   const trailer = coAuthorTrailer(pr.user);
   const trailers = trailer ? [trailer] : [];
@@ -152,6 +200,8 @@ async function supersedePr({github, repo, pr, token, draft = true, unionPaths = 
     if (!result.ok) return {...result, number: existing.number};
     await github.rest.pulls.update({...repo, pull_number: existing.number,
       body: (existing.body || '').replace(sourceMarker(source.number, source.sha), sourceMarker(pr.number, pr.head.sha))});
+    // New commits (fast-forward) or a rewritten branch (sync commit) were pushed: thank the contributor.
+    if (result.pushed) await commentSync(github, repo, pr, existing.number, {rewritten: Boolean(result.synced), syncMessage});
     return {ok: true, number: existing.number, message: `Updated supersede PR #${existing.number}: ${result.message}`};
   }
   const result = git(pr, token, {unionPaths, trailers});
@@ -172,16 +222,36 @@ async function supersedePr({github, repo, pr, token, draft = true, unionPaths = 
   return {ok: true, number: created.number, message: `Superseded by #${created.number} (${result.message})`};
 }
 
+// After the contributor's new or rewritten commits are synced, comment on both PRs
+// (at most once per contributor head SHA): a templated thank-you on the original PR,
+// and a short technical note on the supersede PR.
+async function commentSync(github, repo, pr, number, {rewritten = false, syncMessage = DEFAULT_SYNC_MESSAGE} = {}) {
+  const marker = `<!-- supersede-sync:#${pr.number} head:${pr.head.sha} -->`;
+  const sha = pr.head.sha.slice(0, 7);
+  const notes = [
+    [pr.number, renderSyncMessage(syncMessage, {author: pr.user.login, sha, supersede: number, number: pr.number})],
+    [number, rewritten
+      ? `Synced with #${pr.number} after the contributor rewrote their branch: this PR now carries their current change (${sha}) as one sync commit on top of the earlier history (no force-push).`
+      : `Synced with #${pr.number}: the contributor's new commits up to ${sha} were added to this PR (fast-forward, no force-push).`],
+  ];
+  for (const [issue, text] of notes) {
+    const comments = await github.paginate(github.rest.issues.listComments, {...repo, issue_number: issue, per_page: 100});
+    if (!comments.some(c => (c.body || '').includes(marker))) await github.rest.issues.createComment({...repo, issue_number: issue, body: `${text}\n\n${marker}`});
+  }
+}
+
 // Comment once (per head SHA) on the original PR when the supersede attempt needs a person.
 async function reportSupersedeFailure(github, repo, pr, result) {
   const marker = `<!-- supersede-failed:${pr.head.sha} -->`;
   const comments = await github.paginate(github.rest.issues.listComments, {...repo, issue_number: pr.number, per_page: 100});
   if (comments.some(c => (c.body || '').includes(marker))) return false;
+  const fix = result.number
+    ? `A maintainer can resolve this by hand: push a commit with the contributor's current change to \`${branchFor(pr.number)}\` (the branch of #${result.number}).`
+    : `A maintainer can resolve this by hand: create \`${branchFor(pr.number)}\` from \`${pr.base.ref}\`, cherry-pick the commits, ` +
+      `and open a PR whose body starts with \`Supersedes #${pr.number}\`.`;
   await github.rest.issues.createComment({...repo, issue_number: pr.number, body:
-    `⚠️ Auto-rebase could not create a superseding PR for this contribution, and nothing was pushed.\n\n${result.message}\n\n` +
-    `A maintainer can resolve this by hand: create \`${branchFor(pr.number)}\` from \`${pr.base.ref}\`, cherry-pick the commits, ` +
-    `and open a PR whose body starts with \`Supersedes #${pr.number}\`.\n\n${marker}`});
+    `⚠️ Auto-rebase could not ${result.number ? `update the superseding PR #${result.number}` : 'create a superseding PR for this contribution'}, and nothing was pushed.\n\n${result.message}\n\n${fix}\n\n${marker}`});
   return true;
 }
 
-module.exports = {isFork, coAuthorTrailer, globToRegExp, parsePaths, readSource, supersedeGit, supersedeBody, supersedePr, reportSupersedeFailure, branchFor};
+module.exports = {isFork, coAuthorTrailer, globToRegExp, parsePaths, readSource, supersedeGit, supersedeBody, supersedePr, reportSupersedeFailure, commentSync, renderSyncMessage, DEFAULT_SYNC_MESSAGE, branchFor};
