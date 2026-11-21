@@ -16,6 +16,9 @@ Update behind open PR branches (and optionally rebase conflicts).
 - `comment-on-update` — set `false` on push runs to skip update comments
 - `merge-fallback` — with `rebase-conflicts`, fall back to a non-force merge update when the rebase conflicts but GitHub reports the PR as mergeable (default `false`)
 - `delegate-bot-rebase` — Renovate/Dependabot PRs that are behind or conflicting are handed back to the bot (Renovate rebase checkbox ticked, or `@dependabot rebase`) instead of a git rebase; reported as delegated, not failed (default `false`). Details: [docs/auto-rebase.md](../auto-rebase.md#renovate-and-dependabot-prs-delegate-the-rebase)
+- `resolve-deleted-on-main` / `resolve-deleted-paths` — opt-in: accept base-branch deletions of files the PR only edited (default paths `.github/workflows/**`); also lets `merge-fallback` try a local merge when GitHub says "not mergeable". Details: [docs/auto-rebase.md](../auto-rebase.md#conflict-types-and-deleted-files)
+- `fail-on-conflict` — `false` makes unresolvable conflicts a warning instead of a red job (default `true`)
+- `conflict-label` — label PRs with unresolvable conflicts (e.g. `has-conflicts`); empty disables
 - secret `AUTO_REBASE_TOKEN` — optional token so updated branches re-run CI
 
 ## Example

@@ -14,6 +14,7 @@ fs.appendFileSync(process.env.REBASE_TEST_LOG, JSON.stringify(args) + '\\n');
 if (args[0] === 'rev-parse') console.log('head-sha');
 if (args[0] === 'rebase' && args[1] !== '--abort') process.exitCode = 1;
 if (args[0] === 'diff') console.log('README.md');
+if (args[0] === 'status') console.log('UU README.md');
 `);
 fs.chmodSync(path.join(root, 'git'), 0o755);
 process.env.PATH = `${root}:${oldPath}`;

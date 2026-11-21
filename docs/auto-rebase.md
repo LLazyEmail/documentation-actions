@@ -176,6 +176,64 @@ jobs:
 The new inputs need the DA release that adds them. On an older `@v2` tag,
 passing them fails the caller with an invalid-input error.
 
+## Conflict types and deleted files
+
+Every conflict is reported with its type: in the job log and summary, in the trial-rebase
+comment (`report-conflicts`), and in the conflict report on the PR.
+
+| Type | Message |
+| --- | --- |
+| `deleted-on-main` | `main` deleted this file; the PR still edits it |
+| `deleted-in-pr` | the PR deletes this file; `main` changed it |
+| `content` | both the PR and `main` changed the same lines |
+| `both-added` | both added this file with different content |
+| `rename-or-add` | added or renamed on one side while the other renamed, moved or deleted it |
+| `both-deleted` | renamed or removed in different ways |
+
+Example (awesome-email-marketing #457, November 2026): the PR edited
+`.github/workflows/comment-readme-only.yml`, and #456 deleted that workflow on `main`.
+The rebase stopped with a modify/delete conflict. GitHub reported the PR as not mergeable,
+so `merge-fallback` was skipped and the job went red.
+
+**Conflict report on the PR.** An unresolvable conflict in `rebase-conflicts` mode gets
+**one** comment per PR, edited in place on later runs instead of a new comment each run.
+It lists each file with its type and what to do. Failures that aren't conflicts keep the
+plain `Auto-rebase: Failed: …` comment.
+
+**`resolve-deleted-on-main: true`** (opt-in, off by default):
+
+- During the rebase, a conflict where `main` deleted a file and the PR only modified it
+  is resolved by accepting the deletion (`git rm`). This applies only when **every**
+  conflict in that step is of this kind and the file matches `resolve-deleted-paths`
+  (default `.github/workflows/**`). Otherwise the rebase is aborted exactly as before.
+  Commits that become empty are dropped.
+- The reverse case (the PR deleted a file, `main` changed it) is never resolved automatically.
+- With `merge-fallback: true`, GitHub's "not mergeable" flag no longer skips the fallback
+  for same-repo PRs. The action tries a local `git merge` of `main` with the same resolver
+  and pushes the merge commit as a fast-forward (no force-push).
+- After an update that dropped files, the PR gets a comment listing them.
+
+**`fail-on-conflict: false`** turns unresolvable conflicts into a warning: the job stays
+green, and the PR still gets the report. The default `true` keeps today's red job.
+**`conflict-label`** (for example `has-conflicts`, the label `reusable-label-conflicts` uses)
+is added to PRs with unresolvable conflicts and removed after a successful update or
+once the PR no longer conflicts.
+
+```yaml
+jobs:
+  rebase:
+    uses: LLazyEmail/documentation-actions/.github/workflows/reusable-auto-rebase-prs.yml@v2
+    with:
+      merge-fallback: true
+      resolve-deleted-on-main: true
+      fail-on-conflict: false
+      conflict-label: has-conflicts
+    secrets: inherit
+```
+
+These inputs need the DA release that adds them. On an older `@v2` tag, passing them
+fails the caller with an invalid-input error.
+
 ## Renovate and Dependabot PRs: delegate the rebase
 
 A plain git rebase is the wrong tool for dependency-bot PRs. A typical case

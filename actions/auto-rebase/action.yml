@@ -48,6 +48,22 @@ inputs:
       Thanks for the update @{author}! Your updated branch ({sha}) was synced into #{supersede},
       and you're still credited as co-author. Nothing to do on your side; this PR will be closed
       when #{supersede} merges.
+  resolve-deleted-on-main:
+    description: >-
+      Opt in. During rebase-conflicts (and merge-fallback) accept deletions made on the base
+      branch for files the PR only modified, if every conflict is of that kind and matches
+      resolve-deleted-paths. Dropped files are listed in a PR comment. With merge-fallback,
+      also try a local merge when GitHub says the PR is not mergeable.
+    default: 'false'
+  resolve-deleted-paths:
+    description: Space/comma-separated globs where resolve-deleted-on-main may drop files
+    default: '.github/workflows/**'
+  fail-on-conflict:
+    description: Fail the job on unresolvable conflicts (false logs a warning; the PR still gets the conflict report)
+    default: 'true'
+  conflict-label:
+    description: Label added to PRs with unresolvable conflicts and removed after an update (e.g. has-conflicts); empty disables
+    default: ''
   delegate-bot-rebase:
     description: >-
       Opt in. For Renovate and Dependabot PRs that are behind or conflicting, ask the bot
@@ -73,6 +89,10 @@ runs:
         SUPERSEDE_DRAFT: ${{ inputs.supersede-draft }}
         SUPERSEDE_SYNC_MESSAGE: ${{ inputs.supersede-sync-message }}
         DELEGATE_BOT_REBASE: ${{ inputs.delegate-bot-rebase }}
+        RESOLVE_DELETED_ON_MAIN: ${{ inputs.resolve-deleted-on-main }}
+        RESOLVE_DELETED_PATHS: ${{ inputs.resolve-deleted-paths }}
+        FAIL_ON_CONFLICT: ${{ inputs.fail-on-conflict }}
+        CONFLICT_LABEL: ${{ inputs.conflict-label }}
       with:
         github-token: ${{ inputs.github-token }}
         script: |
@@ -90,4 +110,8 @@ runs:
             supersedeDraft: process.env.SUPERSEDE_DRAFT !== 'false',
             supersedeSyncMessage: process.env.SUPERSEDE_SYNC_MESSAGE,
             delegateBots: process.env.DELEGATE_BOT_REBASE === 'true',
+            resolveDeletedOnMain: process.env.RESOLVE_DELETED_ON_MAIN === 'true',
+            resolveDeletedPaths: process.env.RESOLVE_DELETED_PATHS,
+            failOnConflict: process.env.FAIL_ON_CONFLICT !== 'false',
+            conflictLabel: process.env.CONFLICT_LABEL,
             token: process.env.REBASE_TOKEN});
