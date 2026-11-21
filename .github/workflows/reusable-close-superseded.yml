@@ -1,0 +1,21 @@
+name: Reusable close superseded PRs (short name)
+
+# Short-name alias for reusable-close-superseded-prs.yml: same inputs and secrets, passed through unchanged.
+# Note: check names gain one level (<caller job> / call / <job>) compared with calling the long name.
+
+on:
+  workflow_call:
+    inputs:
+      comment:
+        description: 'Comment posted before closing; {merged} is the merged PR number, {author} the closed PR author'
+        type: string
+        default: 'Closed in favour of #{merged}, which superseded this PR and has been merged. Thank you for the contribution, @{author}!'
+
+permissions:
+  pull-requests: write
+
+jobs:
+  call:
+    uses: ./.github/workflows/reusable-close-superseded-prs.yml
+    with:
+      comment: ${{ inputs.comment }}

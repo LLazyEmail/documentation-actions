@@ -18,7 +18,7 @@
 
 1. Copy the matching file from [examples/](../examples/) (see [docs/examples-guide.md](examples-guide.md)).
 2. Keep triggers, path filters, and permissions on the **caller**.
-3. Use the short workflow name when one exists (`reusable-pages-deploy`, `reusable-test-deploy`, `reusable-readme-sync`, `reusable-readme-only`, `reusable-label-conflicts`, `reusable-pr-report`, `reusable-thin-content`, `reusable-image-check`, `reusable-entry-format`). The full list is in [docs/naming.md](naming.md). Both names work.
+3. Use the short workflow name when one exists (`reusable-pages-deploy`, `reusable-test-deploy`, `reusable-readme-sync`, `reusable-readme-only`, `reusable-label-conflicts`, `reusable-pr-report`, `reusable-thin-content`, `reusable-image-check`, `reusable-entry-format`, `reusable-npm-check`, `reusable-auto-rebase`, `reusable-close-superseded`, `reusable-awesome-checks`). The full list is in [docs/naming.md](naming.md). Both names work.
 4. Adjust only the `with:` inputs that differ (see [docs/inputs-reference.md](inputs-reference.md)).
 5. Grant the caller permissions listed in [docs/troubleshooting.md](troubleshooting.md#permissions-the-caller-must-grant), and add `secrets: inherit` when the workflow needs write access.
 6. Pin `@v2` (or full SHA). Prefer SHA + Renovate.

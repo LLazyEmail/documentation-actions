@@ -1,0 +1,43 @@
+name: Reusable awesome-list checks (short name)
+
+# Short-name alias for reusable-awesome-list-checks.yml: same inputs and secrets, passed through unchanged.
+# Note: check names gain one level (<caller job> / call / <job>) compared with calling the long name.
+
+on:
+  workflow_call:
+    inputs:
+      readme-path:
+        type: string
+        required: false
+        default: README.md
+      checks:
+        type: string
+        required: false
+        default: entry-format,duplicate-links,sorted-sections
+      duplicate-mode:
+        type: string
+        required: false
+        default: warn
+      sorted-mode:
+        type: string
+        required: false
+        default: warn
+      entry-format-mode:
+        type: string
+        required: false
+        default: fail
+      node-version:
+        type: string
+        required: false
+        default: '20'
+
+jobs:
+  call:
+    uses: ./.github/workflows/reusable-awesome-list-checks.yml
+    with:
+      readme-path: ${{ inputs.readme-path }}
+      checks: ${{ inputs.checks }}
+      duplicate-mode: ${{ inputs.duplicate-mode }}
+      sorted-mode: ${{ inputs.sorted-mode }}
+      entry-format-mode: ${{ inputs.entry-format-mode }}
+      node-version: ${{ inputs.node-version }}

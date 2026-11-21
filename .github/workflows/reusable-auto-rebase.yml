@@ -1,0 +1,100 @@
+name: Reusable auto-rebase (short name)
+
+# Short-name alias for reusable-auto-rebase-prs.yml: same inputs and secrets, passed through unchanged.
+# Note: check names gain one level (<caller job> / call / <job>) compared with calling the long name.
+
+on:
+  workflow_call:
+    inputs:
+      pr-numbers:
+        description: Comma-separated PR numbers; empty selects all open PRs
+        type: string
+        default: ''
+      rebase-conflicts:
+        description: Opt in to git rebase for conflicting PRs
+        type: boolean
+        default: false
+      report-conflicts:
+        description: Without rebase-conflicts, comment conflicting files once per head SHA instead of failing
+        type: boolean
+        default: false
+      comment-on-update:
+        description: Comment on PRs after a successful branch update
+        type: boolean
+        default: true
+      merge-fallback:
+        description: With rebase-conflicts, merge-update (no force-push) when the rebase conflicts but GitHub says mergeable
+        type: boolean
+        default: false
+      supersede-fork-prs:
+        description: 'Opt in. Replay conflicting or non-updatable fork PRs into supersede/pr-N and open a PR starting with "Supersedes #N"'
+        type: boolean
+        default: false
+      supersede-union-paths:
+        description: Globs where addition-only conflicts keep both sides (e.g. README.md website/docs/**/*.md)
+        type: string
+        default: ''
+      supersede-draft:
+        description: Open supersede PRs as drafts
+        type: boolean
+        default: true
+      supersede-sync-message:
+        description: >-
+          Thank-you comment on the contributor PR after a sync; placeholders
+          {author} {sha} {supersede} {number}; empty uses the default
+        type: string
+        default: >-
+          Thanks for the update @{author}! Your updated branch ({sha}) was synced into #{supersede},
+          and you're still credited as co-author. Nothing to do on your side; this PR will be closed
+          when #{supersede} merges.
+      resolve-deleted-on-main:
+        description: >-
+          Opt in. Accept base-branch deletions of files the PR only modified (within
+          resolve-deleted-paths) during rebase/merge-fallback; dropped files are listed on the PR
+        type: boolean
+        default: false
+      resolve-deleted-paths:
+        description: Globs where resolve-deleted-on-main may drop files
+        type: string
+        default: '.github/workflows/**'
+      fail-on-conflict:
+        description: Fail the job on unresolvable conflicts (false = warning; the PR still gets the report)
+        type: boolean
+        default: true
+      conflict-label:
+        description: Label for PRs with unresolvable conflicts (e.g. has-conflicts); empty disables
+        type: string
+        default: ''
+      delegate-bot-rebase:
+        description: 'Opt in. Ask Renovate/Dependabot to rebase their own behind or conflicting PRs instead of updating the branch'
+        type: boolean
+        default: false
+    secrets:
+      AUTO_REBASE_TOKEN:
+        description: Optional PAT/App token so updated branches re-trigger CI (GITHUB_TOKEN pushes do not)
+        required: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  call:
+    uses: ./.github/workflows/reusable-auto-rebase-prs.yml
+    with:
+      pr-numbers: ${{ inputs.pr-numbers }}
+      rebase-conflicts: ${{ inputs.rebase-conflicts }}
+      report-conflicts: ${{ inputs.report-conflicts }}
+      comment-on-update: ${{ inputs.comment-on-update }}
+      merge-fallback: ${{ inputs.merge-fallback }}
+      supersede-fork-prs: ${{ inputs.supersede-fork-prs }}
+      supersede-union-paths: ${{ inputs.supersede-union-paths }}
+      supersede-draft: ${{ inputs.supersede-draft }}
+      supersede-sync-message: ${{ inputs.supersede-sync-message }}
+      resolve-deleted-on-main: ${{ inputs.resolve-deleted-on-main }}
+      resolve-deleted-paths: ${{ inputs.resolve-deleted-paths }}
+      fail-on-conflict: ${{ inputs.fail-on-conflict }}
+      conflict-label: ${{ inputs.conflict-label }}
+      delegate-bot-rebase: ${{ inputs.delegate-bot-rebase }}
+    secrets:
+      AUTO_REBASE_TOKEN: ${{ secrets.AUTO_REBASE_TOKEN }}
