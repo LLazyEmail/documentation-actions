@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.10.1] - 2026-11-21
+
+### Changed
+
+- Expanded troubleshooting guide with common agent mistakes and short-name notes.
+- Updated quickstart-for-agents to mention short-name aliases.
+
 ## [2.10.0] - 2026-11-21
 
 ### Added
@@ -434,6 +441,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Reusable JSON API regenerate workflow (`reusable-catalog-api`).
 - Awesome-list checks: entry-format, duplicates, sorted-sections (`actions/awesome-list-checks`).
 
+[2.10.1]: https://github.com/LLazyEmail/documentation-actions/compare/v2.10.0...v2.10.1
 [2.10.0]: https://github.com/LLazyEmail/documentation-actions/compare/v2.9.0...v2.10.0
 [2.9.0]: https://github.com/LLazyEmail/documentation-actions/compare/v2.8.0...v2.9.0
 [2.8.0]: https://github.com/LLazyEmail/documentation-actions/compare/v2.7.0...v2.8.0
