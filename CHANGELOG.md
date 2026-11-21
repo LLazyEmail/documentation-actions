@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.11.0] - 2026-11-21
+
+### Added
+
+- New opt-in `reusable-sync-feedback.yml` workflow and `actions/docs-sync-feedback` action. When a PR, forks included, changes `README.md` without the matching docs page, it adds a `needs-docs-sync` label (created if missing) and posts one comment. The comment names the docs file, section, neighbouring entry and the exact line to add, and is edited in place on later runs. Once the PR is in sync, the label is removed and the comment is marked resolved. It runs from a `pull_request_target` caller, checks out the base branch only and never runs PR code. `reusable-readme-sync` and `reusable-readme-docs-sync-check` gain a `post-comment` input (default `true`) so callers can switch their generic comment off.
+
 ## [2.10.1] - 2026-11-21
 
 ### Changed
@@ -441,6 +447,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Reusable JSON API regenerate workflow (`reusable-catalog-api`).
 - Awesome-list checks: entry-format, duplicates, sorted-sections (`actions/awesome-list-checks`).
 
+[2.11.0]: https://github.com/LLazyEmail/documentation-actions/compare/v2.10.1...v2.11.0
 [2.10.1]: https://github.com/LLazyEmail/documentation-actions/compare/v2.10.0...v2.10.1
 [2.10.0]: https://github.com/LLazyEmail/documentation-actions/compare/v2.9.0...v2.10.0
 [2.9.0]: https://github.com/LLazyEmail/documentation-actions/compare/v2.8.0...v2.9.0

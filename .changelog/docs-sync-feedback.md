@@ -1,3 +1,0 @@
-semver: minor
-type: Added
-New opt-in `reusable-sync-feedback.yml` workflow and `actions/docs-sync-feedback` action. When a PR, forks included, changes `README.md` without the matching docs page, it adds a `needs-docs-sync` label (created if missing) and posts one comment. The comment names the docs file, section, neighbouring entry and the exact line to add, and is edited in place on later runs. Once the PR is in sync, the label is removed and the comment is marked resolved. It runs from a `pull_request_target` caller, checks out the base branch only and never runs PR code. `reusable-readme-sync` and `reusable-readme-docs-sync-check` gain a `post-comment` input (default `true`) so callers can switch their generic comment off.
