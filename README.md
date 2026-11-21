@@ -33,6 +33,7 @@ Start here:
 - [llms.txt](llms.txt) — compact entry point
 - [AGENTS.md](AGENTS.md) — structured playbook with decision trees and pitfalls
 - [docs/architecture.md](docs/architecture.md) — layers and design principles
+- [docs/reorganization-proposal.md](docs/reorganization-proposal.md) — draft proposal: inventory, pain points and options for restructuring the YAML (nothing decided yet)
 - [docs/yaml-ai-rules.md](docs/yaml-ai-rules.md) — strict YAML rules
 - [docs/naming.md](docs/naming.md) — short-name aliases and v2 plan
 - [docs/quickstart-for-agents.md](docs/quickstart-for-agents.md) — ultra-concise checklist
