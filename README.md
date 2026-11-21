@@ -59,7 +59,7 @@ flowchart TD
 - **Composite actions** for shared steps inside custom jobs.
 - **Examples** are the source of truth for thin callers.
 - Inventory is append-only in [docs/actions-index.md](docs/actions-index.md).
-- Prefer short-name aliases: all nine listed in [docs/naming.md](docs/naming.md) exist (`reusable-pages-deploy`, `reusable-test-deploy`, `reusable-readme-sync`, `reusable-readme-only`, `reusable-label-conflicts`, `reusable-pr-report`, `reusable-thin-content`, `reusable-image-check`, `reusable-entry-format`). Each accepts the same inputs as its long name, and `tests/short-name-aliases.test.sh` keeps it that way.
+- Prefer short-name aliases: all thirteen listed in [docs/naming.md](docs/naming.md) exist (`reusable-pages-deploy`, `reusable-test-deploy`, `reusable-readme-sync`, `reusable-readme-only`, `reusable-label-conflicts`, `reusable-pr-report`, `reusable-thin-content`, `reusable-image-check`, `reusable-entry-format`, `reusable-npm-check`, `reusable-auto-rebase`, `reusable-close-superseded`, `reusable-awesome-checks`). Each accepts the same inputs and secrets as its long name (the last four are new: `@v2` callers can switch once the release that ships them moves `v2`), and `tests/short-name-aliases.test.sh` keeps it that way.
 
 ## Quick start
 

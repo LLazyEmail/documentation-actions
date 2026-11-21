@@ -23,6 +23,16 @@ Several reusable workflows and paths are longer than necessary. This increases t
 | `reusable-thin-content-check` | `reusable-thin-content` |
 | `reusable-build-image-check` | `reusable-image-check` |
 | `reusable-awesome-entry-format-check` | `reusable-entry-format` |
+| `reusable-npm-script-check` | `reusable-npm-check` |
+| `reusable-auto-rebase-prs` | `reusable-auto-rebase` |
+| `reusable-close-superseded-prs` | `reusable-close-superseded` |
+| `reusable-awesome-list-checks` | `reusable-awesome-checks` |
+
+`reusable-sync-feedback` was born short and has no long name.
+
+**Check names.** A caller of an alias sees one more level in the check name (for example
+`npm / call / npm-script-check` instead of `npm / npm-script-check`). If a branch protection
+rule requires the old check name, update the rule when you switch the caller.
 
 Short-name aliases are thin wrappers that call the original workflows (or, for `reusable-test-deploy`, the same `reusable-docs-ci.yml` the long name calls). Both names work and accept the same inputs. Prefer the short name in new callers.
 

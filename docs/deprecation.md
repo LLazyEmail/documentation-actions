@@ -15,5 +15,9 @@ They will be removed in v3 after a v2 transition period.
 | `reusable-thin-content-check` | `reusable-thin-content` |
 | `reusable-build-image-check` | `reusable-image-check` |
 | `reusable-awesome-entry-format-check` | `reusable-entry-format` |
+| `reusable-npm-script-check` | `reusable-npm-check` |
+| `reusable-auto-rebase-prs` | `reusable-auto-rebase` |
+| `reusable-close-superseded-prs` | `reusable-close-superseded` |
+| `reusable-awesome-list-checks` | `reusable-awesome-checks` |
 
 See `docs/naming.md` and `docs/v2-migration.md`.

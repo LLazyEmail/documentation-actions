@@ -19,6 +19,10 @@ When writing or updating a caller:
 - `reusable-thin-content`
 - `reusable-image-check`
 - `reusable-entry-format`
-- `reusable-sync-feedback` (new, no long name)
+- `reusable-npm-check`
+- `reusable-auto-rebase` (pass `AUTO_REBASE_TOKEN` under `secrets:` as before)
+- `reusable-close-superseded`
+- `reusable-awesome-checks`
+- `reusable-sync-feedback` (born short, no long name)
 
 Both long and short names work. New code should use short names.
