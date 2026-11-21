@@ -1,0 +1,29 @@
+# Thin caller: label + one self-updating comment when a PR (forks included)
+# changes README.md without the matching docs page. pull_request_target is safe
+# here: the reusable job checks out the base branch only and never runs PR code.
+name: Docs sync feedback
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'README.md'
+      - 'website/docs/**/*.md'
+  workflow_dispatch:
+    inputs:
+      pr-number:
+        description: PR number to (re)check
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  feedback:
+    uses: LLazyEmail/documentation-actions/.github/workflows/reusable-sync-feedback.yml@v2
+    with:
+      pass-if-links-in-docs: true   # keep in sync with your reusable-readme-sync caller
+      pr-number: ${{ inputs.pr-number || '' }}

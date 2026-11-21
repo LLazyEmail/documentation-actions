@@ -23,5 +23,6 @@ Each page covers purpose, inputs/outputs, minimal caller, and agent notes.
 - [changelog](changelog.md)
 - [docs-index](docs-index.md)
 - [catalog-api](catalog-api.md)
+- [docs-sync-feedback](docs-sync-feedback.md) — label and guide contributors whose README change is missing from docs
 
 Start with the [actions index](../actions-index.md) for the append-only inventory.

@@ -1,0 +1,58 @@
+name: Docs sync feedback
+description: >
+  Label and comment on a PR whose README.md change is missing from the matching docs page,
+  naming the docs file, section and line to add. Removes the label and marks the comment
+  resolved once the PR is in sync. Never checks out or runs PR code.
+
+inputs:
+  docs-glob:
+    description: Glob for docs files that count as "in sync" (match reusable-readme-sync)
+    default: website/docs/**/*.md
+  pass-if-links-in-docs:
+    description: Treat added links that already appear on a docs page as in sync (match reusable-readme-sync)
+    default: 'false'
+  label:
+    description: Label added while docs are missing (created if absent); empty disables labelling
+    default: needs-docs-sync
+  contributing-url:
+    description: Link to the contributing guide; empty auto-detects CONTRIBUTING.md in the base checkout
+    default: ''
+  check-name:
+    description: Name of the failing check, as shown to the contributor
+    default: README ↔ docs sync
+  pr-number:
+    description: PR to check on workflow_dispatch; empty uses the event's pull request
+    default: ''
+  github-token:
+    description: Token with pull-requests:write and issues:write
+    default: ${{ github.token }}
+outputs:
+  missing:
+    description: "'true' when the PR changes README.md without the matching docs page"
+    value: ${{ steps.feedback.outputs.missing }}
+
+runs:
+  using: composite
+  steps:
+    - id: feedback
+      uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7.1.0
+      env:
+        ACTION_PATH: ${{ github.action_path }}
+        DOCS_GLOB: ${{ inputs.docs-glob }}
+        LINKS_IN_DOCS: ${{ inputs.pass-if-links-in-docs }}
+        LABEL: ${{ inputs.label }}
+        CONTRIBUTING_URL: ${{ inputs.contributing-url }}
+        CHECK_NAME: ${{ inputs.check-name }}
+        PR_NUMBER: ${{ inputs.pr-number }}
+      with:
+        github-token: ${{ inputs.github-token }}
+        script: |
+          const {run} = require(`${process.env.ACTION_PATH}/feedback.js`);
+          await run({github, context, core,
+            root: process.env.GITHUB_WORKSPACE,
+            docsGlob: process.env.DOCS_GLOB,
+            linksInDocs: process.env.LINKS_IN_DOCS === 'true',
+            label: process.env.LABEL,
+            contributingUrl: process.env.CONTRIBUTING_URL,
+            checkName: process.env.CHECK_NAME,
+            prNumber: process.env.PR_NUMBER});

@@ -24,6 +24,10 @@ on:
         type: boolean
         required: false
         default: true
+      post-comment:
+        type: boolean
+        required: false
+        default: true
       pass-if-links-in-docs:
         type: boolean
         required: false
@@ -41,3 +45,4 @@ jobs:
       comment-body: ${{ inputs.comment-body }}
       fail-on-missing: ${{ inputs.fail-on-missing }}
       pass-if-links-in-docs: ${{ inputs.pass-if-links-in-docs }}
+      post-comment: ${{ inputs.post-comment }}

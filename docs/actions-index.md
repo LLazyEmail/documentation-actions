@@ -29,3 +29,4 @@ Append-only. Each action PR adds **exactly one new line** at the end of the tabl
 | `readme-docs-sync-check` | `.github/workflows/reusable-readme-docs-sync-check.yml` | Fail when README changes without matching docs |
 | `comment-readme-only` | `.github/workflows/reusable-comment-readme-only.yml` | One-time comment when PR only changes README.md |
 | `awesome-entry-format-check` | `.github/workflows/reusable-awesome-entry-format-check.yml` | Warn on list entries missing the description separator |
+| `docs-sync-feedback` | `actions/docs-sync-feedback` | Label + one self-updating comment naming the docs file and line when README changes without docs (fork PRs too) |

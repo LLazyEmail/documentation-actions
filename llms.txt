@@ -17,6 +17,7 @@ It wires docs-ci + optional pages deploy + optional hygiene checks in one call.
 | PR build only | reusable-test-deploy |
 | Pages deploy | reusable-pages-deploy |
 | README sync | reusable-readme-sync |
+| Docs sync feedback (label + comment) | reusable-sync-feedback |
 | Label conflicts | reusable-label-conflicts |
 | PR report | reusable-pr-report |
 

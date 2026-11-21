@@ -27,6 +27,13 @@ on:
         type: boolean
         required: false
         default: true
+      post-comment:
+        description: >-
+          Post comment-body when docs are missing. Set false when
+          reusable-sync-feedback.yml handles the comment (and label).
+        type: boolean
+        required: false
+        default: true
       pass-if-links-in-docs:
         description: >-
           Opt-in. Pass a README-only PR when every link it adds to README.md
@@ -101,7 +108,7 @@ jobs:
           echo "missing_docs=$MISSING" >> "$GITHUB_OUTPUT"
 
       - name: Comment if docs page missing
-        if: steps.check.outputs.missing_docs == 'true'
+        if: steps.check.outputs.missing_docs == 'true' && inputs.post-comment
         uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7.1.0
         env:
           COMMENT_BODY: ${{ inputs.comment-body }}
