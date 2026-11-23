@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.14.0] - 2026-11-23
+
+### Added
+
+- Per-release pinning (opt-in). When the repo secret `RELEASE_PIN_TOKEN` is set (a fine-grained PAT with Contents: write and Workflows: write), `tag-release.yml` runs the new `scripts/pin-release-refs.sh`. It makes one commit on top of the release commit, never pushed to a branch, that rewrites this repo's own `LLazyEmail/documentation-actions/...@main` refs to `@vX.Y.Z`, then tags it and moves `v2` to it. Callers pinned at `@v2`, `@vX.Y.Z` or a SHA then run that release's action code instead of `main`. `main` keeps `@main`. Without the secret, releases are tagged exactly as before, with a logged dry run. `tests/pin-release-refs.test.sh` checks the rewrite on every PR. Docs: long workflow names stay supported for all of v2 (decided in #181). The decisions from #181 are recorded in `docs/reorganization-proposal.md`.
+
 ## [2.13.0] - 2026-11-23
 
 ### Added
@@ -466,6 +472,7 @@ auto-rebase: conflicts are now reported with their type (`deleted-on-main`, `del
 - Reusable JSON API regenerate workflow (`reusable-catalog-api`).
 - Awesome-list checks: entry-format, duplicates, sorted-sections (`actions/awesome-list-checks`).
 
+[2.14.0]: https://github.com/LLazyEmail/documentation-actions/compare/v2.13.0...v2.14.0
 [2.13.0]: https://github.com/LLazyEmail/documentation-actions/compare/v2.12.0...v2.13.0
 [2.12.0]: https://github.com/LLazyEmail/documentation-actions/compare/v2.11.0...v2.12.0
 [2.11.0]: https://github.com/LLazyEmail/documentation-actions/compare/v2.10.1...v2.11.0
