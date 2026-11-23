@@ -10,6 +10,7 @@ Common inputs used across documentation-actions composites and reusable workflow
 | `install-command` | `npm ci` | build workflows | |
 | `build-command` | `npm run build` | build workflows | |
 | `prebuild-command` | empty or `npm run lint:docs-links` | build, docs-ci | Empty skips |
+| `fetch-depth` | `0` (default, full history) or `1` | docs-ci, test-deploy, npm-script-check | Earlier releases: test-deploy accepted it but always used `0` |
 | `markdownlint-globs` | multiline YAML | docs-ci, root action | Exclude node_modules / build |
 | `lychee-args` | flags + paths | docs-ci, root action | Soft-fail by default; accept 403,429 |
 | `docusaurus-root` | `website` or empty | lychee-link-check, reusable-link-check | Empty skips. When set, resolves Docusaurus `/docs/...` and extensionless local links |

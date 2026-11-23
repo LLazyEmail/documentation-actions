@@ -35,9 +35,10 @@ Arthur answered all five questions in #181 on 2026-11-23 (Europe/Kiev):
     update a manifest instead, which it can't. Next step: generate their
     `workflow_call` inputs from the action's `action.yml` plus per-input type
     overrides, leaving the steps hand-written.
-  - **Known quirk, now recorded in the manifest as `unused-inputs`:**
-    `reusable-docusaurus-test-deploy` and `reusable-test-deploy` accept
-    `fetch-depth` but don't pass it on (`reusable-docs-ci` has no such input).
+  - **Known quirk, found by the generator check:** `reusable-docusaurus-test-deploy` and
+    `reusable-test-deploy` accepted `fetch-depth` but didn't pass it on. Fixed in the
+    follow-up PR: `reusable-docs-ci` now has an opt-in `fetch-depth` input (default `0`,
+    the previous fixed value), and test-deploy forwards it.
 
 The text below is the original proposal, kept as written.
 
