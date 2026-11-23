@@ -1,8 +1,11 @@
 # Deprecation notices
 
-Long reusable-workflow names remain supported on `@v1`.
+Long reusable-workflow names remain supported on `@v1` and **for all of v2**.
 Prefer the short-name aliases in new callers.
-They will be removed in v3 after a v2 transition period.
+
+> Decided 2026-11-23 (#181): the long names stay for the whole of v2, with no removal date.
+> They can only go in a future major, after a code search shows no caller still uses them.
+> The earlier plan ("removed in v3 after a v2 transition period") is replaced by this.
 
 | Long name (still works) | Prefer |
 |-------------------------|--------|

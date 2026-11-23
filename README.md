@@ -14,7 +14,7 @@ Extracted from duplicated automation across:
 
 Modeled on [LLazyEmail/email-template-workflows](https://github.com/LLazyEmail/email-template-workflows).
 
-**Pin** `LLazyEmail/documentation-actions@v1` once released. Draft adoption PRs may use `@main` only during the adoption window. Prefer full SHA + Renovate for production.
+**Pin** `LLazyEmail/documentation-actions@v2` (or a release tag / SHA). With `RELEASE_PIN_TOKEN` set, each release pins its own actions refs, so a pinned caller runs that release's action code ([docs/pinning.md](docs/pinning.md#per-release-pinning-of-this-repos-own-refs)). Draft adoption PRs may use `@main` only during the adoption window. Prefer full SHA + Renovate for production.
 
 ## Table of contents
 
@@ -40,7 +40,7 @@ Start here:
 - [docs/ai-agent-guide.md](docs/ai-agent-guide.md) — step-by-step adoption and extension flows
 - [docs/examples-guide.md](docs/examples-guide.md) — when to copy which example
 - [docs/inputs-reference.md](docs/inputs-reference.md) — common inputs table
-- [docs/pinning.md](docs/pinning.md) — SHA and `@v1` rules
+- [docs/pinning.md](docs/pinning.md) — SHA and `@v2` rules, per-release pinning of the actions
 - [docs/troubleshooting.md](docs/troubleshooting.md) — symptom / cause / fix, common agent mistakes, and the permissions each caller must grant
 - [skills/](skills/) — focused checklists (see [skills/README.md](skills/README.md))
 - Copy from [examples/](examples/) — never invent job YAML from scratch
@@ -92,8 +92,9 @@ Several can fire after the same merge, so they push through
 rejected, the job runs `git pull --rebase --autostash origin main`, and tries
 again (`max-attempts`, default 5). `--autostash` keeps unrelated unstaged files
 (LFS-smudged media, build output) from aborting the retry. Callers need
-`permissions: contents: write`; nothing else to configure. The workflows use the
-action at `@main`, so fixes to it apply without a new release.
+`permissions: contents: write`; nothing else to configure. On `main` the workflows use the
+action at `@main`; releases cut with per-release pinning point it at the release tag
+([docs/pinning.md](docs/pinning.md)).
 
 Detailed reference: [docs/actions/](docs/actions/).
 
