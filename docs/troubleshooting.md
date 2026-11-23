@@ -52,6 +52,10 @@ A reusable workflow can only use permissions the calling job grants. Grant at le
 | `reusable-readme-docs-sync-check` / `reusable-readme-sync` | `pull-requests: write` (checkout with full history is handled inside) |
 | `reusable-comment-readme-only` / `reusable-readme-only` | `pull-requests: write` |
 | `reusable-star-request` | `pull-requests: write` |
+| `reusable-npm-script-check` / `reusable-npm-check` | `contents: read` |
+| `reusable-auto-rebase-prs` / `reusable-auto-rebase` | `contents: write`, `pull-requests: write`; pass `AUTO_REBASE_TOKEN` under `secrets:` so updated branches re-run CI |
+| `reusable-close-superseded-prs` / `reusable-close-superseded` | `pull-requests: write` |
+| `reusable-awesome-list-checks` / `reusable-awesome-checks` | `contents: read` |
 
 ## Workflow-specific
 
@@ -63,6 +67,6 @@ A reusable workflow can only use permissions the calling job grants. Grant at le
 
 ## Short names
 
-Prefer short aliases when available (`reusable-pages-deploy`, `reusable-test-deploy`, `reusable-readme-sync`, `reusable-label-conflicts`, `reusable-pr-report`, `reusable-readme-only`). Both names work.
+Prefer short aliases when available (`reusable-pages-deploy`, `reusable-test-deploy`, `reusable-readme-sync`, `reusable-label-conflicts`, `reusable-pr-report`, `reusable-readme-only`, `reusable-npm-check`, `reusable-auto-rebase`, `reusable-close-superseded`, `reusable-awesome-checks`; full list in `docs/naming.md`). Both names work. Switching to a short name adds one level to check names, so update required-check rules if you use them.
 
 See also `docs/yaml-ai-rules.md` and `docs/naming.md`.

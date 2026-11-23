@@ -8,7 +8,7 @@ Always start by copying a file from `examples/`.
 | PR build | test-deploy.yml | reusable-test-deploy |
 | Pages | deploy-pages.yml | reusable-pages-deploy |
 | Link check | link-check.yml | reusable-link-check |
-| Awesome list | awesome-list-checks.yml | reusable-awesome-list-checks |
+| Awesome list | awesome-list-checks.yml | reusable-awesome-checks |
 | Label conflicts | label-conflicted-prs.yml | reusable-label-conflicts |
 | PR report | pr-status-report.yml | reusable-pr-report |
 | README sync | readme-docs-sync-check.yml | reusable-readme-sync |
