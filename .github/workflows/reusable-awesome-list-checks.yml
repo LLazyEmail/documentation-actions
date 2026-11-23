@@ -2,24 +2,32 @@ name: Reusable awesome-list checks
 
 on:
   workflow_call:
+    # inputs: generated from workflows.manifest.yml and actions/awesome-list-checks/action.yml by scripts/gen-workflows.py
     inputs:
       readme-path:
+        description: Path to the curated markdown list
         type: string
         required: false
         default: README.md
       checks:
+        description: >
+          Comma-separated subset of entry-format, duplicate-links, sorted-sections.
+          Default runs all three.
         type: string
         required: false
         default: entry-format,duplicate-links,sorted-sections
       duplicate-mode:
+        description: 'fail or warn for duplicate-links (CI historically uses warn)'
         type: string
         required: false
         default: warn
       sorted-mode:
+        description: 'warn (default exit 0) or strict (exit 1 on disorder)'
         type: string
         required: false
         default: warn
       entry-format-mode:
+        description: 'fail or warn for entry-format hard errors'
         type: string
         required: false
         default: fail

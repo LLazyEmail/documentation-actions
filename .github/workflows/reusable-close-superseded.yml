@@ -6,10 +6,12 @@ name: Reusable close superseded PRs (short name)
 
 on:
   workflow_call:
+    # inputs: generated from workflows.manifest.yml and actions/close-superseded/action.yml by scripts/gen-workflows.py
     inputs:
       comment:
         description: 'Comment posted before closing; {merged} is the merged PR number, {author} the closed PR author'
         type: string
+        required: false
         default: 'Closed in favour of #{merged}, which superseded this PR and has been merged. Thank you for the contribution, @{author}!'
 
 permissions:

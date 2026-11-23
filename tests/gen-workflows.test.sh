@@ -44,11 +44,11 @@ expect_fail "hand-edited alias" "out of date"
 # 3. An input added to a long workflow reaches its alias only through the generator.
 copy
 sed -i 's/^    inputs:$/    inputs:\n      new-flag:\n        type: boolean\n        default: false/' \
-  "$tmp/r/.github/workflows/reusable-close-superseded-prs.yml"
-expect_fail "new long-name input without regenerating" "reusable-close-superseded"
+  "$tmp/r/.github/workflows/reusable-readme-docs-sync-check.yml"
+expect_fail "new long-name input without regenerating" "reusable-readme-sync"
 # Still exits 1 here: the fixture input is declared but unused in the long workflow.
 "${gen[@]}" --root "$tmp/r" >"$tmp/out" 2>&1 || grep -q "unused inputs \['new-flag'\]" "$tmp/out" || { cat "$tmp/out"; fail "unexpected error"; }
-grep -q 'new-flag: ${{ inputs.new-flag }}' "$tmp/r/.github/workflows/reusable-close-superseded.yml" \
+grep -q 'new-flag: ${{ inputs.new-flag }}' "$tmp/r/.github/workflows/reusable-readme-sync.yml" \
   || fail "new input not forwarded by the generated alias"
 
 # 4. A reusable workflow missing from the manifest fails.
@@ -78,7 +78,22 @@ copy
 sed -i '/`reusable-npm-check`/d' "$tmp/r/docs/naming.md"
 expect_fail "alias missing from docs/naming.md" "docs/naming.md alias table"
 
-# 9. Generated files only hold refs that pin-release-refs.sh handles (./ refs are left alone, own refs pinned).
+# 9. A new action input must be exposed or listed in not-exposed; exposing it generates the declaration.
+copy
+printf '  extra-option:\n    description: New option\n    required: false\n    default: "x"\n' >"$tmp/extra"
+sed -i "/^inputs:/r $tmp/extra" "$tmp/r/actions/markdownlint/action.yml"
+expect_fail "new action input not exposed" "neither exposed"
+sed -i 's/^      globs: string$/      globs: string\n      extra-option: string/' "$tmp/r/workflows.manifest.yml"
+"${gen[@]}" --root "$tmp/r" >"$tmp/out" 2>&1 || grep -q "unused inputs \['extra-option'\]" "$tmp/out" || { cat "$tmp/out"; fail "unexpected error"; }
+grep -q '^      extra-option:$' "$tmp/r/.github/workflows/reusable-markdownlint.yml" || fail "exposed input not generated"
+grep -q 'default: "x"' "$tmp/r/.github/workflows/reusable-markdownlint.yml" || fail "action default not copied"
+
+# 10. A hand edit inside a generated inputs block is caught.
+copy
+sed -i 's/description: Arguments passed to lychee (paths, flags)/description: hand edit/' "$tmp/r/.github/workflows/reusable-link-check.yml"
+expect_fail "hand-edited generated inputs" "reusable-link-check"
+
+# 11. Generated files only hold refs that pin-release-refs.sh handles (./ refs are left alone, own refs pinned).
 bash "$root/scripts/pin-release-refs.sh" --check v9.9.9 >/dev/null || fail "pin-release-refs dry run failed"
 
 echo "gen-workflows: ok"

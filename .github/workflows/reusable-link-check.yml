@@ -2,42 +2,45 @@ name: Reusable link check
 
 on:
   workflow_call:
+    # inputs: generated from workflows.manifest.yml and actions/lychee-link-check/action.yml by scripts/gen-workflows.py
     inputs:
       args:
-        description: Lychee args including paths
+        description: Arguments passed to lychee (paths, flags)
         type: string
         required: true
       create-issue:
-        description: Create/update issue from report
+        description: 'If true, create/update an issue from the report (for schedule runs)'
         type: boolean
         required: false
         default: false
       docusaurus-root:
         description: >
-          Optional path relative to the workspace (for example `website`).
-          When set, appends --root-dir $GITHUB_WORKSPACE/<value>,
-          --fallback-extensions md,mdx, and --index-files index.md,index.mdx,.
+          Optional path relative to the workspace (for example `website`). When
+          set, appends --root-dir $GITHUB_WORKSPACE/<value>, --fallback-extensions
+          md,mdx, and --index-files index.md,index.mdx,. so Docusaurus
+          root-relative and extensionless links resolve to Markdown sources.
           Empty (default) leaves args unchanged.
         type: string
         required: false
         default: ''
       config-file:
         description: >
-          Optional lychee config path. When set and the file exists, pass
-          --config <path>. lychee only auto-loads lychee.toml, so a file
-          named .lychee.toml needs this. Empty (default) does not pass
-          --config.
+          Optional lychee config path. When set and the file exists, prepends
+          --config <path>. lychee only auto-loads lychee.toml, so a file named
+          .lychee.toml needs this. Empty (default) does not pass --config.
         type: string
         required: false
         default: ''
       issue-title:
+        description: Issue title when create-issue is true
         type: string
         required: false
         default: 'Link check report (lychee)'
       update-existing-issue:
         description: >
-          Update the newest open issue titled issue-title instead of opening
-          a new one each run. Off by default.
+          If true (with create-issue), update the newest open issue whose title
+          equals issue-title instead of opening a new one every run. Default
+          false keeps the old behavior (a new issue per run).
         type: boolean
         required: false
         default: false

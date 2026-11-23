@@ -14,6 +14,12 @@
 #             they call (inputs must exist on the action), and inputs that are
 #             declared but not used (`unused-inputs`, kept so they stay visible).
 #             Own refs stay `@main`. scripts/pin-release-refs.sh pins them at release.
+#             Optional `inputs-from-action: <action>` + `inputs:` generates the
+#             workflow's `workflow_call.inputs` block: `<name>: <type>` takes the
+#             description, required and default from actions/<action>/action.yml;
+#             `<name>: keep` keeps the workflow's own definition (workflow-only input).
+#             Every action input must be in `inputs:` or `not-exposed:`, so a new
+#             action input can't be forgotten. Steps and `with:` stay hand-written.
 
 version: 1
 
@@ -124,12 +130,37 @@ workflows:
     permissions: {contents: write, pull-requests: write}
     secrets: [AUTO_REBASE_TOKEN]
     actions: [auto-rebase]
+    inputs-from-action: auto-rebase
+    inputs:
+      pr-numbers: string
+      rebase-conflicts: boolean
+      report-conflicts: boolean
+      comment-on-update: boolean
+      merge-fallback: boolean
+      supersede-fork-prs: boolean
+      supersede-union-paths: string
+      supersede-draft: boolean
+      supersede-sync-message: string
+      resolve-deleted-on-main: boolean
+      resolve-deleted-paths: string
+      fail-on-conflict: boolean
+      conflict-label: string
+      delegate-bot-rebase: boolean
+    not-exposed: [github-token, success-message, fork-blocked-message]
   - file: reusable-awesome-entry-format-check
     jobs: {validate: null}
     permissions: {contents: read}
   - file: reusable-awesome-list-checks
     jobs: {awesome-checks: awesome-list-checks}
     actions: [awesome-list-checks]
+    inputs-from-action: awesome-list-checks
+    inputs:
+      readme-path: string
+      checks: string
+      duplicate-mode: string
+      sorted-mode: string
+      entry-format-mode: string
+      node-version: keep
   - file: reusable-build-image-check
     jobs: {images: null}
     permissions: {contents: read}
@@ -146,6 +177,10 @@ workflows:
     jobs: {close: close-superseded}
     permissions: {pull-requests: write}
     actions: [close-superseded]
+    inputs-from-action: close-superseded
+    inputs:
+      comment: string
+    not-exposed: [github-token]
   - file: reusable-comment-readme-only
     jobs: {comment: null}
     permissions: {contents: read, pull-requests: write}
@@ -164,6 +199,18 @@ workflows:
     jobs: {build: Build Docusaurus, deploy: Deploy to GitHub Pages, deploy-peaceiris: Deploy via peaceiris}
     permissions: {contents: write, pages: write, id-token: write}
     actions: [docusaurus-build]
+    inputs-from-action: docusaurus-build
+    inputs:
+      working-directory: string
+      node-version: string
+      cache-dependency-path: string
+      install-command: string
+      build-command: string
+      artifact-path: keep
+      peaceiris-publish-dir: keep
+      peaceiris-cname: keep
+      lfs: keep
+    not-exposed: [prebuild-command, package-manager-cache, annotate-log]
   - file: reusable-docusaurus-test-deploy
     jobs: {test-deploy: null}
     permissions: {contents: read, pull-requests: write, issues: write}
@@ -173,12 +220,35 @@ workflows:
   - file: reusable-link-check
     jobs: {lychee: lychee}
     actions: [lychee-link-check]
+    inputs-from-action: lychee-link-check
+    inputs:
+      args: string
+      create-issue: boolean
+      docusaurus-root: string
+      config-file: string
+      issue-title: string
+      update-existing-issue: boolean
+    not-exposed: [fail, output, issue-labels, github-token]
   - file: reusable-markdownlint
     jobs: {markdownlint: markdownlint}
     actions: [markdownlint]
+    inputs-from-action: markdownlint
+    inputs:
+      globs: string
   - file: reusable-npm-script-check
     jobs: {npm-script-check: '${{ inputs.job-name }}'}
     actions: [npm-script-check]
+    inputs-from-action: npm-script-check
+    inputs:
+      working-directory: string
+      node-version: string
+      cache-dependency-path: string
+      install-command: string
+      package-manager-cache: string
+      run-command: string
+      fetch-depth: keep
+      lfs: keep
+      job-name: keep
   - file: reusable-pr-status-report
     jobs: {report: null}
     permissions: {contents: read, issues: write, pull-requests: read}
@@ -189,10 +259,23 @@ workflows:
     jobs: {comment: star-request}
     permissions: {pull-requests: write}
     actions: [star-request]
+    inputs-from-action: star-request
+    inputs:
+      message: string
+    not-exposed: [github-token]
   - file: reusable-sync-feedback
     jobs: {feedback: docs-sync-feedback}
     permissions: {contents: read, issues: write, pull-requests: write}
     actions: [docs-sync-feedback]
+    inputs-from-action: docs-sync-feedback
+    inputs:
+      docs-glob: string
+      pass-if-links-in-docs: boolean
+      label: string
+      contributing-url: string
+      check-name: string
+      pr-number: string
+    not-exposed: [github-token]
   - file: reusable-thin-content-check
     jobs: {thin-content: null}
     permissions: {contents: read}

@@ -2,9 +2,10 @@ name: Reusable markdownlint
 
 on:
   workflow_call:
+    # inputs: generated from workflows.manifest.yml and actions/markdownlint/action.yml by scripts/gen-workflows.py
     inputs:
       globs:
-        description: Multiline globs for markdownlint-cli2
+        description: Multiline globs passed to markdownlint-cli2-action
         type: string
         required: true
 

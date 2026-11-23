@@ -7,30 +7,37 @@ name: Reusable docs sync feedback
 
 on:
   workflow_call:
+    # inputs: generated from workflows.manifest.yml and actions/docs-sync-feedback/action.yml by scripts/gen-workflows.py
     inputs:
       docs-glob:
         description: Glob for docs files that count as "in sync" (match reusable-readme-sync)
         type: string
+        required: false
         default: website/docs/**/*.md
       pass-if-links-in-docs:
-        description: Treat added links already on a docs page as in sync (match reusable-readme-sync)
+        description: Treat added links that already appear on a docs page as in sync (match reusable-readme-sync)
         type: boolean
+        required: false
         default: false
       label:
         description: Label added while docs are missing (created if absent); empty disables labelling
         type: string
+        required: false
         default: needs-docs-sync
       contributing-url:
-        description: Link to the contributing guide; empty auto-detects CONTRIBUTING.md
+        description: Link to the contributing guide; empty auto-detects CONTRIBUTING.md in the base checkout
         type: string
+        required: false
         default: ''
       check-name:
         description: Name of the failing check, as shown to the contributor
         type: string
+        required: false
         default: README ↔ docs sync
       pr-number:
-        description: PR to check (workflow_dispatch); empty uses the event's pull request
+        description: PR to check on workflow_dispatch; empty uses the event's pull request
         type: string
+        required: false
         default: ''
 
 permissions:
