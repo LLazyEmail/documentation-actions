@@ -9,6 +9,17 @@
 # GITHUB_TOKEN do not trigger release.yml (GitHub will not start new
 # workflows from GITHUB_TOKEN events). release.yml remains for manually
 # published releases / PAT-based publishes.
+#
+# Per-release pinning (opt-in, see docs/pinning.md): when the RELEASE_PIN_TOKEN
+# secret is set, the tag does not point at the main commit itself but at one
+# extra commit on top of it, made here and never pushed to a branch, in which
+# scripts/pin-release-refs.sh rewrites this repo's own
+# `LLazyEmail/documentation-actions/...@main` refs to `@vX.Y.Z`. Callers pinned
+# at @v2 / @vX.Y.Z then run that release's action code, while main keeps @main
+# so it stays testable. The token must be a fine-grained PAT (or App token)
+# with Contents: write and Workflows: write on this repo: GITHUB_TOKEN can't
+# push a new commit that changes .github/workflows/. Without the secret the job
+# tags the main commit exactly as before and logs a dry run of the pinning.
 name: Tag release
 
 on:
@@ -33,6 +44,8 @@ jobs:
         with:
           fetch-depth: 0
           fetch-tags: true
+          # Pushes in this job (tags only, never a branch) use the pin token when it is set.
+          token: ${{ secrets.RELEASE_PIN_TOKEN || github.token }}
 
       - id: v
         name: Read newest changelog version
@@ -77,6 +90,38 @@ jobs:
             cat "$RUNNER_TEMP/RELEASE_NOTES.md"
           } >> "$GITHUB_STEP_SUMMARY"
 
+      - name: Pin own refs to the release
+        if: steps.v.outputs.skip != 'true' && steps.v.outputs.tag_exists != 'true'
+        env:
+          TAG: ${{ steps.v.outputs.tag }}
+          HAS_PIN_TOKEN: ${{ secrets.RELEASE_PIN_TOKEN != '' }}
+        run: |
+          set -euo pipefail
+          if [[ "$HAS_PIN_TOKEN" != "true" ]]; then
+            echo "::warning::RELEASE_PIN_TOKEN is not set: $TAG will point at the main commit, whose actions refs stay @main."
+            bash scripts/pin-release-refs.sh --check "$TAG"
+            exit 0
+          fi
+          git checkout --detach
+          bash scripts/pin-release-refs.sh "$TAG"
+          if git diff --quiet; then
+            echo "Nothing to pin; tagging the main commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -q -a -m "release: pin documentation-actions refs to $TAG" \
+            -m "Made by tag-release.yml for the $TAG tag only; main keeps @main."
+          {
+            echo "### Pinned refs for $TAG"
+            echo
+            echo "Tag commit $(git rev-parse HEAD) on top of main $(git rev-parse HEAD^)."
+            echo
+            echo '```diff'
+            git diff HEAD^ HEAD --stat
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Create annotated tag
         if: steps.v.outputs.skip != 'true' && steps.v.outputs.tag_exists != 'true'
         env:
@@ -85,6 +130,7 @@ jobs:
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # HEAD is the pin commit when pinning ran, otherwise the main commit.
           git tag -a "$TAG" -m "$TAG"
           git push origin "refs/tags/$TAG"
           echo "Created tag $TAG"

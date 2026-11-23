@@ -1,6 +1,24 @@
-# Reorganization proposal (draft, nothing decided yet)
+# Reorganization proposal
 
-Status: **proposal**. This page changes no code and no caller. It records how the
+## Status: decided 2026-11-23
+
+Arthur answered all five questions in #181 on 2026-11-23 (Europe/Kiev):
+
+1. **Option (a): yes.** Actions are the single source of truth, and a manifest plus a
+   generator writes the thin reusable workflows and aliases. This is a separate PR that
+   follows the pinning work.
+2. **Pin actions per release: yes.** `tag-release.yml` rewrites own `@main` refs to the
+   release tag in the tagged commit, opt-in through `RELEASE_PIN_TOKEN`. See
+   [`docs/pinning.md`](pinning.md#per-release-pinning-of-this-repos-own-refs).
+3. **Move `@v1` callers to `@v2`: yes, now.** Done with caller PRs.
+4. **Long names: kept for all of v2, with no removal date.** See
+   [`docs/deprecation.md`](deprecation.md).
+5. **Umbrella per-domain workflows: later, as opt-in extras only.** They never replace
+   the existing names.
+
+The text below is the original proposal, kept as written.
+
+Original status: **proposal**. This page changes no code and no caller. It records how the
 repository is put together today, what hurts, three ways to restructure, and a
 recommendation, so the choice can be made on purpose. Rule for every option:
 **no breakage** — every caller that works today keeps working, on its current
@@ -165,7 +183,7 @@ unpinned code. Option (b) can come later as optional convenience wrappers on
 top of (a). Option (c) is not worth a rewrite now. Most of the cost is in
 Docusaurus, lychee and Pages steps that are better left as composite actions.
 
-## 7. Decisions needed
+## 7. Decisions needed (answered 2026-11-23, see Status at the top)
 
 1. Option (a) as the direction, yes or no?
 2. Pin actions per release? This means a release changes `@main` references in
