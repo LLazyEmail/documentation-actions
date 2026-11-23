@@ -37,7 +37,26 @@ pipx run 'yamllint==1.38.0' --format github .
 actionlint
 bash tests/run-unit.sh
 bash scripts/changelog-check.sh
+python3 scripts/gen-workflows.py --check   # needs PyYAML
 ```
+
+## Reusable workflows and aliases: edit the manifest, run the generator
+
+`workflows.manifest.yml` lists every `.github/workflows/reusable-*.yml`.
+
+- **Short-name aliases are generated.** Don't edit them by hand. To add or change one,
+  edit its entry under `aliases:`, add its row to the table in `docs/naming.md`, then run
+  `python3 scripts/gen-workflows.py`. An alias copies the `workflow_call` block of its
+  long name, so **a new input goes on the long workflow only**. Regenerate, and every
+  alias picks it up.
+- **The other reusable workflows are still hand-written**, and each one has an entry
+  under `workflows:`. When you add a workflow, or change a job id, check name,
+  permissions, secrets or the actions it calls, update its entry too.
+- **Keep this repo's own refs as `LLazyEmail/documentation-actions/...@main`.**
+  `scripts/pin-release-refs.sh` pins them to the release tag when a release is cut.
+
+CI (`tests/gen-workflows.test.sh`) fails when a generated file is out of date or a
+workflow doesn't match its manifest entry.
 
 
 ## Changelog entries

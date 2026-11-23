@@ -38,6 +38,8 @@ Short-name aliases are thin wrappers that call the original workflows (or, for `
 
 `tests/short-name-aliases.test.sh` reads this table and fails CI if a listed workflow file is missing or an alias does not accept every input of its long name. Add a row here when you add an alias.
 
+Since 2026-11-23 the alias files are **generated** from `workflows.manifest.yml` by `scripts/gen-workflows.py` (each copies its long name's `workflow_call` block and forwards every input). The generator also checks that this table matches the manifest. See CONTRIBUTING.md, "edit the manifest, run the generator".
+
 > Until the release that includes this note, `reusable-test-deploy`, `reusable-readme-only` and `reusable-pr-report` were listed here but the files did not exist, so callers using them failed with "workflow not found". Use the long names on tags older than that release.
 
 ## Migration plan for v2

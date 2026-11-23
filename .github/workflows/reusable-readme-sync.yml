@@ -1,15 +1,18 @@
 name: Reusable README sync (short name)
 
+# Generated from workflows.manifest.yml by scripts/gen-workflows.py. Edit the manifest, not this file.
 # Short-name alias. Prefer this over reusable-readme-docs-sync-check.yml.
 
 on:
   workflow_call:
     inputs:
       docs-glob:
+        description: Glob for docs files that count as "in sync"
         type: string
         required: false
         default: website/docs/**/*.md
       comment-body:
+        description: Markdown comment posted when README changes without docs
         type: string
         required: false
         default: >
@@ -21,14 +24,22 @@ on:
 
           After adding the docs change, this check will pass.
       fail-on-missing:
+        description: Fail the job when docs are missing (otherwise only comment)
         type: boolean
         required: false
         default: true
       post-comment:
+        description: >-
+          Post comment-body when docs are missing. Set false when
+          reusable-sync-feedback.yml handles the comment (and label).
         type: boolean
         required: false
         default: true
       pass-if-links-in-docs:
+        description: >-
+          Opt-in. Pass a README-only PR when every link it adds to README.md
+          already appears in a docs file matching docs-glob, or when it adds
+          no links at all (prose or table edits). Off by default.
         type: boolean
         required: false
         default: false
@@ -44,5 +55,5 @@ jobs:
       docs-glob: ${{ inputs.docs-glob }}
       comment-body: ${{ inputs.comment-body }}
       fail-on-missing: ${{ inputs.fail-on-missing }}
-      pass-if-links-in-docs: ${{ inputs.pass-if-links-in-docs }}
       post-comment: ${{ inputs.post-comment }}
+      pass-if-links-in-docs: ${{ inputs.pass-if-links-in-docs }}

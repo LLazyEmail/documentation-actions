@@ -1,55 +1,68 @@
 name: Reusable image check (short name)
 
+# Generated from workflows.manifest.yml by scripts/gen-workflows.py. Edit the manifest, not this file.
 # Short-name alias for reusable-build-image-check.yml.
 
 on:
   workflow_call:
     inputs:
       build-dir:
+        description: Built directory relative to repository root
         type: string
         required: false
         default: 'build'
       base-url:
+        description: Site path prefix
         type: string
         required: false
         default: '/'
       allowlist:
+        description: Optional repository-relative allowlist
         type: string
         required: false
         default: ''
       mode:
+        description: fail or warn
         type: string
         required: false
         default: 'fail'
       working-directory:
+        description: Directory containing package.json
         type: string
         required: false
         default: '.'
       node-version:
+        description: Node.js version
         type: string
         required: false
         default: '22'
       cache-dependency-path:
+        description: Lockfile relative to repository root
         type: string
         required: false
         default: 'package-lock.json'
       install-command:
+        description: Dependency installation command
         type: string
         required: false
         default: 'npm ci'
       build-command:
+        description: Website build command
         type: string
         required: false
         default: 'npm run build'
       prebuild-command:
+        description: Optional command before build
         type: string
         required: false
         default: ''
       lfs:
+        description: "Pass lfs: true to actions/checkout (Git LFS docs repos)"
         type: boolean
         required: false
         default: false
       site-url:
+        description: Optional site origin (for example https://example.github.io) for full page URLs in the report
         type: string
         required: false
         default: ''

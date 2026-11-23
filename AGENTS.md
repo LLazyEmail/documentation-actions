@@ -45,7 +45,7 @@ Full inventory (append-only): [`docs/actions-index.md`](docs/actions-index.md).
 3. Awesome-list validators ship scripts inside this repo — consumers do not need local copies once adopted.
 4. Docusaurus inputs must match the consumer: `working-directory` (`website` vs `.`), Node version, package-manager cache path, and any `prebuild-command`.
 5. Never invent new job YAML from scratch. Copy an example, adjust inputs and triggers, keep permissions minimal.
-6. Prefer short-name aliases (see the table in `docs/naming.md`; e.g. `reusable-pages-deploy`, `reusable-test-deploy`, `reusable-pr-report`). Both names work and take the same inputs. When adding an alias, add its row to `docs/naming.md`; `tests/short-name-aliases.test.sh` fails if the file is missing or drops an input.
+6. Prefer short-name aliases (see the table in `docs/naming.md`; e.g. `reusable-pages-deploy`, `reusable-test-deploy`, `reusable-pr-report`). Both names work and take the same inputs. Aliases are generated: to add one, add an entry under `aliases:` in `workflows.manifest.yml` and its row to `docs/naming.md`, then run `python3 scripts/gen-workflows.py`. Never hand-edit an alias file. New inputs go on the long workflow only; regenerate and the aliases pick them up. Every reusable workflow must be listed in the manifest (see CONTRIBUTING.md). `tests/gen-workflows.test.sh` and `tests/short-name-aliases.test.sh` fail on drift.
 
 ## Required caller setup
 

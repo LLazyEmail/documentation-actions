@@ -1,5 +1,6 @@
 name: Reusable pages deploy (short name)
 
+# Generated from workflows.manifest.yml by scripts/gen-workflows.py. Edit the manifest, not this file.
 # Short-name alias. Prefer this over reusable-docusaurus-pages-deploy.yml.
 # Both names call the same implementation.
 
@@ -27,6 +28,7 @@ on:
         required: false
         default: npm run build
       artifact-path:
+        description: Path passed to upload-pages-artifact
         type: string
         required: false
         default: website/build
@@ -39,6 +41,7 @@ on:
         required: false
         default: ''
       lfs:
+        description: "Pass lfs: true to actions/checkout (Git LFS docs repos)"
         type: boolean
         required: false
         default: false

@@ -1,0 +1,201 @@
+# Single source of truth for this repo's reusable-workflow layout (DA #181, option a).
+#
+# Edit this file, then run:  python3 scripts/gen-workflows.py
+# CI runs `python3 scripts/gen-workflows.py --check` and fails when a generated file
+# is out of date or a hand-written workflow no longer matches its entry here.
+#
+# aliases:   generated. Each short-name file copies the `workflow_call` block (inputs,
+#             secrets) of `long` verbatim and forwards everything to `calls` (default:
+#             `long`). `job` is the job id callers see in check names, so never
+#             rename it. `permissions` is the alias's top-level block (omit for none).
+#             `secrets`: inherit | forward (the default when `long` declares secrets).
+# workflows: hand-written for now and checked against this list: job ids and
+#             check names, permissions, secrets, which of this repo's actions
+#             they call (inputs must exist on the action), and inputs that are
+#             declared but not used (`unused-inputs`, kept so they stay visible).
+#             Own refs stay `@main`. scripts/pin-release-refs.sh pins them at release.
+
+version: 1
+
+aliases:
+  - short: reusable-pages-deploy
+    long: reusable-docusaurus-pages-deploy
+    name: Reusable pages deploy (short name)
+    comment: |
+      Short-name alias. Prefer this over reusable-docusaurus-pages-deploy.yml.
+      Both names call the same implementation.
+    job: deploy
+    permissions: {contents: write, pages: write, id-token: write}
+    secrets: inherit
+  - short: reusable-test-deploy
+    long: reusable-docusaurus-test-deploy
+    calls: reusable-docs-ci
+    name: Reusable test-deploy (short name)
+    comment: |
+      Short-name alias for reusable-docusaurus-test-deploy.yml.
+      Same inputs and behavior: both call reusable-docs-ci.yml with run-build: true.
+      Prefer this name in new callers.
+    job: test-deploy
+    permissions: {contents: read, pull-requests: write, issues: write}
+    with-fixed: {run-build: true}
+    not-forwarded: [fetch-depth]
+  - short: reusable-readme-sync
+    long: reusable-readme-docs-sync-check
+    name: Reusable README sync (short name)
+    comment: |
+      Short-name alias. Prefer this over reusable-readme-docs-sync-check.yml.
+    job: check
+    permissions: {contents: read, pull-requests: write}
+  - short: reusable-readme-only
+    long: reusable-comment-readme-only
+    name: Reusable README-only comment (short name)
+    comment: |
+      Short-name alias for reusable-comment-readme-only.yml.
+    job: comment
+    permissions: {contents: read, pull-requests: write}
+  - short: reusable-label-conflicts
+    long: reusable-label-conflicted-prs
+    name: Reusable label conflicts (short name)
+    comment: |
+      Short-name alias for reusable-label-conflicted-prs.yml.
+    job: label
+    permissions: {contents: read, pull-requests: write}
+  - short: reusable-pr-report
+    long: reusable-pr-status-report
+    name: Reusable PR report (short name)
+    comment: |
+      Short-name alias for reusable-pr-status-report.yml.
+    job: report
+    permissions: {contents: read, issues: write, pull-requests: read}
+  - short: reusable-thin-content
+    long: reusable-thin-content-check
+    name: Reusable thin content (short name)
+    comment: |
+      Short-name alias for reusable-thin-content-check.yml.
+    job: thin-content
+    permissions: {contents: read}
+  - short: reusable-image-check
+    long: reusable-build-image-check
+    name: Reusable image check (short name)
+    comment: |
+      Short-name alias for reusable-build-image-check.yml.
+    job: images
+    permissions: {contents: read}
+  - short: reusable-entry-format
+    long: reusable-awesome-entry-format-check
+    name: Reusable entry format (short name)
+    comment: |
+      Short-name alias for reusable-awesome-entry-format-check.yml.
+    job: validate
+    permissions: {contents: read}
+  - short: reusable-npm-check
+    long: reusable-npm-script-check
+    name: Reusable npm check (short name)
+    comment: |
+      Short-name alias for reusable-npm-script-check.yml: same inputs and secrets, passed through unchanged.
+      Note: check names gain one level (<caller job> / call / <job>) compared with calling the long name.
+    job: call
+  - short: reusable-auto-rebase
+    long: reusable-auto-rebase-prs
+    name: Reusable auto-rebase (short name)
+    comment: |
+      Short-name alias for reusable-auto-rebase-prs.yml: same inputs and secrets, passed through unchanged.
+      Note: check names gain one level (<caller job> / call / <job>) compared with calling the long name.
+    job: call
+    permissions: {contents: write, pull-requests: write}
+  - short: reusable-close-superseded
+    long: reusable-close-superseded-prs
+    name: Reusable close superseded PRs (short name)
+    comment: |
+      Short-name alias for reusable-close-superseded-prs.yml: same inputs and secrets, passed through unchanged.
+      Note: check names gain one level (<caller job> / call / <job>) compared with calling the long name.
+    job: call
+    permissions: {pull-requests: write}
+  - short: reusable-awesome-checks
+    long: reusable-awesome-list-checks
+    name: Reusable awesome-list checks (short name)
+    comment: |
+      Short-name alias for reusable-awesome-list-checks.yml: same inputs and secrets, passed through unchanged.
+      Note: check names gain one level (<caller job> / call / <job>) compared with calling the long name.
+    job: call
+
+workflows:
+  - file: reusable-auto-rebase-prs
+    jobs: {rebase: auto-rebase}
+    permissions: {contents: write, pull-requests: write}
+    secrets: [AUTO_REBASE_TOKEN]
+    actions: [auto-rebase]
+  - file: reusable-awesome-entry-format-check
+    jobs: {validate: null}
+    permissions: {contents: read}
+  - file: reusable-awesome-list-checks
+    jobs: {awesome-checks: awesome-list-checks}
+    actions: [awesome-list-checks]
+  - file: reusable-build-image-check
+    jobs: {images: null}
+    permissions: {contents: read}
+    actions: [build-image-check, docusaurus-build]
+  - file: reusable-catalog-api
+    jobs: {catalog-api: Regenerate catalog JSON}
+    permissions: {contents: write}
+    actions: [git-push-retry]
+  - file: reusable-changelog
+    jobs: {changelog: Regenerate changelog}
+    permissions: {contents: write}
+    actions: [git-push-retry]
+  - file: reusable-close-superseded-prs
+    jobs: {close: close-superseded}
+    permissions: {pull-requests: write}
+    actions: [close-superseded]
+  - file: reusable-comment-readme-only
+    jobs: {comment: null}
+    permissions: {contents: read, pull-requests: write}
+  - file: reusable-docs-ci
+    jobs: {markdownlint: markdownlint, lychee: lychee, npm-check: '${{ inputs.npm-check-job-name }}', build: Test build}
+    permissions: {contents: read, pull-requests: write, issues: write}
+    actions: [docusaurus-build, docusaurus-pr-comment, lychee-link-check, markdownlint, npm-script-check]
+  - file: reusable-docs-index
+    jobs: {docs-index: Regenerate docs pages index}
+    permissions: {contents: write}
+    actions: [git-push-retry]
+  - file: reusable-docs-suite
+    jobs: {docs-ci: null, pages-deploy: null, readme-sync: null, label-conflicts: null}
+    permissions: {contents: write, pages: write, id-token: write, pull-requests: write, issues: write}
+  - file: reusable-docusaurus-pages-deploy
+    jobs: {build: Build Docusaurus, deploy: Deploy to GitHub Pages, deploy-peaceiris: Deploy via peaceiris}
+    permissions: {contents: write, pages: write, id-token: write}
+    actions: [docusaurus-build]
+  - file: reusable-docusaurus-test-deploy
+    jobs: {test-deploy: null}
+    permissions: {contents: read, pull-requests: write, issues: write}
+    unused-inputs: [fetch-depth]
+  - file: reusable-label-conflicted-prs
+    jobs: {label: null}
+    permissions: {contents: read, pull-requests: write}
+  - file: reusable-link-check
+    jobs: {lychee: lychee}
+    actions: [lychee-link-check]
+  - file: reusable-markdownlint
+    jobs: {markdownlint: markdownlint}
+    actions: [markdownlint]
+  - file: reusable-npm-script-check
+    jobs: {npm-script-check: '${{ inputs.job-name }}'}
+    actions: [npm-script-check]
+  - file: reusable-pr-status-report
+    jobs: {report: null}
+    permissions: {contents: read, issues: write, pull-requests: read}
+  - file: reusable-readme-docs-sync-check
+    jobs: {check-sync: null}
+    permissions: {contents: read, pull-requests: write}
+  - file: reusable-star-request
+    jobs: {comment: star-request}
+    permissions: {pull-requests: write}
+    actions: [star-request]
+  - file: reusable-sync-feedback
+    jobs: {feedback: docs-sync-feedback}
+    permissions: {contents: read, issues: write, pull-requests: write}
+    actions: [docs-sync-feedback]
+  - file: reusable-thin-content-check
+    jobs: {thin-content: null}
+    permissions: {contents: read}
+    actions: [docusaurus-build, thin-content-check]

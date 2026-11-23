@@ -1,0 +1,3 @@
+semver: patch
+type: Changed
+Maintainers: the 13 short-name alias workflows are now generated from the new `workflows.manifest.yml` by `scripts/gen-workflows.py` (DA #181, option a, step 1). Each alias copies its long name's `workflow_call` block and forwards every input, so a new input is declared once, on the long workflow. The generated files are semantically identical to the hand-written ones: same inputs, defaults, secrets, permissions, job ids and check names. Callers need no change. The other 22 reusable workflows are listed in the manifest and checked in CI: job ids, check names, permissions, secrets, action inputs, unused inputs, and own refs on `@main` so `scripts/pin-release-refs.sh` can pin them. New `tests/gen-workflows.test.sh`.

@@ -1,5 +1,6 @@
 name: Reusable entry format (short name)
 
+# Generated from workflows.manifest.yml by scripts/gen-workflows.py. Edit the manifest, not this file.
 # Short-name alias for reusable-awesome-entry-format-check.yml.
 
 on:

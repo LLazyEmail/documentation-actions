@@ -16,6 +16,29 @@ Arthur answered all five questions in #181 on 2026-11-23 (Europe/Kiev):
 5. **Umbrella per-domain workflows: later, as opt-in extras only.** They never replace
    the existing names.
 
+### Progress
+
+- 2026-11-23, decision 2: per-release pinning merged (#187). It's opt-in until the
+  `RELEASE_PIN_TOKEN` secret exists.
+- 2026-11-23, decision 1, step 1: `workflows.manifest.yml` and
+  `scripts/gen-workflows.py`.
+  - **Generated (13):** all short-name alias files. Each is semantically identical to
+    the hand-written version: the same inputs, defaults, types, secrets, permissions,
+    job ids and `with:` values. The text differs only in a "generated" comment
+    line, input descriptions the old copies had dropped, and the order of `with:` keys.
+  - **Checked, not generated (22):** every other reusable workflow. The checks cover
+    job ids, check names, permissions, secrets, the actions it calls (and that every
+    input passed to them exists), unused inputs, and `@main` own refs.
+  - **Why the 22 aren't generated yet:** their job bodies are all different
+    (checkout options, `if:`, concurrency, value conversions like `&& 'true' || 'false'`).
+    Renovate also updates the third-party SHA pins inside them, and it would have to
+    update a manifest instead, which it can't. Next step: generate their
+    `workflow_call` inputs from the action's `action.yml` plus per-input type
+    overrides, leaving the steps hand-written.
+  - **Known quirk, now recorded in the manifest as `unused-inputs`:**
+    `reusable-docusaurus-test-deploy` and `reusable-test-deploy` accept
+    `fetch-depth` but don't pass it on (`reusable-docs-ci` has no such input).
+
 The text below is the original proposal, kept as written.
 
 Original status: **proposal**. This page changes no code and no caller. It records how the

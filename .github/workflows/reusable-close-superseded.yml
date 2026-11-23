@@ -1,5 +1,6 @@
 name: Reusable close superseded PRs (short name)
 
+# Generated from workflows.manifest.yml by scripts/gen-workflows.py. Edit the manifest, not this file.
 # Short-name alias for reusable-close-superseded-prs.yml: same inputs and secrets, passed through unchanged.
 # Note: check names gain one level (<caller job> / call / <job>) compared with calling the long name.
 
