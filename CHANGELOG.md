@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.13.0] - 2026-11-23
+
+### Added
+
+- Four new short-name aliases, each passing the same inputs and secrets through to its long name: `reusable-npm-check` (`reusable-npm-script-check`), `reusable-auto-rebase` (`reusable-auto-rebase-prs`, including the optional `AUTO_REBASE_TOKEN` secret), `reusable-close-superseded` (`reusable-close-superseded-prs`) and `reusable-awesome-checks` (`reusable-awesome-list-checks`). Long names keep working. A caller that switches sees one extra level in its check names (`<job> / call / <inner job>`), so update any branch protection rule that requires the old name. `tests/short-name-aliases.test.sh` now also checks that every secret is declared and every input and secret is passed through.
+
+### Changed
+
+- Docs: added `docs/reorganization-proposal.md`, a draft proposal for restructuring the reusable workflows (inventory, pain points, three options, versioning, a no-breakage migration plan and a recommendation). Also annotated `docs/architecture.md` and `docs/pinning.md`: reusable workflows call the actions at `@main`, so tag and SHA pins fix inputs but not action code. No workflow or action changes.
+
 ## [2.12.0] - 2026-11-21
 
 ### Added
@@ -456,6 +466,7 @@ auto-rebase: conflicts are now reported with their type (`deleted-on-main`, `del
 - Reusable JSON API regenerate workflow (`reusable-catalog-api`).
 - Awesome-list checks: entry-format, duplicates, sorted-sections (`actions/awesome-list-checks`).
 
+[2.13.0]: https://github.com/LLazyEmail/documentation-actions/compare/v2.12.0...v2.13.0
 [2.12.0]: https://github.com/LLazyEmail/documentation-actions/compare/v2.11.0...v2.12.0
 [2.11.0]: https://github.com/LLazyEmail/documentation-actions/compare/v2.10.1...v2.11.0
 [2.10.1]: https://github.com/LLazyEmail/documentation-actions/compare/v2.10.0...v2.10.1

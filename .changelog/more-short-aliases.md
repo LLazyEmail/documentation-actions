@@ -1,3 +1,0 @@
-semver: minor
-type: Added
-Four new short-name aliases, each passing the same inputs and secrets through to its long name: `reusable-npm-check` (`reusable-npm-script-check`), `reusable-auto-rebase` (`reusable-auto-rebase-prs`, including the optional `AUTO_REBASE_TOKEN` secret), `reusable-close-superseded` (`reusable-close-superseded-prs`) and `reusable-awesome-checks` (`reusable-awesome-list-checks`). Long names keep working. A caller that switches sees one extra level in its check names (`<job> / call / <inner job>`), so update any branch protection rule that requires the old name. `tests/short-name-aliases.test.sh` now also checks that every secret is declared and every input and secret is passed through.
