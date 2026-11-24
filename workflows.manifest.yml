@@ -38,7 +38,6 @@ aliases:
     job: test-deploy
     permissions: {contents: read, pull-requests: write, issues: write}
     with-fixed: {run-build: true}
-    not-forwarded: [fetch-depth]
   - short: reusable-readme-sync
     long: reusable-readme-docs-sync-check
     name: Reusable README sync (short name)
@@ -168,7 +167,6 @@ workflows:
   - file: reusable-docusaurus-test-deploy
     jobs: {test-deploy: null}
     permissions: {contents: read, pull-requests: write, issues: write}
-    unused-inputs: [fetch-depth]
   - file: reusable-label-conflicted-prs
     jobs: {label: null}
     permissions: {contents: read, pull-requests: write}

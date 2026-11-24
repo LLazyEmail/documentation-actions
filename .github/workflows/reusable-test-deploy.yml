@@ -33,7 +33,7 @@ on:
         required: false
         default: ''
       fetch-depth:
-        description: "Accepted for compatibility; docs-ci always checks out with fetch-depth 0"
+        description: "Commits to fetch in the build checkout (0 = full history, the default)"
         type: number
         required: false
         default: 0
@@ -70,6 +70,7 @@ jobs:
       install-command: ${{ inputs.install-command }}
       build-command: ${{ inputs.build-command }}
       prebuild-command: ${{ inputs.prebuild-command }}
+      fetch-depth: ${{ inputs.fetch-depth }}
       lfs: ${{ inputs.lfs }}
       run-build: true
       annotate-log: ${{ inputs.annotate-log }}

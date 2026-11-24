@@ -32,6 +32,7 @@ jobs:
 | `install-command` | string | `npm ci` | |
 | `build-command` | string | `npm run build` | |
 | `prebuild-command` | string | empty | Empty skips |
+| `fetch-depth` | number | `0` | Opt-in. Commits to fetch in the build and npm-check checkouts. `0` (the default) is full history, as before; `1` is a shallow, faster clone. Keep `0` if the site uses `showLastUpdateTime` / `showLastUpdateAuthor` (they read git history). Also accepted, and now passed on, by `reusable-docusaurus-test-deploy` / `reusable-test-deploy` |
 | `lfs` | boolean | `false` | Check out Git LFS objects (build and npm-check jobs) |
 | `run-build` | boolean | `true` | Docusaurus test build |
 | `annotate-log` | boolean | `true` | Build warnings/errors as annotations + summary |

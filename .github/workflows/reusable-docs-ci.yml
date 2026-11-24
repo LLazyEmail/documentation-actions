@@ -31,6 +31,13 @@ on:
         type: string
         required: false
         default: ''
+      fetch-depth:
+        description: >-
+          Opt-in. Commits to fetch in the npm-check and build checkouts (0 = full history, the
+          default and the previous fixed value; 1 = shallow, faster on large repos)
+        type: number
+        required: false
+        default: 0
       lfs:
         type: boolean
         required: false
@@ -140,7 +147,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          fetch-depth: 0
+          fetch-depth: ${{ inputs.fetch-depth }}
           lfs: ${{ inputs.lfs }}
 
       - name: Require command
@@ -167,7 +174,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          fetch-depth: 0
+          fetch-depth: ${{ inputs.fetch-depth }}
           lfs: ${{ inputs.lfs }}
 
       - name: Build Docusaurus
