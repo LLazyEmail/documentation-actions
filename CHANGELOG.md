@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.14.1] - 2026-11-24
+
+### Changed
+
+- Maintainers: the 13 short-name alias workflows are now generated from the new `workflows.manifest.yml` by `scripts/gen-workflows.py` (DA #181, option a, step 1). Each alias copies its long name's `workflow_call` block and forwards every input, so a new input is declared once, on the long workflow. The generated files are semantically identical to the hand-written ones: same inputs, defaults, secrets, permissions, job ids and check names. Callers need no change. The other 22 reusable workflows are listed in the manifest and checked in CI: job ids, check names, permissions, secrets, action inputs, unused inputs, and own refs on `@main` so `scripts/pin-release-refs.sh` can pin them. New `tests/gen-workflows.test.sh`.
+
 ## [2.14.0] - 2026-11-23
 
 ### Added
@@ -472,6 +478,7 @@ auto-rebase: conflicts are now reported with their type (`deleted-on-main`, `del
 - Reusable JSON API regenerate workflow (`reusable-catalog-api`).
 - Awesome-list checks: entry-format, duplicates, sorted-sections (`actions/awesome-list-checks`).
 
+[2.14.1]: https://github.com/LLazyEmail/documentation-actions/compare/v2.14.0...v2.14.1
 [2.14.0]: https://github.com/LLazyEmail/documentation-actions/compare/v2.13.0...v2.14.0
 [2.13.0]: https://github.com/LLazyEmail/documentation-actions/compare/v2.12.0...v2.13.0
 [2.12.0]: https://github.com/LLazyEmail/documentation-actions/compare/v2.11.0...v2.12.0
