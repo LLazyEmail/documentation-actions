@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.15.0] - 2026-11-24
+
+### Added
+
+- `reusable-docs-ci`: new opt-in `fetch-depth` input for the build and npm-check checkouts. The default `0` (full history) is the value these jobs always used, so nothing changes unless you set it. `reusable-docusaurus-test-deploy` and its alias `reusable-test-deploy` already accepted `fetch-depth` but ignored it. They now pass it on, so `fetch-depth: 1` really gives a shallow build checkout. Keep `0` if the site shows git-based "last updated" data. The markdownlint and lychee checkouts are unchanged (shallow).
+
 ## [2.14.1] - 2026-11-24
 
 ### Changed
@@ -478,6 +484,7 @@ auto-rebase: conflicts are now reported with their type (`deleted-on-main`, `del
 - Reusable JSON API regenerate workflow (`reusable-catalog-api`).
 - Awesome-list checks: entry-format, duplicates, sorted-sections (`actions/awesome-list-checks`).
 
+[2.15.0]: https://github.com/LLazyEmail/documentation-actions/compare/v2.14.1...v2.15.0
 [2.14.1]: https://github.com/LLazyEmail/documentation-actions/compare/v2.14.0...v2.14.1
 [2.14.0]: https://github.com/LLazyEmail/documentation-actions/compare/v2.13.0...v2.14.0
 [2.13.0]: https://github.com/LLazyEmail/documentation-actions/compare/v2.12.0...v2.13.0
