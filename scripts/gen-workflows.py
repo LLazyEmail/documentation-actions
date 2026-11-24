@@ -22,7 +22,8 @@ yet. They are checked so they can't drift:
     form that scripts/pin-release-refs.sh rewrites at release time.
 
 It also checks that every .github/workflows/reusable-*.yml is listed in the
-manifest, and that the alias table in docs/naming.md matches the manifest.
+manifest, and writes the alias tables in docs/naming.md and docs/deprecation.md
+(between generated-table markers).
 
 Needs PyYAML (`python3 -m pip install pyyaml`).
 """
@@ -278,6 +279,11 @@ def render_wrapper_inputs(root, w, text):
     return "\n".join(lines) + "\n", span
 
 
+DOC_TABLES = ["docs/naming.md", "docs/deprecation.md"]
+DOC_BEGIN = ("<!-- generated: alias table from workflows.manifest.yml (scripts/gen-workflows.py); "
+             "edit the manifest, not this table -->")
+DOC_END = "<!-- end generated -->"
+
 WITH_BEGIN = "# generated: inputs passed through unchanged (scripts/gen-workflows.py)"
 WITH_END = "# end generated"
 
@@ -414,11 +420,27 @@ def main():
     for n in sorted(set(on_disk) - set(listed)):
         errors.append(f"{n}.yml is not in workflows.manifest.yml (add it under aliases: or workflows:)")
 
-    naming = (root / "docs" / "naming.md").read_text()
-    table = set(re.findall(r"^\| `([a-z0-9-]+)` \| `([a-z0-9-]+)` \|", naming, re.M))
-    want = {(a["long"], a["short"]) for a in aliases}
-    if table != want:
-        errors.append(f"docs/naming.md alias table differs from the manifest: missing {sorted(want - table)}, extra {sorted(table - want)}")
+    # Alias tables in the docs, between DOC_BEGIN / DOC_END markers.
+    table = "\n".join(["| Long name (still works) | Prefer |", "|-------------------------|--------|"]
+                      + [f"| `{a['long']}` | `{a['short']}` |" for a in aliases])
+    for rel in DOC_TABLES:
+        path = root / rel
+        if not path.exists():
+            continue
+        doc = path.read_text()
+        m = re.search(r"^" + re.escape(DOC_BEGIN) + r"\n(.*?)^" + re.escape(DOC_END) + r"$", doc, re.M | re.S)
+        if not m:
+            errors.append(f"{rel}: missing the generated alias table markers ({DOC_BEGIN} ... {DOC_END})")
+            continue
+        content = doc[:m.start(1)] + "\n" + table + "\n\n" + doc[m.end(1):]
+        if content != doc:
+            if args.check:
+                stale.append(rel)
+                sys.stdout.writelines(difflib.unified_diff(
+                    doc.splitlines(True), content.splitlines(True), f"a/{rel}", f"b/{rel} (generated)"))
+            else:
+                path.write_text(content)
+                print(f"wrote {rel} (alias table)")
 
     for e in errors:
         print(f"::error::{e}")

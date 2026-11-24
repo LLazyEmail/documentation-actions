@@ -45,8 +45,9 @@ python3 scripts/gen-workflows.py --check   # needs PyYAML
 `workflows.manifest.yml` lists every `.github/workflows/reusable-*.yml`.
 
 - **Short-name aliases are generated.** Don't edit them by hand. To add or change one,
-  edit its entry under `aliases:`, add its row to the table in `docs/naming.md`, then run
-  `python3 scripts/gen-workflows.py`. An alias copies the `workflow_call` block of its
+  edit its entry under `aliases:`, then run `python3 scripts/gen-workflows.py`. That also
+  rewrites the alias tables in `docs/naming.md` and `docs/deprecation.md` (between the
+  `<!-- generated: … -->` markers). Don't edit those rows by hand. An alias copies the `workflow_call` block of its
   long name, so **a new input goes on the long workflow only**. Regenerate, and every
   alias picks it up.
 - **The other reusable workflows are still hand-written**, and each one has an entry

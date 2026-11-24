@@ -60,6 +60,9 @@ Arthur answered all five questions in #181 on 2026-11-23 (Europe/Kiev):
   auto-rebase, `package-manager-cache: npm` in pages-deploy. All 9 files parse to the
   same YAML as before; only comments and key order changed. A new action input now
   takes one manifest line plus a regenerate.
+- Decision 1, step 4: the alias tables in `docs/naming.md` and `docs/deprecation.md` are
+  generated from the manifest, between `<!-- generated: … -->` markers. The rows are
+  byte-identical to the hand-written tables.
 
 The text below is the original proposal, kept as written.
 
