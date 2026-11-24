@@ -61,9 +61,11 @@ jobs:
       - name: Label and comment when docs are missing
         uses: LLazyEmail/documentation-actions/actions/docs-sync-feedback@main
         with:
+          # generated: inputs passed through unchanged (scripts/gen-workflows.py)
           docs-glob: ${{ inputs.docs-glob }}
           pass-if-links-in-docs: ${{ inputs.pass-if-links-in-docs }}
           label: ${{ inputs.label }}
           contributing-url: ${{ inputs.contributing-url }}
           check-name: ${{ inputs.check-name }}
           pr-number: ${{ inputs.pr-number }}
+          # end generated

@@ -28,4 +28,6 @@ jobs:
       - name: Ask contributor for a star
         uses: LLazyEmail/documentation-actions/actions/star-request@main
         with:
+          # generated: inputs passed through unchanged (scripts/gen-workflows.py)
           message: ${{ inputs.message }}
+          # end generated

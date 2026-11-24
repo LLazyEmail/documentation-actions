@@ -53,6 +53,13 @@ Arthur answered all five questions in #181 on 2026-11-23 (Europe/Kiev):
     (catalog-api, changelog, docs-index, whose inputs mean something different from the
     action's), docs-ci (5 actions), build-image-check and thin-content-check (2 actions
     each), the composite and suite workflows, and the 5 inline-logic workflows.
+- Decision 1, step 3: the same 9 wrappers now also get the action step's `with:`
+  lines generated, one `<name>: ${{ inputs.<name> }}` per typed input, between
+  `# generated:` / `# end generated` comments. Hand-written lines stay below the block
+  and win for their key: the boolean conversions in link-check, `github-token` in
+  auto-rebase, `package-manager-cache: npm` in pages-deploy. All 9 files parse to the
+  same YAML as before; only comments and key order changed. A new action input now
+  takes one manifest line plus a regenerate.
 
 The text below is the original proposal, kept as written.
 

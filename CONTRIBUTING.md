@@ -57,8 +57,11 @@ python3 scripts/gen-workflows.py --check   # needs PyYAML
   markdownlint, npm-script-check, star-request and sync-feedback, which have
   `inputs-from-action:` in the manifest. Their `workflow_call.inputs` take description,
   required and default from the action's `action.yml`. To expose a new action input,
-  add `<name>: <type>` under the workflow's `inputs:` in the manifest, run the generator,
-  then add the `with:` line in the step by hand. CI fails until you either expose
+  add `<name>: <type>` under the workflow's `inputs:` in the manifest and run the generator.
+  The generator writes both the declaration and the `<name>: ${{ inputs.<name> }}` line in the
+  step's `with:` block, between the `# generated: …` / `# end generated` comments. If the value
+  needs a conversion (for example `${{ inputs.x && 'true' || 'false' }}`), write that line by
+  hand below `# end generated`. A hand line for a key wins over the generated one. CI fails until you either expose
   it or list it under `not-exposed:`. Inputs that exist only on the workflow are
   `<name>: keep`, and you edit them in the workflow file.
 - **Keep this repo's own refs as `LLazyEmail/documentation-actions/...@main`.**

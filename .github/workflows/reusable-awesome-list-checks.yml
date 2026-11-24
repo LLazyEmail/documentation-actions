@@ -48,8 +48,10 @@ jobs:
       - name: Run checks
         uses: LLazyEmail/documentation-actions/actions/awesome-list-checks@main
         with:
+          # generated: inputs passed through unchanged (scripts/gen-workflows.py)
           readme-path: ${{ inputs.readme-path }}
           checks: ${{ inputs.checks }}
           duplicate-mode: ${{ inputs.duplicate-mode }}
           sorted-mode: ${{ inputs.sorted-mode }}
           entry-format-mode: ${{ inputs.entry-format-mode }}
+          # end generated

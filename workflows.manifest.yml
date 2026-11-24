@@ -19,7 +19,10 @@
 #             description, required and default from actions/<action>/action.yml;
 #             `<name>: keep` keeps the workflow's own definition (workflow-only input).
 #             Every action input must be in `inputs:` or `not-exposed:`, so a new
-#             action input can't be forgotten. Steps and `with:` stay hand-written.
+#             action input can't be forgotten. Typed inputs are also forwarded
+#             (`<name>: ${{ inputs.<name> }}`) in the action step's `with:` block,
+#             between `# generated:` / `# end generated`. Hand lines below the block
+#             (value conversions, secrets) win. Other steps stay hand-written.
 
 version: 1
 

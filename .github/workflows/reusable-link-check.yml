@@ -56,9 +56,11 @@ jobs:
       - name: Link check
         uses: LLazyEmail/documentation-actions/actions/lychee-link-check@main
         with:
+          # generated: inputs passed through unchanged (scripts/gen-workflows.py)
           args: ${{ inputs.args }}
           docusaurus-root: ${{ inputs.docusaurus-root }}
           config-file: ${{ inputs.config-file }}
-          create-issue: ${{ inputs.create-issue && 'true' || 'false' }}
           issue-title: ${{ inputs.issue-title }}
+          # end generated
+          create-issue: ${{ inputs.create-issue && 'true' || 'false' }}
           update-existing-issue: ${{ inputs.update-existing-issue && 'true' || 'false' }}

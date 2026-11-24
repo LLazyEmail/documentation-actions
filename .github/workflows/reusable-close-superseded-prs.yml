@@ -26,4 +26,6 @@ jobs:
       - name: 'Close PRs named in "Supersedes #N"'
         uses: LLazyEmail/documentation-actions/actions/close-superseded@main
         with:
+          # generated: inputs passed through unchanged (scripts/gen-workflows.py)
           comment: ${{ inputs.comment }}
+          # end generated

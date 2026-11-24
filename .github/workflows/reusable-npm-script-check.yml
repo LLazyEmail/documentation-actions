@@ -61,9 +61,11 @@ jobs:
       - name: Run npm script check
         uses: LLazyEmail/documentation-actions/actions/npm-script-check@main
         with:
+          # generated: inputs passed through unchanged (scripts/gen-workflows.py)
           working-directory: ${{ inputs.working-directory }}
           node-version: ${{ inputs.node-version }}
           cache-dependency-path: ${{ inputs.cache-dependency-path }}
           install-command: ${{ inputs.install-command }}
           package-manager-cache: ${{ inputs.package-manager-cache }}
           run-command: ${{ inputs.run-command }}
+          # end generated

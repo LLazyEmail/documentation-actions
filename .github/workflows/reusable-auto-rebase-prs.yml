@@ -113,6 +113,7 @@ jobs:
       - name: Attempt to update branches of open PRs
         uses: LLazyEmail/documentation-actions/actions/auto-rebase@main
         with:
+          # generated: inputs passed through unchanged (scripts/gen-workflows.py)
           pr-numbers: ${{ inputs.pr-numbers }}
           rebase-conflicts: ${{ inputs.rebase-conflicts }}
           report-conflicts: ${{ inputs.report-conflicts }}
@@ -122,9 +123,10 @@ jobs:
           supersede-union-paths: ${{ inputs.supersede-union-paths }}
           supersede-draft: ${{ inputs.supersede-draft }}
           supersede-sync-message: ${{ inputs.supersede-sync-message }}
-          delegate-bot-rebase: ${{ inputs.delegate-bot-rebase }}
           resolve-deleted-on-main: ${{ inputs.resolve-deleted-on-main }}
           resolve-deleted-paths: ${{ inputs.resolve-deleted-paths }}
           fail-on-conflict: ${{ inputs.fail-on-conflict }}
           conflict-label: ${{ inputs.conflict-label }}
+          delegate-bot-rebase: ${{ inputs.delegate-bot-rebase }}
+          # end generated
           github-token: ${{ secrets.AUTO_REBASE_TOKEN || github.token }}
