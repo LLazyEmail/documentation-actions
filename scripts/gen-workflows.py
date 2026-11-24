@@ -278,6 +278,70 @@ def render_wrapper_inputs(root, w, text):
     return "\n".join(lines) + "\n", span
 
 
+WITH_BEGIN = "# generated: inputs passed through unchanged (scripts/gen-workflows.py)"
+WITH_END = "# end generated"
+
+
+def render_with_lines(w, text):
+    """Rewrite the `with:` block of every step that uses the wrapped action.
+
+    Typed inputs from the manifest (`<name>: <type>`, not `keep`) are written as
+    `<name>: ${{ inputs.<name> }}` between WITH_BEGIN / WITH_END. A line for the
+    same key outside the markers (for example a value conversion) wins and is
+    kept by hand, as is every other hand-written line.
+    """
+    act = w["inputs-from-action"]
+    typed = [k for k, v in (w.get("inputs") or {}).items() if v != "keep"]
+    lines = text.split("\n")
+    uses_re = re.compile(r"^(\s*)(?:- )?uses: " + re.escape(OWN) + r"/actions/" + re.escape(act) + r"@main\s*$")
+    out, i, found = [], 0, 0
+    while i < len(lines):
+        line = lines[i]
+        m = uses_re.match(line)
+        out.append(line)
+        i += 1
+        if not m:
+            continue
+        found += 1
+        key_indent = len(m.group(1)) + (2 if line.lstrip().startswith("- ") else 0)
+        pad = " " * key_indent
+        # Other keys of the step after `uses:` (for example `id:`), up to `with:`.
+        while i < len(lines) and lines[i].startswith(pad) and not lines[i].startswith(pad + " ") \
+                and not lines[i].startswith(pad + "with:") and lines[i].strip():
+            out.append(lines[i])
+            i += 1
+        hand = []
+        if i < len(lines) and lines[i] == pad + "with:":
+            i += 1
+            inside = False
+            while i < len(lines) and lines[i].startswith(pad + "  "):
+                body = lines[i].strip()
+                if body == WITH_BEGIN:
+                    inside = True
+                elif body == WITH_END:
+                    inside = False
+                elif not inside:
+                    hand.append(lines[i])
+                i += 1
+        # A hand line that is already a plain pass-through of a typed input is
+        # absorbed into the generated block (same key, same value).
+        hand = [h for h in hand
+                if not any(h.strip() == f"{k}: ${{{{ inputs.{k} }}}}" for k in typed)]
+        hand_keys = {h.strip().split(":", 1)[0] for h in hand if not h.strip().startswith("#")}
+        gen = [k for k in typed if k not in hand_keys]
+        if gen or hand:
+            out.append(pad + "with:")
+        if gen:
+            out.append(pad + "  " + WITH_BEGIN)
+            out += [f"{pad}  {k}: ${{{{ inputs.{k} }}}}" for k in gen]
+            out.append(pad + "  " + WITH_END)
+        out += hand
+    if found == 0:
+        # Reported by the caller; check_workflow explains why (for example a non-@main ref).
+        return None
+    return "\n".join(out)
+
+
 def check_exposed(root, w, errors):
     act = w["inputs-from-action"]
     adoc = load(root / "actions" / act / "action.yml").get("inputs") or {}
@@ -309,6 +373,11 @@ def main():
                 errors.append(f"{w['file']}: no workflow_call inputs block to generate into")
             else:
                 content = text[:span[0]] + block + text[span[1]:]
+                with_content = render_with_lines(w, content)
+                if with_content is None:
+                    errors.append(f"{w['file']}: no step uses actions/{w['inputs-from-action']}@main to generate with: lines into")
+                else:
+                    content = with_content
                 if content != text:
                     if args.check:
                         stale.append(w["file"])
@@ -317,7 +386,7 @@ def main():
                             f"a/{path.relative_to(root)}", f"b/{path.relative_to(root)} (generated)"))
                     else:
                         path.write_text(content)
-                        print(f"wrote {path.relative_to(root)} (inputs)")
+                        print(f"wrote {path.relative_to(root)} (inputs, with: lines)")
             check_exposed(root, w, errors)
         check_workflow(root, w, errors)
 
@@ -358,7 +427,7 @@ def main():
     if errors or stale:
         return 1
     gen_inputs = sum(1 for w in workflows if w.get("inputs-from-action"))
-    print(f"gen-workflows: ok ({len(aliases)} aliases generated, {gen_inputs} wrapper input blocks generated, "
+    print(f"gen-workflows: ok ({len(aliases)} aliases generated, {gen_inputs} wrappers with generated inputs and with: lines, "
           f"{len(workflows)} hand-written workflows checked)")
     return 0
 

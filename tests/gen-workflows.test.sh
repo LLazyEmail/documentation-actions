@@ -87,6 +87,22 @@ sed -i 's/^      globs: string$/      globs: string\n      extra-option: string/
 "${gen[@]}" --root "$tmp/r" >"$tmp/out" 2>&1 || grep -q "unused inputs \['extra-option'\]" "$tmp/out" || { cat "$tmp/out"; fail "unexpected error"; }
 grep -q '^      extra-option:$' "$tmp/r/.github/workflows/reusable-markdownlint.yml" || fail "exposed input not generated"
 grep -q 'default: "x"' "$tmp/r/.github/workflows/reusable-markdownlint.yml" || fail "action default not copied"
+grep -q '^          extra-option: ${{ inputs.extra-option }}$' "$tmp/r/.github/workflows/reusable-markdownlint.yml" \
+  || fail "exposed input not forwarded in the step's with: block"
+"${gen[@]}" --check --root "$tmp/r" >/dev/null || fail "exposing a new action input still fails after regenerating"
+
+# 9b. Generated with: lines: a hand edit or a dropped line is caught; value conversions kept by hand survive.
+copy
+sed -i 's/^          globs: ${{ inputs.globs }}$/          globs: hand-edit/' "$tmp/r/.github/workflows/reusable-markdownlint.yml"
+expect_fail "hand-edited generated with: line" "reusable-markdownlint"
+copy
+sed -i '/^          comment: ${{ inputs.comment }}$/d' "$tmp/r/.github/workflows/reusable-close-superseded-prs.yml"
+expect_fail "dropped pass-through line" "reusable-close-superseded-prs"
+"${gen[@]}" --root "$tmp/r" >/dev/null
+grep -q '^          comment: ${{ inputs.comment }}$' "$tmp/r/.github/workflows/reusable-close-superseded-prs.yml" \
+  || fail "dropped pass-through line not regenerated"
+grep -q "create-issue: \${{ inputs.create-issue && 'true' || 'false' }}" "$tmp/r/.github/workflows/reusable-link-check.yml" \
+  || fail "hand-written value conversion was not kept"
 
 # 10. A hand edit inside a generated inputs block is caught.
 copy

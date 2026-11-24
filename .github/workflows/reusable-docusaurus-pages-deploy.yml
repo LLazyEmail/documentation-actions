@@ -74,11 +74,13 @@ jobs:
       - name: Build Docusaurus
         uses: LLazyEmail/documentation-actions/actions/docusaurus-build@main
         with:
+          # generated: inputs passed through unchanged (scripts/gen-workflows.py)
           working-directory: ${{ inputs.working-directory }}
           node-version: ${{ inputs.node-version }}
           cache-dependency-path: ${{ inputs.cache-dependency-path }}
           install-command: ${{ inputs.install-command }}
           build-command: ${{ inputs.build-command }}
+          # end generated
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3.0.1
@@ -111,11 +113,13 @@ jobs:
       - name: Build Docusaurus
         uses: LLazyEmail/documentation-actions/actions/docusaurus-build@main
         with:
+          # generated: inputs passed through unchanged (scripts/gen-workflows.py)
           working-directory: ${{ inputs.working-directory }}
           node-version: ${{ inputs.node-version }}
           cache-dependency-path: ${{ inputs.cache-dependency-path }}
           install-command: ${{ inputs.install-command }}
           build-command: ${{ inputs.build-command }}
+          # end generated
           package-manager-cache: npm
 
       - name: Deploy to GitHub Pages
