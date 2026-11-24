@@ -7,6 +7,8 @@ Prefer the short-name aliases in new callers.
 > They can only go in a future major, after a code search shows no caller still uses them.
 > The earlier plan ("removed in v3 after a v2 transition period") is replaced by this.
 
+<!-- generated: alias table from workflows.manifest.yml (scripts/gen-workflows.py); edit the manifest, not this table -->
+
 | Long name (still works) | Prefer |
 |-------------------------|--------|
 | `reusable-docusaurus-pages-deploy` | `reusable-pages-deploy` |
@@ -22,5 +24,7 @@ Prefer the short-name aliases in new callers.
 | `reusable-auto-rebase-prs` | `reusable-auto-rebase` |
 | `reusable-close-superseded-prs` | `reusable-close-superseded` |
 | `reusable-awesome-list-checks` | `reusable-awesome-checks` |
+
+<!-- end generated -->
 
 See `docs/naming.md` and `docs/v2-migration.md`.

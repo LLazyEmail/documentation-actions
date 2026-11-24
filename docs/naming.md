@@ -12,6 +12,8 @@ Several reusable workflows and paths are longer than necessary. This increases t
 
 ### Short-name aliases (available)
 
+<!-- generated: alias table from workflows.manifest.yml (scripts/gen-workflows.py); edit the manifest, not this table -->
+
 | Long name (still works) | Prefer |
 |-------------------------|--------|
 | `reusable-docusaurus-pages-deploy` | `reusable-pages-deploy` |
@@ -28,6 +30,8 @@ Several reusable workflows and paths are longer than necessary. This increases t
 | `reusable-close-superseded-prs` | `reusable-close-superseded` |
 | `reusable-awesome-list-checks` | `reusable-awesome-checks` |
 
+<!-- end generated -->
+
 `reusable-sync-feedback` was born short and has no long name.
 
 **Check names.** A caller of an alias sees one more level in the check name (for example
@@ -36,9 +40,9 @@ rule requires the old check name, update the rule when you switch the caller.
 
 Short-name aliases are thin wrappers that call the original workflows (or, for `reusable-test-deploy`, the same `reusable-docs-ci.yml` the long name calls). Both names work and accept the same inputs. Prefer the short name in new callers.
 
-`tests/short-name-aliases.test.sh` reads this table and fails CI if a listed workflow file is missing or an alias does not accept every input of its long name. Add a row here when you add an alias.
+`tests/short-name-aliases.test.sh` reads this table and fails CI if a listed workflow file is missing or an alias does not accept every input of its long name. The table is generated from `workflows.manifest.yml`: add the alias there and run the generator, not by hand here.
 
-Since 2026-11-23 the alias files are **generated** from `workflows.manifest.yml` by `scripts/gen-workflows.py` (each copies its long name's `workflow_call` block and forwards every input). The generator also checks that this table matches the manifest. See CONTRIBUTING.md, "edit the manifest, run the generator".
+Since 2026-11-23 the alias files are **generated** from `workflows.manifest.yml` by `scripts/gen-workflows.py` (each copies its long name's `workflow_call` block and forwards every input). The generator also writes this table and the one in `docs/deprecation.md`. See CONTRIBUTING.md, "edit the manifest, run the generator".
 
 > Until the release that includes this note, `reusable-test-deploy`, `reusable-readme-only` and `reusable-pr-report` were listed here but the files did not exist, so callers using them failed with "workflow not found". Use the long names on tags older than that release.
 

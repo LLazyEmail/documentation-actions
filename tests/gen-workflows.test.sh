@@ -24,6 +24,7 @@ copy() {
   cp -R "$root/.github/workflows" "$tmp/r/.github/workflows"
   cp -R "$root/actions" "$tmp/r/actions"
   cp "$root/docs/naming.md" "$tmp/r/docs/naming.md"
+  cp "$root/docs/deprecation.md" "$tmp/r/docs/deprecation.md"
   cp "$root/workflows.manifest.yml" "$tmp/r/workflows.manifest.yml"
 }
 expect_fail() {
@@ -73,10 +74,18 @@ copy
 sed -i 's/^    name: markdownlint$/    name: lint/' "$tmp/r/.github/workflows/reusable-markdownlint.yml"
 expect_fail "renamed check" "check names are caller-visible"
 
-# 8. docs/naming.md must list every alias.
+# 8. The alias tables in docs/naming.md and docs/deprecation.md are generated.
 copy
 sed -i '/`reusable-npm-check`/d' "$tmp/r/docs/naming.md"
-expect_fail "alias missing from docs/naming.md" "docs/naming.md alias table"
+expect_fail "row removed from docs/naming.md" "docs/naming.md"
+copy
+sed -i 's/`reusable-pr-report` |$/`reusable-pr-rep` |/' "$tmp/r/docs/deprecation.md"
+expect_fail "hand-edited docs/deprecation.md row" "docs/deprecation.md"
+"${gen[@]}" --root "$tmp/r" >/dev/null
+grep -q '| `reusable-pr-status-report` | `reusable-pr-report` |' "$tmp/r/docs/deprecation.md" || fail "deprecation table not regenerated"
+copy
+sed -i '/^<!-- end generated -->$/d' "$tmp/r/docs/naming.md"
+expect_fail "missing table markers" "missing the generated alias table markers"
 
 # 9. A new action input must be exposed or listed in not-exposed; exposing it generates the declaration.
 copy
