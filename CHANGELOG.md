@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.15.2] - 2026-11-24
+
+### Changed
+
+- Maintainers: `scripts/gen-workflows.py` now also writes the pass-through `with:` lines (`<name>: ${{ inputs.<name> }}`) of the action step in the 9 generated wrappers, between `# generated:` / `# end generated` comments. Hand-written lines, such as value conversions and tokens, stay below the block and win for their key. Exposing a new action input is now one manifest line plus `python3 scripts/gen-workflows.py`. Callers see no change: every changed workflow parses to the same YAML as before.
+
 ## [2.15.1] - 2026-11-24
 
 ### Changed
@@ -490,6 +496,7 @@ auto-rebase: conflicts are now reported with their type (`deleted-on-main`, `del
 - Reusable JSON API regenerate workflow (`reusable-catalog-api`).
 - Awesome-list checks: entry-format, duplicates, sorted-sections (`actions/awesome-list-checks`).
 
+[2.15.2]: https://github.com/LLazyEmail/documentation-actions/compare/v2.15.1...v2.15.2
 [2.15.1]: https://github.com/LLazyEmail/documentation-actions/compare/v2.15.0...v2.15.1
 [2.15.0]: https://github.com/LLazyEmail/documentation-actions/compare/v2.14.1...v2.15.0
 [2.14.1]: https://github.com/LLazyEmail/documentation-actions/compare/v2.14.0...v2.14.1
