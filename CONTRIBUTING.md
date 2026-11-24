@@ -52,6 +52,15 @@ python3 scripts/gen-workflows.py --check   # needs PyYAML
 - **The other reusable workflows are still hand-written**, and each one has an entry
   under `workflows:`. When you add a workflow, or change a job id, check name,
   permissions, secrets or the actions it calls, update its entry too.
+- **Input declarations of 9 action wrappers are generated too.** This covers auto-rebase-prs,
+  awesome-list-checks, close-superseded-prs, docusaurus-pages-deploy, link-check,
+  markdownlint, npm-script-check, star-request and sync-feedback, which have
+  `inputs-from-action:` in the manifest. Their `workflow_call.inputs` take description,
+  required and default from the action's `action.yml`. To expose a new action input,
+  add `<name>: <type>` under the workflow's `inputs:` in the manifest, run the generator,
+  then add the `with:` line in the step by hand. CI fails until you either expose
+  it or list it under `not-exposed:`. Inputs that exist only on the workflow are
+  `<name>: keep`, and you edit them in the workflow file.
 - **Keep this repo's own refs as `LLazyEmail/documentation-actions/...@main`.**
   `scripts/pin-release-refs.sh` pins them to the release tag when a release is cut.
 

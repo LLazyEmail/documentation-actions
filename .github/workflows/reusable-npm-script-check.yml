@@ -2,29 +2,35 @@ name: Reusable npm script check
 
 on:
   workflow_call:
+    # inputs: generated from workflows.manifest.yml and actions/npm-script-check/action.yml by scripts/gen-workflows.py
     inputs:
       working-directory:
+        description: Directory that contains package.json
         type: string
         required: false
         default: '.'
       node-version:
+        description: Node.js version
         type: string
         required: false
         default: '22'
       cache-dependency-path:
+        description: Lockfile path for setup-node cache
         type: string
         required: false
         default: package-lock.json
       install-command:
+        description: Install command (empty skips install)
         type: string
         required: false
         default: npm ci
       package-manager-cache:
+        description: setup-node cache value (npm, yarn, pnpm) or empty to disable
         type: string
         required: false
         default: npm
       run-command:
-        description: "Command to run (e.g. npm run check:media -- --base origin/main --head HEAD)"
+        description: Command to run after install (required)
         type: string
         required: true
       fetch-depth:

@@ -6,24 +6,30 @@ name: Reusable pages deploy (short name)
 
 on:
   workflow_call:
+    # inputs: generated from workflows.manifest.yml and actions/docusaurus-build/action.yml by scripts/gen-workflows.py
     inputs:
       working-directory:
+        description: Directory that contains package.json (website or .)
         type: string
         required: false
         default: website
       node-version:
+        description: Node.js version (override; default 22)
         type: string
         required: false
         default: '22'
       cache-dependency-path:
+        description: Lockfile path for setup-node cache
         type: string
         required: false
         default: website/package-lock.json
       install-command:
+        description: Install command
         type: string
         required: false
         default: npm ci
       build-command:
+        description: Build command
         type: string
         required: false
         default: npm run build

@@ -185,6 +185,109 @@ def check_own_refs(name, text, errors):
                 errors.append(f"{name}: own ref {ref} is not in a form pin-release-refs.sh handles")
 
 
+# ---------------------------------------------------------------------------
+# Wrapper inputs generated from the action's action.yml (manifest
+# `workflows[].inputs-from-action` + `inputs`).
+
+def input_chunks(block_text, indent):
+    """Split an `inputs:` block into {name: [raw lines]} keeping order."""
+    chunks, name = {}, None
+    head = re.compile(r"^" + " " * indent + r"([A-Za-z0-9_-]+):\s*$")
+    for line in block_text.splitlines():
+        m = head.match(line)
+        if m:
+            name = m.group(1)
+            chunks[name] = [line]
+        elif name is not None:
+            chunks[name].append(line)
+    for k in chunks:
+        while chunks[k] and not chunks[k][-1].strip():
+            chunks[k].pop()
+    return chunks
+
+
+def key_lines(chunk, key, indent):
+    """Raw lines of `key:` (and its continuation lines) inside one input chunk."""
+    out, on = [], False
+    for line in chunk[1:]:
+        stripped = line.strip()
+        cur = len(line) - len(line.lstrip(" "))
+        if on:
+            if stripped and cur <= indent:
+                break
+            out.append(line)
+            continue
+        if cur == indent and stripped.startswith(key + ":"):
+            on = True
+            out.append(line)
+    while out and not out[-1].strip():
+        out.pop()
+    return out
+
+
+def wf_inputs_span(text):
+    """(start, end) character span of the `    inputs:` block under workflow_call."""
+    m = re.search(r"^  workflow_call:\n", text, re.M)
+    if not m:
+        return None
+    im = re.compile(r"^    inputs:\n((?:      .*\n|\n)*)", re.M).match(text, m.end())
+    if not im:
+        im = re.compile(r"^(?:    #.*\n)*    inputs:\n((?:      .*\n|\n)*)", re.M).match(text, m.end())
+    if not im:
+        return None
+    end = im.end()
+    # Do not swallow the blank line(s) that separate the block from what follows.
+    while text[:end].endswith("\n\n"):
+        end -= 1
+    return im.start(), end
+
+
+def render_wrapper_inputs(root, w, text):
+    act = w["inputs-from-action"]
+    apath = root / "actions" / act / "action.yml"
+    atext = apath.read_text()
+    adoc = yaml.safe_load(atext).get("inputs") or {}
+    am = re.search(r"^inputs:\n((?:  .*\n|\n)*)", atext, re.M)
+    achunks = input_chunks(am.group(1), 2) if am else {}
+    span = wf_inputs_span(text)
+    current = input_chunks(text[span[0]:span[1]].split("inputs:\n", 1)[1], 6) if span else {}
+
+    lines = [f"    # inputs: generated from workflows.manifest.yml and actions/{act}/action.yml by scripts/gen-workflows.py",
+             "    inputs:"]
+    for name, spec in (w.get("inputs") or {}).items():
+        if spec == "keep":
+            if name not in current:
+                raise SystemExit(f"{w['file']}: input {name} is `keep` but not declared in the workflow")
+            lines += current[name]
+            continue
+        typ = spec
+        if name not in adoc:
+            raise SystemExit(f"{w['file']}: input {name} is not an input of actions/{act}")
+        a = adoc[name] or {}
+        lines.append(f"      {name}:")
+        lines += ["    " + x for x in key_lines(achunks[name], "description", 4)]
+        lines.append(f"        type: {typ}")
+        lines.append(f"        required: {'true' if a.get('required') else 'false'}")
+        if "default" in a:
+            if typ == "boolean":
+                lines.append(f"        default: {str(a['default']).strip().lower()}")
+            elif typ == "number":
+                lines.append(f"        default: {int(str(a['default']).strip())}")
+            else:
+                lines += ["    " + x for x in key_lines(achunks[name], "default", 4)]
+    return "\n".join(lines) + "\n", span
+
+
+def check_exposed(root, w, errors):
+    act = w["inputs-from-action"]
+    adoc = load(root / "actions" / act / "action.yml").get("inputs") or {}
+    listed = set(w.get("inputs") or {}) | set(w.get("not-exposed") or [])
+    new = [k for k in adoc if k not in listed]
+    if new:
+        errors.append(f"{w['file']}: actions/{act} input(s) {new} are neither exposed (`inputs:`) nor listed in "
+                      f"`not-exposed:`. Add them to the manifest and run python3 scripts/gen-workflows.py")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--check", action="store_true", help="fail instead of writing when generated files are out of date")
@@ -197,6 +300,27 @@ def main():
 
     aliases = manifest.get("aliases") or []
     workflows = manifest.get("workflows") or []
+    for w in workflows:
+        if w.get("inputs-from-action"):
+            path = wf / f"{w['file']}.yml"
+            text = path.read_text()
+            block, span = render_wrapper_inputs(root, w, text)
+            if span is None:
+                errors.append(f"{w['file']}: no workflow_call inputs block to generate into")
+            else:
+                content = text[:span[0]] + block + text[span[1]:]
+                if content != text:
+                    if args.check:
+                        stale.append(w["file"])
+                        sys.stdout.writelines(difflib.unified_diff(
+                            text.splitlines(True), content.splitlines(True),
+                            f"a/{path.relative_to(root)}", f"b/{path.relative_to(root)} (generated)"))
+                    else:
+                        path.write_text(content)
+                        print(f"wrote {path.relative_to(root)} (inputs)")
+            check_exposed(root, w, errors)
+        check_workflow(root, w, errors)
+
     for a in aliases:
         content = render_alias(root, a)
         path = wf / f"{a['short']}.yml"
@@ -212,9 +336,6 @@ def main():
                 print(f"wrote {path.relative_to(root)}")
         for m in OWN_REF.finditer(content):
             errors.append(f"{a['short']}: generated alias must only use ./ refs, found {m.group(0)}")
-
-    for w in workflows:
-        check_workflow(root, w, errors)
 
     listed = [a["short"] for a in aliases] + [w["file"] for w in workflows]
     dupes = sorted({n for n in listed if listed.count(n) > 1})
@@ -236,7 +357,9 @@ def main():
         print(f"::error::generated files are out of date: {stale}. Run: python3 scripts/gen-workflows.py")
     if errors or stale:
         return 1
-    print(f"gen-workflows: ok ({len(aliases)} aliases generated, {len(workflows)} hand-written workflows checked)")
+    gen_inputs = sum(1 for w in workflows if w.get("inputs-from-action"))
+    print(f"gen-workflows: ok ({len(aliases)} aliases generated, {gen_inputs} wrapper input blocks generated, "
+          f"{len(workflows)} hand-written workflows checked)")
     return 0
 
 

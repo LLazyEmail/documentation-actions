@@ -2,69 +2,95 @@ name: Reusable auto-rebase PRs
 
 on:
   workflow_call:
+    # inputs: generated from workflows.manifest.yml and actions/auto-rebase/action.yml by scripts/gen-workflows.py
     inputs:
       pr-numbers:
         description: Comma-separated PR numbers; empty selects all open PRs
         type: string
+        required: false
         default: ''
       rebase-conflicts:
-        description: Opt in to git rebase for conflicting PRs
+        description: Opt in to git rebase and force-push with lease
         type: boolean
+        required: false
         default: false
       report-conflicts:
         description: Without rebase-conflicts, comment conflicting files once per head SHA instead of failing
         type: boolean
+        required: false
         default: false
       comment-on-update:
         description: Comment on PRs after a successful branch update
         type: boolean
+        required: false
         default: true
       merge-fallback:
         description: With rebase-conflicts, merge-update (no force-push) when the rebase conflicts but GitHub says mergeable
         type: boolean
+        required: false
         default: false
       supersede-fork-prs:
-        description: 'Opt in. Replay conflicting or non-updatable fork PRs into supersede/pr-N and open a PR starting with "Supersedes #N"'
+        description: >-
+          Opt in. For fork PRs that conflict or cannot be updated, replay their commits into
+          supersede/pr-N in this repo and open a PR whose body starts with "Supersedes #N".
+          Never pushes to the fork.
         type: boolean
+        required: false
         default: false
       supersede-union-paths:
-        description: Globs where addition-only conflicts keep both sides (e.g. README.md website/docs/**/*.md)
+        description: >-
+          Space/comma-separated globs (e.g. README.md website/docs/**/*.md) where an
+          addition-only conflict is resolved by keeping both sides
         type: string
+        required: false
         default: ''
       supersede-draft:
         description: Open supersede PRs as drafts
         type: boolean
+        required: false
         default: true
       supersede-sync-message:
         description: >-
-          Thank-you comment on the contributor PR after a sync; placeholders
-          {author} {sha} {supersede} {number}; empty uses the default
+          With supersede-fork-prs, thank-you comment posted on the contributor's PR (once per
+          head SHA) when their new or rewritten commits are synced into the supersede PR.
+          Placeholders: {author}, {sha}, {supersede}, {number}. Empty uses the default.
         type: string
+        required: false
         default: >-
           Thanks for the update @{author}! Your updated branch ({sha}) was synced into #{supersede},
           and you're still credited as co-author. Nothing to do on your side; this PR will be closed
           when #{supersede} merges.
       resolve-deleted-on-main:
         description: >-
-          Opt in. Accept base-branch deletions of files the PR only modified (within
-          resolve-deleted-paths) during rebase/merge-fallback; dropped files are listed on the PR
+          Opt in. During rebase-conflicts (and merge-fallback) accept deletions made on the base
+          branch for files the PR only modified, if every conflict is of that kind and matches
+          resolve-deleted-paths. Dropped files are listed in a PR comment. With merge-fallback,
+          also try a local merge when GitHub says the PR is not mergeable.
         type: boolean
+        required: false
         default: false
       resolve-deleted-paths:
-        description: Globs where resolve-deleted-on-main may drop files
+        description: Space/comma-separated globs where resolve-deleted-on-main may drop files
         type: string
+        required: false
         default: '.github/workflows/**'
       fail-on-conflict:
-        description: Fail the job on unresolvable conflicts (false = warning; the PR still gets the report)
+        description: Fail the job on unresolvable conflicts (false logs a warning; the PR still gets the conflict report)
         type: boolean
+        required: false
         default: true
       conflict-label:
-        description: Label for PRs with unresolvable conflicts (e.g. has-conflicts); empty disables
+        description: Label added to PRs with unresolvable conflicts and removed after an update (e.g. has-conflicts); empty disables
         type: string
+        required: false
         default: ''
       delegate-bot-rebase:
-        description: 'Opt in. Ask Renovate/Dependabot to rebase their own behind or conflicting PRs instead of updating the branch'
+        description: >-
+          Opt in. For Renovate and Dependabot PRs that are behind or conflicting, ask the bot
+          to rebase (tick Renovate's rebase checkbox / comment "@dependabot rebase") instead of
+          updating the branch; reported as delegated, never as a failure.
         type: boolean
+        required: false
         default: false
     secrets:
       AUTO_REBASE_TOKEN:

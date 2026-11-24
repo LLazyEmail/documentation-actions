@@ -2,6 +2,7 @@ name: Reusable star-request
 
 on:
   workflow_call:
+    # inputs: generated from workflows.manifest.yml and actions/star-request/action.yml by scripts/gen-workflows.py
     inputs:
       message:
         description: Comment body posted on the pull request

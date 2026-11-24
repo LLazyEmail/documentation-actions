@@ -40,6 +40,20 @@ Arthur answered all five questions in #181 on 2026-11-23 (Europe/Kiev):
     follow-up PR: `reusable-docs-ci` now has an opt-in `fetch-depth` input (default `0`,
     the previous fixed value), and test-deploy forwards it.
 
+- Decision 1, step 2: the generator now writes the `workflow_call.inputs` block of
+  9 single-action wrappers from their `action.yml`. These are auto-rebase-prs,
+  awesome-list-checks, close-superseded-prs, docusaurus-pages-deploy, link-check,
+  markdownlint, npm-script-check, star-request and sync-feedback.
+  - The rule: `<name>: <type>` takes the action's description, required and default.
+    `keep` keeps a workflow-only input. Every action input must be exposed or listed
+    in `not-exposed:`.
+  - This is semantically identical for callers: the same names, order, types,
+    defaults and required flags. Only the descriptions now use the action's wording.
+  - Still hand-written: steps and `with:` lines, the git-push-retry helpers
+    (catalog-api, changelog, docs-index, whose inputs mean something different from the
+    action's), docs-ci (5 actions), build-image-check and thin-content-check (2 actions
+    each), the composite and suite workflows, and the 5 inline-logic workflows.
+
 The text below is the original proposal, kept as written.
 
 Original status: **proposal**. This page changes no code and no caller. It records how the
