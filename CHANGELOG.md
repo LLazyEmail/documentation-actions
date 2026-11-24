@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.15.3] - 2026-11-24
+
+### Changed
+
+- Docs: the alias tables in `docs/naming.md` and `docs/deprecation.md` are now generated from `workflows.manifest.yml` by `scripts/gen-workflows.py`, between `<!-- generated: … -->` markers. CI fails when they drift. The table rows didn't change.
+
 ## [2.15.2] - 2026-11-24
 
 ### Changed
@@ -496,6 +502,7 @@ auto-rebase: conflicts are now reported with their type (`deleted-on-main`, `del
 - Reusable JSON API regenerate workflow (`reusable-catalog-api`).
 - Awesome-list checks: entry-format, duplicates, sorted-sections (`actions/awesome-list-checks`).
 
+[2.15.3]: https://github.com/LLazyEmail/documentation-actions/compare/v2.15.2...v2.15.3
 [2.15.2]: https://github.com/LLazyEmail/documentation-actions/compare/v2.15.1...v2.15.2
 [2.15.1]: https://github.com/LLazyEmail/documentation-actions/compare/v2.15.0...v2.15.1
 [2.15.0]: https://github.com/LLazyEmail/documentation-actions/compare/v2.14.1...v2.15.0
