@@ -1,5 +1,6 @@
 name: Reusable test-deploy (short name)
 
+# Generated from workflows.manifest.yml by scripts/gen-workflows.py. Edit the manifest, not this file.
 # Short-name alias for reusable-docusaurus-test-deploy.yml.
 # Same inputs and behavior: both call reusable-docs-ci.yml with run-build: true.
 # Prefer this name in new callers.

@@ -1,15 +1,18 @@
 name: Reusable README-only comment (short name)
 
+# Generated from workflows.manifest.yml by scripts/gen-workflows.py. Edit the manifest, not this file.
 # Short-name alias for reusable-comment-readme-only.yml.
 
 on:
   workflow_call:
     inputs:
       docs-prefix:
+        description: Path prefix that counts as a docs update
         type: string
         required: false
         default: website/docs/
       comment-body:
+        description: Markdown comment (a marker is prepended for idempotency)
         type: string
         required: false
         default: >
