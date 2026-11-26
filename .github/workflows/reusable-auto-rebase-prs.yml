@@ -84,6 +84,28 @@ on:
         type: string
         required: false
         default: ''
+      fail-on-skipped-conflicts:
+        description: >-
+          Opt in. Fail the job when a sweep skips a PR because it has merge conflicts (default
+          false: a warning, and the run stays green).
+        type: boolean
+        required: false
+        default: false
+      report-failing-checks:
+        description: >-
+          Opt in. Warn about PRs whose head checks are red and add a "Checks not green" column to
+          the job summary. Needs a token that can read checks for check names; otherwise uses
+          GitHub's mergeable_state (unstable).
+        type: boolean
+        required: false
+        default: false
+      failing-checks-label:
+        description: >-
+          Opt in with report-failing-checks. Label added to PRs whose checks are red and removed
+          once they are green (e.g. checks-failing); empty disables
+        type: string
+        required: false
+        default: ''
       delegate-bot-rebase:
         description: >-
           Opt in. For Renovate and Dependabot PRs that are behind or conflicting, ask the bot
@@ -127,6 +149,9 @@ jobs:
           resolve-deleted-paths: ${{ inputs.resolve-deleted-paths }}
           fail-on-conflict: ${{ inputs.fail-on-conflict }}
           conflict-label: ${{ inputs.conflict-label }}
+          fail-on-skipped-conflicts: ${{ inputs.fail-on-skipped-conflicts }}
+          report-failing-checks: ${{ inputs.report-failing-checks }}
+          failing-checks-label: ${{ inputs.failing-checks-label }}
           delegate-bot-rebase: ${{ inputs.delegate-bot-rebase }}
           # end generated
           github-token: ${{ secrets.AUTO_REBASE_TOKEN || github.token }}

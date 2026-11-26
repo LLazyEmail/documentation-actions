@@ -246,11 +246,45 @@ async function setLabel(github, repo, pr, label, on) {
     catch (err) { if (err.status !== 404) throw err; }
   }
 }
+const RED = new Set(['failure', 'timed_out', 'action_required', 'startup_failure', 'cancelled']);
+// Opt-in report: are the PR head's checks red? Uses the checks and statuses APIs when the
+// token can read them (the default GITHUB_TOKEN of the reusable workflow cannot: it only has
+// contents and pull-requests), and falls back to GitHub's mergeable_state otherwise.
+async function failingChecks(github, repo, pr, core) {
+  const sha = pr.head && pr.head.sha;
+  try {
+    const runs = await github.paginate(github.rest.checks.listForRef, {...repo, ref: sha, per_page: 100});
+    const list = Array.isArray(runs) ? runs : (runs.check_runs || []);
+    const names = list.filter(r => RED.has(r.conclusion)).map(r => r.name);
+    try {
+      const {data} = await github.rest.repos.getCombinedStatusForRef({...repo, ref: sha});
+      for (const st of data.statuses || []) if (['failure', 'error'].includes(st.state)) names.push(st.context);
+    } catch (err) { if (![403, 404].includes(err.status)) throw err; }
+    return names.length ? {names: [...new Set(names)], source: 'checks API'} : null;
+  } catch (err) {
+    if (![403, 404].includes(err.status)) core.warning(`#${pr.number}: could not read checks: ${err.message}`);
+    // `unstable` = a non-required status is failing or pending; `blocked` can also be a red required check.
+    return pr.mergeable_state === 'unstable' ? {names: [], source: 'mergeable_state unstable; pass a token with checks: read for names'} : null;
+  }
+}
+function cell(text) { return String(text == null ? '' : text).replace(/\|/g, '\\|').replace(/\s+/g, ' ').slice(0, 160); }
+async function writeTable(core, rows, {reportFailingChecks}) {
+  if (!rows.length || typeof core.summary.addTable !== 'function') return;
+  const head = [{data: 'PR', header: true}, {data: 'Status', header: true}, {data: 'Details', header: true}];
+  if (reportFailingChecks) head.push({data: 'Checks not green', header: true});
+  const body = rows.map(r => {
+    const row = [`#${r.number}${r.title ? ` ${cell(r.title)}` : ''}`, r.status, cell(r.message)];
+    if (reportFailingChecks) row.push(cell(r.checks) || '—');
+    return row;
+  });
+  await core.summary.addHeading('Overview', 2).addTable([head, ...body]).write();
+}
 class ConflictError extends Error {
   constructor(result) { super(result.message); this.conflicts = result.conflicts || []; }
 }
 async function run({github, context, core, numbers = '', mode = false, report = false, mergeFallback = false, rebase = gitRebase, commentOnUpdate = true, token, successMessage = 'Automatically updated this PR branch.', forkBlockedMessage = 'Check fork write permissions.', supersedeForks = false, supersedeUnionPaths = '', supersedeDraft = true, supersedeSyncMessage = '', supersede = supersedePr, delegateBots = false, merge = gitMerge,
-  resolveDeletedOnMain = false, resolveDeletedPaths = '.github/workflows/**', failOnConflict = true, conflictLabel = ''}) {
+  resolveDeletedOnMain = false, resolveDeletedPaths = '.github/workflows/**', failOnConflict = true, conflictLabel = '',
+  failOnSkippedConflicts = false, reportFailingChecks = false, failingChecksLabel = ''}) {
   const repo = {...context.repo};
   const unionPaths = parsePaths(supersedeUnionPaths);
   const resolvePaths = parsePaths(resolveDeletedPaths);
@@ -270,6 +304,29 @@ async function run({github, context, core, numbers = '', mode = false, report = 
   const explicit = parseNumbers(numbers);
   const selected = explicit || (await github.paginate(github.rest.pulls.list, {...repo, state: 'open', per_page: 100})).map(pr => pr.number);
   let failed = false;
+  const rows = [];
+  // Per-PR bookkeeping shared by every exit path (including the early `continue`s):
+  // conflict label, opt-in failing-checks report, and the summary table row.
+  const finish = async ({number, pr, status, message, conflictOn, updated = false, keepLabel = false}) => {
+    // Delegated bot PRs keep their label as is (unchanged from before); the bot rebases them.
+    if (pr && conflictLabel && !keepLabel) {
+      try { await setLabel(github, repo, pr, conflictLabel, conflictOn); }
+      catch (err) { core.warning(`Could not update label on #${number}: ${err.message}`); }
+    }
+    let checks = '';
+    if (pr && reportFailingChecks && !updated) {
+      const red = await failingChecks(github, repo, pr, core);
+      if (red) {
+        checks = red.names.length ? red.names.join(', ') : `failing or pending (${red.source})`;
+        core.warning(`#${number}: checks not green on ${String(pr.head && pr.head.sha).slice(0, 7)}: ${checks}`);
+      }
+      if (failingChecksLabel) {
+        try { await setLabel(github, repo, pr, failingChecksLabel, Boolean(red)); }
+        catch (err) { core.warning(`Could not update label on #${number}: ${err.message}`); }
+      }
+    }
+    rows.push({number, title: pr && pr.title, status, message, checks});
+  };
   await core.summary.addHeading('PR branch updates').write();
   for (const number of selected) {
     let message;
@@ -286,6 +343,7 @@ async function run({github, context, core, numbers = '', mode = false, report = 
         if (delegated) {
           core.info(`#${number}: ${delegated}`);
           await core.summary.addHeading(`#${number}`, 3).addCodeBlock(delegated, 'text').write();
+          await finish({number, pr, status: 'delegated to bot', message: delegated, keepLabel: true});
           continue;
         }
       }
@@ -310,15 +368,19 @@ async function run({github, context, core, numbers = '', mode = false, report = 
           message = `Conflicts reported${posted ? '' : ' (already commented for this head)'}: ${trial.files.join(', ') || trial.message}`;
           core.info(`#${number}: ${message}`);
           await core.summary.addHeading(`#${number}`, 3).addCodeBlock(message, 'text').write();
+          await finish({number, pr, status: 'conflict (reported)', message, conflictOn: true});
           continue;
         }
         if (!mode && !explicit) {
           // Scheduled sweeps skip conflicting PRs quietly instead of failing the run
           // and commenting on the same PR every few hours.
           message = 'Skipped: conflicts need a manual rebase or a dispatch with rebase-conflicts: true';
-          core.warning(`#${number}: ${message}`);
+          // Opt-in: a skipped conflict turns the run red instead of a warning only.
+          if (failOnSkippedConflicts) { failed = true; core.error(`#${number}: ${message}`); }
+          else core.warning(`#${number}: ${message}`);
           core.info(`#${number}: ${message}`);
           await core.summary.addHeading(`#${number}`, 3).addCodeBlock(message, 'text').write();
+          await finish({number, pr, status: 'conflict (skipped)', message, conflictOn: true});
           continue;
         }
         if (!mode) throw new Error('Conflicts require opt-in rebase-conflicts mode');
@@ -370,10 +432,6 @@ async function run({github, context, core, numbers = '', mode = false, report = 
         catch (commentError) { core.warning(`Could not comment on #${number}: ${commentError.message}`); }
       }
     }
-    if (pr && conflictLabel) {
-      try { await setLabel(github, repo, pr, conflictLabel, conflicted || (pr.mergeable_state === 'dirty' && !updated)); }
-      catch (err) { core.warning(`Could not update label on #${number}: ${err.message}`); }
-    }
     if (updated && dropped.length) {
       try {
         await github.rest.issues.createComment({...repo, issue_number: number, body:
@@ -387,7 +445,16 @@ async function run({github, context, core, numbers = '', mode = false, report = 
     }
     core.info(`#${number}: ${message}`);
     await core.summary.addHeading(`#${number}`, 3).addCodeBlock(message, 'text').write();
+    const status = conflicted ? 'conflict' : /^Failed/.test(message) ? 'failed' : updated ? 'updated'
+      : /Needs a maintainer/.test(message) ? 'needs a maintainer' : /^(No update required|Already up to date)/.test(message) ? 'up to date' : 'see details';
+    await finish({number, pr, status, message, updated, conflictOn: conflicted || Boolean(pr && pr.mergeable_state === 'dirty' && !updated)});
+  }
+  await writeTable(core, rows, {reportFailingChecks});
+  const skipped = rows.filter(r => r.status === 'conflict (skipped)').map(r => `#${r.number}`);
+  if (skipped.length && !failOnSkippedConflicts) {
+    core.warning(`${skipped.length} open PR(s) still have merge conflicts and were skipped: ${skipped.join(', ')}. ` +
+      'The run stays green by default; set fail-on-skipped-conflicts, conflict-label or report-conflicts to make this louder.');
   }
   if (failed) core.setFailed('One or more PR updates failed; see per-PR summary');
 }
-module.exports = {botKind, delegateBotRebase, parseNumbers, details, gitRebase, gitMerge, classifyConflicts, conflictKind, upsertConflictReport, REPORT_MARKER, reportConflicts, behindWhileFailing, behindBy, compare, run};
+module.exports = {failingChecks, writeTable, botKind, delegateBotRebase, parseNumbers, details, gitRebase, gitMerge, classifyConflicts, conflictKind, upsertConflictReport, REPORT_MARKER, reportConflicts, behindWhileFailing, behindBy, compare, run};

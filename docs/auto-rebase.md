@@ -217,7 +217,41 @@ plain `Auto-rebase: Failed: …` comment.
 green, and the PR still gets the report. The default `true` keeps today's red job.
 **`conflict-label`** (for example `has-conflicts`, the label `reusable-label-conflicts` uses)
 is added to PRs with unresolvable conflicts and removed after a successful update or
-once the PR no longer conflicts.
+once the PR no longer conflicts. Since the release after v2.15.3 it's also added to
+conflicting PRs that a scheduled sweep **skips** (and the `report-conflicts` path). Before,
+those returned early and never got the label.
+
+## Why a sweep can be green while a PR still has conflicts
+
+Case: atherdon/fuck-ecoflow, 26 November 2026. The scheduled run at 18:04 Kyiv time
+started before #149 existed (opened 23:00) and only saw #99 and #100. The run Arthur
+dispatched at 23:09 saw #149, which was `dirty` (merge conflicts; its checks were green),
+and logged `##[warning]#149: Skipped: conflicts need a manual rebase or a dispatch with
+rebase-conflicts: true`. The job still ended **success**:
+
+- In a sweep (no `pr-numbers`, no `rebase-conflicts`), a conflicting PR is skipped on
+  purpose. Rebasing without owner approval is unsafe, and commenting every 6 hours is
+  noise. `fail-on-conflict` only applies to conflicts hit **during** a rebase, so it
+  didn't apply here.
+- That caller sets no `conflict-label` and no `report-conflicts`, so nothing on the PR
+  changed. And even with `conflict-label`, the skip path returned before labelling (fixed).
+
+What each run now does by default: the **Overview** table in the job summary lists every
+PR with its status, and one extra warning names all skipped conflicting PRs.
+
+To make it louder, opt in to any of these:
+
+| Want | Set |
+| --- | --- |
+| A label on the PR | `conflict-label: has-conflicts` |
+| One comment per head SHA listing the conflicting files | `report-conflicts: true` |
+| A red run while any PR has conflicts | `fail-on-skipped-conflicts: true` |
+| A warning, a summary column and an optional label for PRs whose checks are red | `report-failing-checks: true` (+ `failing-checks-label: checks-failing`) |
+
+`report-failing-checks` reads check runs and commit statuses on the PR head. The reusable
+workflow's own `GITHUB_TOKEN` can't (it only has `contents` and `pull-requests`), so pass
+the `AUTO_REBASE_TOKEN` secret for check names. Without it, GitHub's `mergeable_state`
+(`unstable`) is used, which also counts pending checks. Reporting checks never fails the run.
 
 ```yaml
 jobs:

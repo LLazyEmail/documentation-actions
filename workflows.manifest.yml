@@ -148,6 +148,9 @@ workflows:
       resolve-deleted-paths: string
       fail-on-conflict: boolean
       conflict-label: string
+      fail-on-skipped-conflicts: boolean
+      report-failing-checks: boolean
+      failing-checks-label: string
       delegate-bot-rebase: boolean
     not-exposed: [github-token, success-message, fork-blocked-message]
   - file: reusable-awesome-entry-format-check

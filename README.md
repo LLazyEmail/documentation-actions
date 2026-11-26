@@ -118,8 +118,15 @@ or manual dispatch). Full guide: [docs/auto-rebase.md](docs/auto-rebase.md).
 | `resolve-deleted-on-main` | `false` | With `rebase-conflicts`, accept deletions made on `main` for files the PR only edited (within `resolve-deleted-paths`), if that's the only kind of conflict. With `merge-fallback`, also try a local merge when GitHub says "not mergeable". Dropped files are listed on the PR |
 | `resolve-deleted-paths` | `.github/workflows/**` | Globs where `resolve-deleted-on-main` may drop files |
 | `fail-on-conflict` | `true` | `false` turns unresolvable conflicts into a warning (job stays green); the PR still gets the conflict report |
-| `conflict-label` | empty | Label for PRs with unresolvable conflicts (e.g. `has-conflicts`, as `reusable-label-conflicts` uses); removed after an update |
+| `conflict-label` | empty | Label for PRs with conflicts (e.g. `has-conflicts`, as `reusable-label-conflicts` uses), including PRs a sweep skips; removed after an update or once the PR no longer conflicts |
+| `fail-on-skipped-conflicts` | `false` | Turn the run red when a sweep skips a conflicting PR (by default that's a warning and the run stays green) |
+| `report-failing-checks` | `false` | Warn about PRs whose head checks are red, with a "Checks not green" column in the job summary. Check names need a token that can read checks (e.g. `AUTO_REBASE_TOKEN`); otherwise GitHub's `mergeable_state` is used |
+| `failing-checks-label` | empty | With `report-failing-checks`, label PRs whose checks are red (e.g. `checks-failing`); removed once green |
 | secret `AUTO_REBASE_TOKEN` | unset | Token so updated branches re-run CI |
+
+Every run ends with an **Overview** table in the job summary: one row per PR with its status
+(`updated`, `up to date`, `conflict (skipped)`, `conflict (reported)`, `conflict`, `delegated to bot`,
+`needs a maintainer`, `failed`). When PRs were skipped for conflicts, one warning lists them.
 
 Pair `supersede-fork-prs` with
 [`reusable-close-superseded-prs.yml`](.github/workflows/reusable-close-superseded-prs.yml)

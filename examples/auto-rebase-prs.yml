@@ -36,4 +36,9 @@ jobs:
       # Pair with examples/close-superseded-prs.yml.
       # supersede-fork-prs: true
       # supersede-union-paths: 'README.md website/docs/**/*.md'
+      # Opt in: make PRs the sweep can't fix visible (see docs/auto-rebase.md).
+      # conflict-label: has-conflicts
+      # fail-on-skipped-conflicts: true
+      # report-failing-checks: true
+      # failing-checks-label: checks-failing
     secrets: inherit
