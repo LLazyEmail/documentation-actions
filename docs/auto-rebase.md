@@ -64,7 +64,7 @@ jobs:
 | `report-conflicts` | `false` | When `rebase-conflicts` is off, a conflicting PR gets a trial rebase in a throwaway clone (never pushed) and **one** comment per head SHA listing the conflicting files. The job does not fail for reported conflicts. |
 | `comment-on-update` | `true` | Set `false` on push runs to avoid a "branch updated" comment on every merge. |
 | `merge-fallback` | `false` | Only with `rebase-conflicts: true`. When the git rebase conflicts (for example the branch already merged `main` and the replayed commit clashes with adjacent lines) but GitHub reports the PR as mergeable, request a normal merge update (update-branch API, no force-push) instead of failing. Needs the DA release that adds it: on an older tag the caller run fails with an invalid-input error, so pass it only after the `@v2` tag includes it. |
-| secret `AUTO_REBASE_TOKEN` | unset | Optional fine-grained PAT or GitHub App token. Branch updates made with the default `GITHUB_TOKEN` do **not** re-trigger `pull_request` CI, so required checks can look stale. Add the secret yourself in repo settings; the workflow falls back to `GITHUB_TOKEN`. |
+| secret `AUTO_REBASE_TOKEN` | unset | Optional fine-grained PAT or GitHub App token. Branch updates made with the default `GITHUB_TOKEN` do **not** re-trigger `pull_request` CI, so required checks can look stale. Add the secret yourself in repo settings; the workflow falls back to `GITHUB_TOKEN`. Scopes: see [Token permissions](#auto_rebase_token-permissions). |
 
 Notes:
 
@@ -221,6 +221,25 @@ once the PR no longer conflicts. Since the release after v2.15.3 it's also added
 conflicting PRs that a scheduled sweep **skips** (and the `report-conflicts` path). Before,
 those returned early and never got the label.
 
+## AUTO_REBASE_TOKEN permissions
+
+A fine-grained personal access token limited to the one repository (Settings → Developer
+settings → Fine-grained tokens), saved as the repository secret `AUTO_REBASE_TOKEN`
+(repo Settings → Secrets and variables → Actions → New repository secret). Repository permissions:
+
+| Permission | Access | Used for |
+| --- | --- | --- |
+| Contents | Read and write | `update-branch`, rebase and merge pushes, `supersede/pr-N` branches |
+| Pull requests | Read and write | reading PRs, opening supersede PRs, PR labels and comments |
+| Issues | Read and write | labels (`has-conflicts`, `checks-failing`) and comments, which go through the issues API |
+| Checks | Read | failing check names for `report-failing-checks` |
+| Commit statuses | Read | failing commit statuses for `report-failing-checks` |
+| Workflows | Read and write | only if PRs edit `.github/workflows/**`; without it, pushing such a rebased branch is rejected |
+| Metadata | Read | added automatically |
+
+Branch updates made with this token re-run `pull_request` CI. Updates made with
+`GITHUB_TOKEN` don't. Never commit the token; rotate it before it expires.
+
 ## Why a sweep can be green while a PR still has conflicts
 
 Case: atherdon/fuck-ecoflow, 26 November 2026. The scheduled run at 18:04 Kyiv time
@@ -245,7 +264,7 @@ To make it louder, opt in to any of these:
 | --- | --- |
 | A label on the PR | `conflict-label: has-conflicts` |
 | One comment per head SHA listing the conflicting files | `report-conflicts: true` |
-| A red run while any PR has conflicts | `fail-on-skipped-conflicts: true` |
+| A red run while any PR has conflicts | `fail-on-skipped-conflicts: true` (covers skipped PRs and, with `report-conflicts`, reported ones) |
 | A warning, a summary column and an optional label for PRs whose checks are red | `report-failing-checks: true` (+ `failing-checks-label: checks-failing`) |
 
 `report-failing-checks` reads check runs and commit statuses on the PR head. The reusable

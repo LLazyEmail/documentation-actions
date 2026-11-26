@@ -366,6 +366,8 @@ async function run({github, context, core, numbers = '', mode = false, report = 
           const trial = gitRebase(pr, token, {push: false, ...gitOptions});
           const posted = await reportConflicts(github, repo, pr, trial);
           message = `Conflicts reported${posted ? '' : ' (already commented for this head)'}: ${trial.files.join(', ') || trial.message}`;
+          // Opt-in: a reported conflict is still an open conflict, so it turns the run red too.
+          if (failOnSkippedConflicts) { failed = true; core.error(`#${number}: ${message}`); }
           core.info(`#${number}: ${message}`);
           await core.summary.addHeading(`#${number}`, 3).addCodeBlock(message, 'text').write();
           await finish({number, pr, status: 'conflict (reported)', message, conflictOn: true});
