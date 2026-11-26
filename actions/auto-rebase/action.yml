@@ -64,6 +64,22 @@ inputs:
   conflict-label:
     description: Label added to PRs with unresolvable conflicts and removed after an update (e.g. has-conflicts); empty disables
     default: ''
+  fail-on-skipped-conflicts:
+    description: >-
+      Opt in. Fail the job when a sweep skips a PR because it has merge conflicts (default
+      false: a warning, and the run stays green).
+    default: 'false'
+  report-failing-checks:
+    description: >-
+      Opt in. Warn about PRs whose head checks are red and add a "Checks not green" column to
+      the job summary. Needs a token that can read checks for check names; otherwise uses
+      GitHub's mergeable_state (unstable).
+    default: 'false'
+  failing-checks-label:
+    description: >-
+      Opt in with report-failing-checks. Label added to PRs whose checks are red and removed
+      once they are green (e.g. checks-failing); empty disables
+    default: ''
   delegate-bot-rebase:
     description: >-
       Opt in. For Renovate and Dependabot PRs that are behind or conflicting, ask the bot
@@ -93,6 +109,9 @@ runs:
         RESOLVE_DELETED_PATHS: ${{ inputs.resolve-deleted-paths }}
         FAIL_ON_CONFLICT: ${{ inputs.fail-on-conflict }}
         CONFLICT_LABEL: ${{ inputs.conflict-label }}
+        FAIL_ON_SKIPPED_CONFLICTS: ${{ inputs.fail-on-skipped-conflicts }}
+        REPORT_FAILING_CHECKS: ${{ inputs.report-failing-checks }}
+        FAILING_CHECKS_LABEL: ${{ inputs.failing-checks-label }}
       with:
         github-token: ${{ inputs.github-token }}
         script: |
@@ -114,4 +133,7 @@ runs:
             resolveDeletedPaths: process.env.RESOLVE_DELETED_PATHS,
             failOnConflict: process.env.FAIL_ON_CONFLICT !== 'false',
             conflictLabel: process.env.CONFLICT_LABEL,
+            failOnSkippedConflicts: process.env.FAIL_ON_SKIPPED_CONFLICTS === 'true',
+            reportFailingChecks: process.env.REPORT_FAILING_CHECKS === 'true',
+            failingChecksLabel: process.env.FAILING_CHECKS_LABEL,
             token: process.env.REBASE_TOKEN});
