@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.17.0] - 2026-11-26
+
+### Changed
+
+- auto-rebase: `fail-on-skipped-conflicts: true` now also fails the run when conflicting PRs are reported with `report-conflicts` (one comment per head SHA), not only when a sweep skips them. A reported conflict is still an open conflict. It stays off by default. Callers that don't set it, and callers that set it without `report-conflicts`, behave as before.
+
+  Docs: `docs/auto-rebase.md` gains an "AUTO_REBASE_TOKEN permissions" section listing the fine-grained token permissions.
+
 ## [2.16.0] - 2026-11-26
 
 ### Added
@@ -513,6 +521,7 @@ auto-rebase: conflicts are now reported with their type (`deleted-on-main`, `del
 - Reusable JSON API regenerate workflow (`reusable-catalog-api`).
 - Awesome-list checks: entry-format, duplicates, sorted-sections (`actions/awesome-list-checks`).
 
+[2.17.0]: https://github.com/LLazyEmail/documentation-actions/compare/v2.16.0...v2.17.0
 [2.16.0]: https://github.com/LLazyEmail/documentation-actions/compare/v2.15.3...v2.16.0
 [2.15.3]: https://github.com/LLazyEmail/documentation-actions/compare/v2.15.2...v2.15.3
 [2.15.2]: https://github.com/LLazyEmail/documentation-actions/compare/v2.15.1...v2.15.2
