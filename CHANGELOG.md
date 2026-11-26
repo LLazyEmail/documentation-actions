@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.16.0] - 2026-11-26
+
+### Added
+
+auto-rebase: PRs that a run can't fix are now visible. Every run ends with an **Overview** table in the job summary (one row per PR: updated, up to date, conflict (skipped), conflict (reported), conflict, delegated to bot, needs a maintainer, failed), plus one warning that lists the conflicting PRs a sweep skipped. New opt-in inputs, all off by default:
+- `fail-on-skipped-conflicts` turns the run red when a sweep skips a conflicting PR.
+- `report-failing-checks` warns about PRs whose head checks are red and adds a summary column. Check names need a token with checks read access (for example `AUTO_REBASE_TOKEN`); otherwise `mergeable_state` is used.
+- `failing-checks-label` labels those PRs.
+
+Fixed: `conflict-label` was never applied to conflicting PRs that a sweep skipped, or to the `report-conflicts` path, because both returned early. They're labelled now (only when `conflict-label` is set). Found via atherdon/fuck-ecoflow #149.
+
 ## [2.15.3] - 2026-11-24
 
 ### Changed
@@ -502,6 +513,7 @@ auto-rebase: conflicts are now reported with their type (`deleted-on-main`, `del
 - Reusable JSON API regenerate workflow (`reusable-catalog-api`).
 - Awesome-list checks: entry-format, duplicates, sorted-sections (`actions/awesome-list-checks`).
 
+[2.16.0]: https://github.com/LLazyEmail/documentation-actions/compare/v2.15.3...v2.16.0
 [2.15.3]: https://github.com/LLazyEmail/documentation-actions/compare/v2.15.2...v2.15.3
 [2.15.2]: https://github.com/LLazyEmail/documentation-actions/compare/v2.15.1...v2.15.2
 [2.15.1]: https://github.com/LLazyEmail/documentation-actions/compare/v2.15.0...v2.15.1
