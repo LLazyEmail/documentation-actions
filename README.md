@@ -119,10 +119,10 @@ or manual dispatch). Full guide: [docs/auto-rebase.md](docs/auto-rebase.md).
 | `resolve-deleted-paths` | `.github/workflows/**` | Globs where `resolve-deleted-on-main` may drop files |
 | `fail-on-conflict` | `true` | `false` turns unresolvable conflicts into a warning (job stays green); the PR still gets the conflict report |
 | `conflict-label` | empty | Label for PRs with conflicts (e.g. `has-conflicts`, as `reusable-label-conflicts` uses), including PRs a sweep skips; removed after an update or once the PR no longer conflicts |
-| `fail-on-skipped-conflicts` | `false` | Turn the run red when a sweep skips a conflicting PR (by default that's a warning and the run stays green) |
+| `fail-on-skipped-conflicts` | `false` | Turn the run red when a run leaves a PR with conflicts: skipped by a sweep, or reported with `report-conflicts` (by default that's a warning or a report, and the run stays green) |
 | `report-failing-checks` | `false` | Warn about PRs whose head checks are red, with a "Checks not green" column in the job summary. Check names need a token that can read checks (e.g. `AUTO_REBASE_TOKEN`); otherwise GitHub's `mergeable_state` is used |
 | `failing-checks-label` | empty | With `report-failing-checks`, label PRs whose checks are red (e.g. `checks-failing`); removed once green |
-| secret `AUTO_REBASE_TOKEN` | unset | Token so updated branches re-run CI |
+| secret `AUTO_REBASE_TOKEN` | unset | Fine-grained PAT so updated branches re-run CI and failing check names can be read ([permissions](docs/auto-rebase.md#auto_rebase_token-permissions)) |
 
 Every run ends with an **Overview** table in the job summary: one row per PR with its status
 (`updated`, `up to date`, `conflict (skipped)`, `conflict (reported)`, `conflict`, `delegated to bot`,

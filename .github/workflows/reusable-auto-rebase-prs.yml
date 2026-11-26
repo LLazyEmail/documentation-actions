@@ -86,8 +86,8 @@ on:
         default: ''
       fail-on-skipped-conflicts:
         description: >-
-          Opt in. Fail the job when a sweep skips a PR because it has merge conflicts (default
-          false: a warning, and the run stays green).
+          Opt in. Fail the job when a run leaves a PR with merge conflicts: skipped by a sweep, or
+          reported with report-conflicts (default false: a warning or a report, and the run stays green).
         type: boolean
         required: false
         default: false

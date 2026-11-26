@@ -19,9 +19,9 @@ Update behind open PR branches (and optionally rebase conflicts).
 - `resolve-deleted-on-main` / `resolve-deleted-paths` — opt-in: accept base-branch deletions of files the PR only edited (default paths `.github/workflows/**`); also lets `merge-fallback` try a local merge when GitHub says "not mergeable". Details: [docs/auto-rebase.md](../auto-rebase.md#conflict-types-and-deleted-files)
 - `fail-on-conflict` — `false` makes unresolvable conflicts a warning instead of a red job (default `true`)
 - `conflict-label` — label PRs with conflicts, including ones a sweep skips (e.g. `has-conflicts`); empty disables
-- `fail-on-skipped-conflicts` — opt-in: fail the job when a sweep skips a conflicting PR (default `false`: warning only)
+- `fail-on-skipped-conflicts` — opt-in: fail the job when a sweep skips a conflicting PR or `report-conflicts` reports one (default `false`: warning or report only)
 - `report-failing-checks` / `failing-checks-label` — opt-in: warn about (and optionally label) PRs whose head checks are red; adds a column to the summary table. Check names need a token with checks read access, otherwise `mergeable_state` is used. Details: [docs/auto-rebase.md](../auto-rebase.md#why-a-sweep-can-be-green-while-a-pr-still-has-conflicts)
-- secret `AUTO_REBASE_TOKEN` — optional token so updated branches re-run CI
+- secret `AUTO_REBASE_TOKEN` — optional fine-grained PAT so updated branches re-run CI and check names can be read; permissions: [docs/auto-rebase.md](../auto-rebase.md#auto_rebase_token-permissions)
 
 ## Example
 

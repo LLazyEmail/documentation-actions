@@ -1,4 +1,4 @@
-// report-conflicts: trial rebase lists files, comments once per head SHA, never pushes or fails the job.
+// report-conflicts: trial rebase lists files, comments once per head SHA, never pushes; fails the job only with fail-on-skipped-conflicts.
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const os = require('node:os');
@@ -42,6 +42,14 @@ process.env.REBASE_TEST_LOG = log;
   // Second push-triggered run with the same head: no duplicate comment.
   await run({github, context: {repo: {owner: 'org', repo: 'repo'}}, core, numbers: '371', report: true});
   assert.equal(comments.length, 1);
+  // Opt-in fail-on-skipped-conflicts: a reported conflict turns the run red too (still no push).
+  const errors = [];
+  await run({github, context: {repo: {owner: 'org', repo: 'repo'}}, core: {...core, error: m => errors.push(m)},
+    numbers: '371', report: true, failOnSkippedConflicts: true});
+  assert.equal(failure, true);
+  assert.match(errors[0], /#371: Conflicts reported/);
+  assert.equal(comments.length, 1, 'still one comment per head SHA');
+  failure = false;
   // Clean trial rebase still explains what to do.
   const fresh = [];
   const gh2 = {rest: {issues: {listComments: 'list', createComment: async c => fresh.push(c)}}, paginate: async () => []};
