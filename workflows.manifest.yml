@@ -152,6 +152,9 @@ workflows:
       report-failing-checks: boolean
       failing-checks-label: string
       delegate-bot-rebase: boolean
+      generated-paths: string
+      regenerate-command: string
+      list-skipped-conflicts: boolean
     not-exposed: [github-token, success-message, fork-blocked-message]
   - file: reusable-awesome-entry-format-check
     jobs: {validate: null}

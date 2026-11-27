@@ -114,6 +114,32 @@ on:
         type: boolean
         required: false
         default: false
+      generated-paths:
+        description: >-
+          Opt in. Space/comma-separated globs of generated files (e.g. docs/pages-index.md
+          website/static/api/*.json). A conflict there is resolved by taking the base branch's
+          version (the base regenerates it after merge). A scheduled sweep then merges the base into
+          a conflicting same-repo PR (merge commit, no force-push) when every conflict is in these
+          files, instead of skipping it; rebase-conflicts and merge-fallback resolve them too.
+        type: string
+        required: false
+        default: ''
+      regenerate-command:
+        description: >-
+          Optional, with generated-paths. Shell command run in the updated PR checkout after a
+          generated file was resolved (e.g. node ./scripts/generate-docs-index.mjs). Changed files
+          matching generated-paths are committed; other changes are discarded. No dependencies are
+          installed, tokens are removed from its environment, and it never runs for fork PRs.
+        type: string
+        required: false
+        default: ''
+      list-skipped-conflicts:
+        description: >-
+          Name the conflicting files of PRs a sweep skips (in the log, annotation and summary),
+          found with a throwaway local merge that pushes nothing. Set false to skip that clone.
+        type: boolean
+        required: false
+        default: true
     secrets:
       AUTO_REBASE_TOKEN:
         description: Optional PAT/App token so updated branches re-trigger CI (GITHUB_TOKEN pushes do not)
@@ -153,5 +179,8 @@ jobs:
           report-failing-checks: ${{ inputs.report-failing-checks }}
           failing-checks-label: ${{ inputs.failing-checks-label }}
           delegate-bot-rebase: ${{ inputs.delegate-bot-rebase }}
+          generated-paths: ${{ inputs.generated-paths }}
+          regenerate-command: ${{ inputs.regenerate-command }}
+          list-skipped-conflicts: ${{ inputs.list-skipped-conflicts }}
           # end generated
           github-token: ${{ secrets.AUTO_REBASE_TOKEN || github.token }}
