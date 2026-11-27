@@ -86,6 +86,26 @@ inputs:
       to rebase (tick Renovate's rebase checkbox / comment "@dependabot rebase") instead of
       updating the branch; reported as delegated, never as a failure.
     default: 'false'
+  generated-paths:
+    description: >-
+      Opt in. Space/comma-separated globs of generated files (e.g. docs/pages-index.md
+      website/static/api/*.json). A conflict there is resolved by taking the base branch's
+      version (the base regenerates it after merge). A scheduled sweep then merges the base into
+      a conflicting same-repo PR (merge commit, no force-push) when every conflict is in these
+      files, instead of skipping it; rebase-conflicts and merge-fallback resolve them too.
+    default: ''
+  regenerate-command:
+    description: >-
+      Optional, with generated-paths. Shell command run in the updated PR checkout after a
+      generated file was resolved (e.g. node ./scripts/generate-docs-index.mjs). Changed files
+      matching generated-paths are committed; other changes are discarded. No dependencies are
+      installed, tokens are removed from its environment, and it never runs for fork PRs.
+    default: ''
+  list-skipped-conflicts:
+    description: >-
+      Name the conflicting files of PRs a sweep skips (in the log, annotation and summary),
+      found with a throwaway local merge that pushes nothing. Set false to skip that clone.
+    default: 'true'
 runs:
   using: composite
   steps:
@@ -112,6 +132,9 @@ runs:
         FAIL_ON_SKIPPED_CONFLICTS: ${{ inputs.fail-on-skipped-conflicts }}
         REPORT_FAILING_CHECKS: ${{ inputs.report-failing-checks }}
         FAILING_CHECKS_LABEL: ${{ inputs.failing-checks-label }}
+        GENERATED_PATHS: ${{ inputs.generated-paths }}
+        REGENERATE_COMMAND: ${{ inputs.regenerate-command }}
+        LIST_SKIPPED_CONFLICTS: ${{ inputs.list-skipped-conflicts }}
       with:
         github-token: ${{ inputs.github-token }}
         script: |
@@ -136,4 +159,7 @@ runs:
             failOnSkippedConflicts: process.env.FAIL_ON_SKIPPED_CONFLICTS === 'true',
             reportFailingChecks: process.env.REPORT_FAILING_CHECKS === 'true',
             failingChecksLabel: process.env.FAILING_CHECKS_LABEL,
+            generatedPaths: process.env.GENERATED_PATHS,
+            regenerateCommand: process.env.REGENERATE_COMMAND,
+            listSkippedConflicts: process.env.LIST_SKIPPED_CONFLICTS !== 'false',
             token: process.env.REBASE_TOKEN});

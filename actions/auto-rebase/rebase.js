@@ -53,6 +53,63 @@ function describeConflicts(conflicts) {
 // Opt-in resolver: a file the base branch deleted and the PR only modified is dropped
 // (the deletion wins), restricted to resolve-deleted-paths. Never the other direction.
 const resolvableDeletion = (c, paths) => c.kind === 'deleted-on-main' && paths.some(re => re.test(c.file));
+// Opt-in resolver for generated files (generated-paths), such as docs/pages-index.md that a
+// docs-index job rewrites on main after every merge: any conflict there is resolved by taking
+// the base branch's version (or dropping the file when the base has none). The base branch
+// regenerates it after the PR merges; regenerate-command can also rebuild it right away.
+const isGenerated = (c, paths) => paths.some(re => re.test(c.file));
+const resolvable = (conflicts, {resolveDeleted, resolvePaths, generatedPaths}) => conflicts.length > 0 &&
+  conflicts.every(c => (resolveDeleted && resolvableDeletion(c, resolvePaths)) || isGenerated(c, generatedPaths));
+// Resolve one step. During a rebase the base is "ours" (index stage 2); during a merge of the
+// base into the PR branch it is "theirs" (stage 3).
+function resolveStep(git, conflicts, op, {resolveDeleted, resolvePaths}, dropped, generated) {
+  const stage = op === 'rebase' ? 2 : 3;
+  for (const c of conflicts) {
+    if (resolveDeleted && resolvableDeletion(c, resolvePaths)) { git('rm', '-q', '--', c.file); dropped.add(c.file); continue; }
+    let onBase = true;
+    try { git('cat-file', '-e', `:${stage}:${c.file}`); } catch { onBase = false; }
+    if (onBase) { git('checkout', op === 'rebase' ? '--ours' : '--theirs', '--', c.file); git('add', '--', c.file); }
+    else git('rm', '-q', '--', c.file);
+    generated.add(c.file);
+  }
+}
+// The regenerate command runs on the PR's own code, so it gets an environment without
+// tokens (the git credentials live only in the git() wrapper's env) and never runs for fork PRs.
+const SECRET_ENV = /TOKEN|SECRET|PASSWORD|^INPUT_|^GIT_CONFIG_|^ACTIONS_(RUNTIME|ID_TOKEN|CACHE)/i;
+function cleanEnv() {
+  return Object.fromEntries(Object.entries(process.env).filter(([key]) => !SECRET_ENV.test(key)));
+}
+// Run regenerate-command, then commit only the files matching generated-paths that it changed;
+// anything else it touched is discarded. Returns the committed files. Throws on failure.
+function regenerate(dir, git, {regenerateCommand, generatedPaths, baseRef, run = execFileSync}) {
+  try {
+    run('bash', ['-c', regenerateCommand], {cwd: dir, env: cleanEnv(), encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], timeout: 10 * 60 * 1000});
+  } catch (err) {
+    const detail = String(err.stderr || err.stdout || err.message || '').trim().split('\n').slice(-5).join('\n');
+    throw new Error(`regenerate-command failed (nothing pushed): ${detail}`);
+  }
+  const changed = git('status', '--porcelain=v1', '--untracked-files=all').split('\n').filter(Boolean)
+    .map(line => unquote(line.slice(3).replace(/^.* -> /, '')));
+  const files = changed.filter(file => generatedPaths.some(re => re.test(file)));
+  if (files.length) git('add', '-A', '--', ...files);
+  try { git('checkout', '-q', '--', '.'); } catch { /* nothing tracked changed */ }
+  try { git('clean', '-fdq'); } catch { /* nothing untracked */ }
+  let staged = false;
+  try { git('diff', '--cached', '--quiet'); } catch { staged = true; }
+  if (!staged) return [];
+  git('commit', '-q', '--no-verify', '-m', `chore: regenerate generated files after updating from ${baseRef}\n\nauto-rebase regenerate-command: ${regenerateCommand}\nFiles: ${files.join(', ')}`);
+  return files;
+}
+function maybeRegenerate(pr, dir, git, generated, {regenerateCommand = '', generatedPaths = [], regenerateRun}) {
+  if (!generated.size || !regenerateCommand.trim() || isFork(pr)) return [];
+  return regenerate(dir, git, {regenerateCommand, generatedPaths, baseRef: pr.base.ref, ...(regenerateRun ? {run: regenerateRun} : {})});
+}
+function resolvedSuffix(baseRef, dropped, generated, regenerated, regenerateCommand) {
+  let text = dropped.length ? `; accepted deletion on ${baseRef} of: ${dropped.join(', ')}` : '';
+  if (generated.length) text += `; took ${baseRef}'s version of generated: ${generated.join(', ')}`;
+  if (regenerated.length) text += `; regenerated with \`${regenerateCommand}\`: ${regenerated.join(', ')}`;
+  return text;
+}
 const conflictMessage = (verb, conflicts) => `${verb} conflicts (aborted):\n${describeConflicts(conflicts)}`;
 function gitSession(pr, token, remoteUrl) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pr-rebase-'));
@@ -80,58 +137,75 @@ const defaultRemote = full => `https://github.com/${full}.git`;
 // push: false runs a throwaway trial rebase that only reports conflicting files.
 // resolveDeleted: accept base-branch deletions of files the PR only modified, when every
 // conflict of a step is of that kind and matches resolvePaths; otherwise abort as before.
-function gitRebase(pr, token, {push = true, resolveDeleted = false, resolvePaths = [], remoteUrl = defaultRemote} = {}) {
+// generatedPaths: conflicts in these files take the base branch's version (see isGenerated);
+// regenerateCommand then rebuilds them in one extra commit (same-repo PRs only).
+function gitRebase(pr, token, {push = true, resolveDeleted = false, resolvePaths = [], generatedPaths = [], regenerateCommand = '', regenerateRun, remoteUrl = defaultRemote} = {}) {
   checkHead(pr, push);
-  const {git, base, done} = gitSession(pr, token, remoteUrl);
+  const {dir, git, base, done} = gitSession(pr, token, remoteUrl);
   const dropped = new Set();
+  const generated = new Set();
+  const options = {resolveDeleted, resolvePaths, generatedPaths};
   try {
     let running = true;
     try { git('rebase', base); running = false; } catch { /* resolve below */ }
     for (let step = 0; running && step < 500; step++) {
       const conflicts = classifyConflicts(git, 'rebase', pr.base.ref);
-      const resolvable = resolveDeleted && conflicts.length > 0 && conflicts.every(c => resolvableDeletion(c, resolvePaths));
-      if (!resolvable) {
+      if (!resolvable(conflicts, options)) {
         try { git('rebase', '--abort'); } catch { /* nothing to abort */ }
         return {ok: false, conflicts, files: conflicts.map(c => c.file),
           message: conflicts.length ? conflictMessage('Rebase', conflicts) : 'Rebase failed and was aborted; inspect workflow logs'};
       }
-      for (const c of conflicts) { git('rm', '-q', '--', c.file); dropped.add(c.file); }
+      resolveStep(git, conflicts, 'rebase', options, dropped, generated);
       let empty = true;
       try { git('diff', '--cached', '--quiet'); } catch { empty = false; }
       try { git('rebase', empty ? '--skip' : '--continue'); running = false; } catch { /* next conflicting commit */ }
     }
     if (running) { try { git('rebase', '--abort'); } catch { /* ignore */ } return {ok: false, conflicts: [], files: [], message: 'Rebase did not finish; aborted'}; }
     const droppedList = [...dropped];
-    const suffix = droppedList.length ? `; accepted deletion on ${pr.base.ref} of: ${droppedList.join(', ')}` : '';
-    if (!push) return {ok: true, files: [], dropped: droppedList, message: `Trial rebase applied cleanly${suffix}; nothing pushed`};
+    const generatedList = [...generated];
+    if (!push) return {ok: true, files: [], dropped: droppedList, generated: generatedList,
+      message: `Trial rebase applied cleanly${resolvedSuffix(pr.base.ref, droppedList, generatedList, [], regenerateCommand)}; nothing pushed`};
+    const regenerated = maybeRegenerate(pr, dir, git, generated, {regenerateCommand, generatedPaths, regenerateRun});
     if (git('rev-parse', 'HEAD^{tree}').trim() === git('rev-parse', `${base}^{tree}`).trim()) throw new Error('Refusing to push a branch identical to its base');
     git('push', '-q', `--force-with-lease=refs/heads/${pr.head.ref}:${pr.head.sha}`, 'head', `HEAD:refs/heads/${pr.head.ref}`);
-    return {ok: true, dropped: droppedList, message: `Rebased onto base and pushed with an explicit SHA lease${suffix}`};
+    return {ok: true, dropped: droppedList, generated: generatedList, regenerated,
+      message: `Rebased onto base and pushed with an explicit SHA lease${resolvedSuffix(pr.base.ref, droppedList, generatedList, regenerated, regenerateCommand)}`};
   } finally { done(); }
 }
 // Local merge update (no force-push): merge the base into the PR branch, applying the same
-// opt-in deletion resolver, and push the merge commit as a fast-forward of the PR branch.
-// Used by merge-fallback when GitHub's API says the PR is not mergeable.
-function gitMerge(pr, token, {resolveDeleted = false, resolvePaths = [], remoteUrl = defaultRemote} = {}) {
-  checkHead(pr, true);
-  const {git, base, done} = gitSession(pr, token, remoteUrl);
-  const dropped = [];
-  const message = `Merge ${pr.base.ref} into ${pr.head.ref} (auto-rebase merge-fallback)`;
+// opt-in resolvers, and push the merge commit as a fast-forward of the PR branch.
+// Used by merge-fallback when GitHub's API says the PR is not mergeable, and by sweeps with
+// generated-paths. push: false is a throwaway trial that only lists the conflicting files.
+function gitMerge(pr, token, {push = true, resolveDeleted = false, resolvePaths = [], generatedPaths = [], regenerateCommand = '', regenerateRun, remoteUrl = defaultRemote} = {}) {
+  checkHead(pr, push);
+  const {dir, git, base, done} = gitSession(pr, token, remoteUrl);
+  const dropped = new Set();
+  const generated = new Set();
+  const options = {resolveDeleted, resolvePaths, generatedPaths};
+  const message = `Merge ${pr.base.ref} into ${pr.head.ref} (auto-rebase)`;
   try {
     try { git('merge', '--no-ff', '--no-edit', '-m', message, base); } catch {
       const conflicts = classifyConflicts(git, 'merge', pr.base.ref);
-      if (!(resolveDeleted && conflicts.length && conflicts.every(c => resolvableDeletion(c, resolvePaths)))) {
+      if (!resolvable(conflicts, options)) {
         try { git('merge', '--abort'); } catch { /* nothing to abort */ }
         return {ok: false, conflicts, files: conflicts.map(c => c.file),
           message: conflicts.length ? conflictMessage('Merge', conflicts) : 'Merge failed and was aborted; inspect workflow logs'};
       }
-      for (const c of conflicts) { git('rm', '-q', '--', c.file); dropped.push(c.file); }
-      git('commit', '-q', '--no-edit', '-m', `${message}\n\nAccepted deletion on ${pr.base.ref} of: ${dropped.join(', ')}`);
+      resolveStep(git, conflicts, 'merge', options, dropped, generated);
+      const notes = [];
+      if (dropped.size) notes.push(`Accepted deletion on ${pr.base.ref} of: ${[...dropped].join(', ')}`);
+      if (generated.size) notes.push(`Took ${pr.base.ref}'s version of generated files: ${[...generated].join(', ')}`);
+      git('commit', '-q', '--no-edit', '--no-verify', '-m', `${message}\n\n${notes.join('\n')}`);
     }
+    const droppedList = [...dropped];
+    const generatedList = [...generated];
+    if (!push) return {ok: true, files: [], dropped: droppedList, generated: generatedList,
+      message: `Trial merge applied cleanly${resolvedSuffix(pr.base.ref, droppedList, generatedList, [], regenerateCommand)}; nothing pushed`};
+    const regenerated = maybeRegenerate(pr, dir, git, generated, {regenerateCommand, generatedPaths, regenerateRun});
     if (git('rev-parse', 'HEAD^{tree}').trim() === git('rev-parse', `${base}^{tree}`).trim()) throw new Error('Refusing to push a branch identical to its base');
     git('push', '-q', 'head', `HEAD:refs/heads/${pr.head.ref}`);
-    return {ok: true, dropped, message: `Merged ${pr.base.ref} into the branch locally and pushed (no force-push)` +
-      (dropped.length ? `; accepted deletion on ${pr.base.ref} of: ${dropped.join(', ')}` : '')};
+    return {ok: true, dropped: droppedList, generated: generatedList, regenerated,
+      message: `Merged ${pr.base.ref} into the branch locally and pushed (no force-push)${resolvedSuffix(pr.base.ref, droppedList, generatedList, regenerated, regenerateCommand)}`};
   } finally { done(); }
 }
 // Compare the PR head with its base branch. Uses compareCommitsWithBasehead:
@@ -284,11 +358,21 @@ class ConflictError extends Error {
 }
 async function run({github, context, core, numbers = '', mode = false, report = false, mergeFallback = false, rebase = gitRebase, commentOnUpdate = true, token, successMessage = 'Automatically updated this PR branch.', forkBlockedMessage = 'Check fork write permissions.', supersedeForks = false, supersedeUnionPaths = '', supersedeDraft = true, supersedeSyncMessage = '', supersede = supersedePr, delegateBots = false, merge = gitMerge,
   resolveDeletedOnMain = false, resolveDeletedPaths = '.github/workflows/**', failOnConflict = true, conflictLabel = '',
-  failOnSkippedConflicts = false, reportFailingChecks = false, failingChecksLabel = ''}) {
+  failOnSkippedConflicts = false, reportFailingChecks = false, failingChecksLabel = '',
+  generatedPaths = '', regenerateCommand = '', listSkippedConflicts = true}) {
   const repo = {...context.repo};
   const unionPaths = parsePaths(supersedeUnionPaths);
   const resolvePaths = parsePaths(resolveDeletedPaths);
-  const gitOptions = {resolveDeleted: resolveDeletedOnMain, resolvePaths};
+  const generated = parsePaths(generatedPaths);
+  const gitOptions = {resolveDeleted: resolveDeletedOnMain, resolvePaths, generatedPaths: generated, regenerateCommand: String(regenerateCommand || '')};
+  // Conflicting files for a skipped PR, from a throwaway local merge (what GitHub's "dirty"
+  // means). Best effort: on any error the skip message stays as before.
+  const listConflicts = (pr, trial) => {
+    if (!trial && listSkippedConflicts) {
+      try { trial = merge(pr, token, {...gitOptions, push: false}); } catch (err) { core.warning(`#${pr.number}: could not list conflicting files: ${err.message}`); }
+    }
+    return trial && trial.conflicts && trial.conflicts.length ? trial.conflicts : [];
+  };
   // Opt-in: replay a fork PR's commits into a base-repo branch and open a new PR.
   const supersedeOne = async pr => {
     const result = await supersede({github, repo, pr, token, draft: supersedeDraft, unionPaths, ...(supersedeSyncMessage ? {syncMessage: supersedeSyncMessage} : {})});
@@ -334,6 +418,7 @@ async function run({github, context, core, numbers = '', mode = false, report = 
     let dropped = [];
     let pr;
     let conflicted = false;
+    let generatedTry = null;
     try {
       pr = await details(github, {...repo, pull_number: number});
       if (pr.state !== 'open') throw new Error('PR is not open');
@@ -361,6 +446,13 @@ async function run({github, context, core, numbers = '', mode = false, report = 
         // A conflicting fork PR can neither be rebased (no push access to forks)
         // nor merge-updated (GitHub refuses conflicts), so supersede it.
         message = await supersedeOne(pr);
+      } else if (pr.mergeable_state === 'dirty' && !mode && generated.length && !isFork(pr)
+        && (generatedTry = merge(pr, token, {...gitOptions, resolveDeleted: false})).ok) {
+        // Opt-in generated-paths: a sweep merges the base into the branch (no force-push)
+        // when every conflict is in a generated file, instead of skipping the PR.
+        message = `Conflicts only in generated files; ${generatedTry.message}`;
+        dropped = generatedTry.dropped || [];
+        updated = true;
       } else if (pr.mergeable_state === 'dirty') {
         if (!mode && report) {
           const trial = gitRebase(pr, token, {push: false, ...gitOptions});
@@ -376,7 +468,9 @@ async function run({github, context, core, numbers = '', mode = false, report = 
         if (!mode && !explicit) {
           // Scheduled sweeps skip conflicting PRs quietly instead of failing the run
           // and commenting on the same PR every few hours.
-          message = 'Skipped: conflicts need a manual rebase or a dispatch with rebase-conflicts: true';
+          const files = listConflicts(pr, generatedTry);
+          message = 'Skipped: conflicts need a manual rebase or a dispatch with rebase-conflicts: true' +
+            (files.length ? `\nConflicting files:\n${describeConflicts(files)}` : '');
           // Opt-in: a skipped conflict turns the run red instead of a warning only.
           if (failOnSkippedConflicts) { failed = true; core.error(`#${number}: ${message}`); }
           else core.warning(`#${number}: ${message}`);
@@ -403,8 +497,8 @@ async function run({github, context, core, numbers = '', mode = false, report = 
               await github.rest.pulls.updateBranch({...repo, pull_number: number, expected_head_sha: fresh.head.sha});
               message = `Rebase conflicted (${(result.files || []).join(', ') || 'see logs'}); merge-fallback requested a merge update (no force-push)`;
               updated = true;
-            } else if (resolveDeletedOnMain && !isFork(pr)) {
-              // GitHub's flag cannot know about the opt-in resolver: try a local merge with it.
+            } else if ((resolveDeletedOnMain || generated.length) && !isFork(pr)) {
+              // GitHub's flag cannot know about the opt-in resolvers: try a local merge with them.
               const merged = merge(fresh, token, gitOptions);
               if (!merged.ok) throw new ConflictError({...merged, message: `${result.message}\nLocal merge fallback: ${merged.message}`});
               message = `Rebase conflicted; merge-fallback: ${merged.message}`;

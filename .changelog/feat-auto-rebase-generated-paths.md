@@ -1,0 +1,3 @@
+semver: minor
+type: Added
+auto-rebase: new opt-in `generated-paths` input. Conflicts in generated files (such as `docs/pages-index.md`, which the docs-index job rewrites on `main`) are resolved by taking the base branch's version. A scheduled sweep merges `main` into a conflicting same-repo PR (merge commit, no force-push) when every conflict is in those files, instead of skipping it; `rebase-conflicts` and `merge-fallback` use the same resolver. Optional `regenerate-command` rebuilds the files in the PR (one extra commit, tokens stripped from its environment, never for fork PRs). New `list-skipped-conflicts` (default `true`) names the conflicting files of every PR a sweep skips, in the log, annotation and summary. Found via atherdon/fuck-ecoflow run 45990681130.

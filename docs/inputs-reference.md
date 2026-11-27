@@ -33,6 +33,9 @@ Common inputs used across documentation-actions composites and reusable workflow
 | `resolve-deleted-paths` | `.github/workflows/**` | auto-rebase, reusable-auto-rebase-prs | Globs for `resolve-deleted-on-main` |
 | `fail-on-conflict` | `true` / `false` | auto-rebase, reusable-auto-rebase-prs | `false`: unresolvable conflicts are a warning, not a failed job |
 | `conflict-label` | `''` / `has-conflicts` | auto-rebase, reusable-auto-rebase-prs | Label PRs with unresolvable conflicts; removed after an update |
+| `generated-paths` | `''` / `docs/pages-index.md` | auto-rebase, reusable-auto-rebase-prs | Conflicts in these generated files take the base branch's version; sweeps merge-update PRs whose only conflicts are there |
+| `regenerate-command` | `''` / `node ./scripts/generate-docs-index.mjs` | auto-rebase, reusable-auto-rebase-prs | With `generated-paths`: rebuild them after resolving; changed generated files are committed |
+| `list-skipped-conflicts` | `true` / `false` | auto-rebase, reusable-auto-rebase-prs | Name conflicting files of PRs a sweep skips (trial merge, nothing pushed) |
 | `delegate-bot-rebase` | `false` / `true` | auto-rebase, reusable-auto-rebase-prs | Renovate/Dependabot PRs that are behind or conflicting: ask the bot to rebase instead of updating the branch |
 | `label` | `needs-docs-sync` | docs-sync-feedback, reusable-sync-feedback | Label while README changes lack docs; empty disables |
 | `post-comment` | `true` / `false` | reusable-readme-sync, reusable-readme-docs-sync-check | `false` leaves the comment to reusable-sync-feedback |

@@ -221,6 +221,61 @@ once the PR no longer conflicts. Since the release after v2.15.3 it's also added
 conflicting PRs that a scheduled sweep **skips** (and the `report-conflicts` path). Before,
 those returned early and never got the label.
 
+## Generated files (`generated-paths`)
+
+Case: atherdon/fuck-ecoflow, run 45990681130 (27 November 2026, 13:28 Kyiv time). The
+sweep went red (`fail-on-skipped-conflicts: true`) because three PRs (#171, #174, #175)
+were `dirty`, and the log only said `Skipped: conflicts need a manual rebase…`. A local
+merge of `main` showed why: every PR had committed its own copy of `docs/pages-index.md`,
+which the docs-index job rewrites on `main` after every merge, so parallel PRs always
+conflict there. #174 and #175 also added redirects at the same spot in `docusaurus.config.js`.
+
+`generated-paths` (opt-in, off by default) names such files:
+
+- A conflict in a matching file is resolved by taking the base branch's version (or
+  dropping the file if the base has none). That's safe for generated output: the base
+  branch regenerates it after the PR merges.
+- In a scheduled sweep, a conflicting **same-repo** PR whose conflicts are **all** in
+  `generated-paths` is merge-updated: `main` is merged into the branch locally and the merge
+  commit is pushed as a fast-forward (no force-push, existing commits stay reviewable).
+  `resolve-deleted-on-main` is not applied in sweeps. Mixed conflicts are never partially
+  resolved: the PR is skipped as before, and the skip message names every conflicting file.
+- With `rebase-conflicts: true`, each replayed commit takes the base version of generated
+  files; with `merge-fallback: true`, the local merge fallback uses the same resolver.
+- `regenerate-command` (optional) then runs in the updated checkout, e.g.
+  `node ./scripts/generate-docs-index.mjs`. Changed files matching `generated-paths` are
+  committed as one extra `chore: regenerate generated files…` commit; anything else the
+  command touches is discarded. Dependencies are not installed, so use a dependency-free
+  script or include the install in the command. Tokens and `INPUT_*` variables are removed
+  from its environment, and it never runs for fork PRs. If it fails, nothing is pushed and
+  the job reports `regenerate-command failed`.
+
+Even without `generated-paths`, a sweep now names the conflicting files of each PR it skips
+(`list-skipped-conflicts`, default `true`), found with a throwaway local merge that pushes
+nothing. For the run above the annotation would read:
+
+```text
+#175: Skipped: conflicts need a manual rebase or a dispatch with rebase-conflicts: true
+Conflicting files:
+- docs/pages-index.md: both the PR and `main` changed the same lines
+- docusaurus.config.js: both the PR and `main` changed the same lines
+```
+
+```yaml
+jobs:
+  rebase:
+    uses: LLazyEmail/documentation-actions/.github/workflows/reusable-auto-rebase.yml@v2
+    with:
+      conflict-label: has-conflicts
+      fail-on-skipped-conflicts: true
+      generated-paths: docs/pages-index.md
+      regenerate-command: node ./scripts/generate-docs-index.mjs
+    secrets: inherit
+```
+
+Branch updates pushed with `GITHUB_TOKEN` don't re-run `pull_request` CI; pass
+`AUTO_REBASE_TOKEN` (see below) so the merged branch gets fresh checks.
+
 ## AUTO_REBASE_TOKEN permissions
 
 A fine-grained personal access token limited to the one repository (Settings → Developer

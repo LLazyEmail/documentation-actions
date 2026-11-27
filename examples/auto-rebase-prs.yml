@@ -41,4 +41,8 @@ jobs:
       # fail-on-skipped-conflicts: true
       # report-failing-checks: true
       # failing-checks-label: checks-failing
+      # Opt in: conflicts only in generated files (e.g. the docs-index page) are
+      # merge-updated instead of skipped; optionally rebuild them in the PR.
+      # generated-paths: docs/pages-index.md
+      # regenerate-command: node ./scripts/generate-docs-index.mjs
     secrets: inherit
