@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.18.0] - 2026-11-27
+
+### Added
+
+- auto-rebase: new opt-in `generated-paths` input. Conflicts in generated files (such as `docs/pages-index.md`, which the docs-index job rewrites on `main`) are resolved by taking the base branch's version. A scheduled sweep merges `main` into a conflicting same-repo PR (merge commit, no force-push) when every conflict is in those files, instead of skipping it; `rebase-conflicts` and `merge-fallback` use the same resolver. Optional `regenerate-command` rebuilds the files in the PR (one extra commit, tokens stripped from its environment, never for fork PRs). New `list-skipped-conflicts` (default `true`) names the conflicting files of every PR a sweep skips, in the log, annotation and summary. Found via atherdon/fuck-ecoflow run 45990681130.
+
 ## [2.17.0] - 2026-11-26
 
 ### Changed
@@ -521,6 +527,7 @@ auto-rebase: conflicts are now reported with their type (`deleted-on-main`, `del
 - Reusable JSON API regenerate workflow (`reusable-catalog-api`).
 - Awesome-list checks: entry-format, duplicates, sorted-sections (`actions/awesome-list-checks`).
 
+[2.18.0]: https://github.com/LLazyEmail/documentation-actions/compare/v2.17.0...v2.18.0
 [2.17.0]: https://github.com/LLazyEmail/documentation-actions/compare/v2.16.0...v2.17.0
 [2.16.0]: https://github.com/LLazyEmail/documentation-actions/compare/v2.15.3...v2.16.0
 [2.15.3]: https://github.com/LLazyEmail/documentation-actions/compare/v2.15.2...v2.15.3
