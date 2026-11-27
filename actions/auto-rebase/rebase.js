@@ -38,12 +38,25 @@ function conflictKind(code, op) {
   if (code === 'UD') return op === 'rebase' ? 'deleted-in-pr' : 'deleted-on-main';
   return 'content';
 }
-function unquote(file) {
-  return file.startsWith('"') ? JSON.parse(file) : file;
+// `git status --porcelain` quotes paths with non-ASCII bytes or special characters as C
+// strings with octal escapes ("docs/\320\257\320\272 ...md"), which JSON.parse cannot read
+// ("Bad escaped character in JSON"). With -z paths are never quoted: entries are separated by
+// NUL, and a rename/copy entry (R or C) is followed by one extra field, the original path.
+function statusEntries(git, untracked = 'no') {
+  const out = git('status', '--porcelain=v1', '-z', `--untracked-files=${untracked}`);
+  // Real git always NUL-terminates with -z; newline-separated output (test doubles) still parses.
+  const fields = out.split(out.includes('\0') ? '\0' : '\n');
+  const entries = [];
+  for (let i = 0; i < fields.length; i++) {
+    if (!fields[i]) continue;
+    const code = fields[i].slice(0, 2);
+    entries.push({code, file: fields[i].slice(3)});
+    if (/[RC]/.test(code)) i++;
+  }
+  return entries;
 }
 function classifyConflicts(git, op, baseRef) {
-  return git('status', '--porcelain=v1', '--untracked-files=no').split('\n')
-    .map(line => ({code: line.slice(0, 2), file: unquote(line.slice(3))}))
+  return statusEntries(git, 'no')
     .filter(e => /^(DD|AU|UD|UA|DU|AA|UU)$/.test(e.code))
     .map(e => { const kind = conflictKind(e.code, op); return {file: e.file, kind, note: CONFLICT_NOTES[kind](baseRef)}; });
 }
@@ -88,8 +101,7 @@ function regenerate(dir, git, {regenerateCommand, generatedPaths, baseRef, run =
     const detail = String(err.stderr || err.stdout || err.message || '').trim().split('\n').slice(-5).join('\n');
     throw new Error(`regenerate-command failed (nothing pushed): ${detail}`);
   }
-  const changed = git('status', '--porcelain=v1', '--untracked-files=all').split('\n').filter(Boolean)
-    .map(line => unquote(line.slice(3).replace(/^.* -> /, '')));
+  const changed = statusEntries(git, 'all').map(e => e.file);
   const files = changed.filter(file => generatedPaths.some(re => re.test(file)));
   if (files.length) git('add', '-A', '--', ...files);
   try { git('checkout', '-q', '--', '.'); } catch { /* nothing tracked changed */ }
@@ -367,6 +379,12 @@ async function run({github, context, core, numbers = '', mode = false, report = 
   const gitOptions = {resolveDeleted: resolveDeletedOnMain, resolvePaths, generatedPaths: generated, regenerateCommand: String(regenerateCommand || '')};
   // Conflicting files for a skipped PR, from a throwaway local merge (what GitHub's "dirty"
   // means). Best effort: on any error the skip message stays as before.
+  // A git error in the opt-in generated-files merge (not a conflict) must not fail the PR:
+  // warn and fall back to the old skip/report path.
+  const tryGeneratedMerge = pr => {
+    try { return merge(pr, token, {...gitOptions, resolveDeleted: false}); }
+    catch (err) { core.warning(`#${pr.number}: generated-paths merge failed, skipping it: ${err.message}`); return null; }
+  };
   const listConflicts = (pr, trial) => {
     if (!trial && listSkippedConflicts) {
       try { trial = merge(pr, token, {...gitOptions, push: false}); } catch (err) { core.warning(`#${pr.number}: could not list conflicting files: ${err.message}`); }
@@ -447,7 +465,7 @@ async function run({github, context, core, numbers = '', mode = false, report = 
         // nor merge-updated (GitHub refuses conflicts), so supersede it.
         message = await supersedeOne(pr);
       } else if (pr.mergeable_state === 'dirty' && !mode && generated.length && !isFork(pr)
-        && (generatedTry = merge(pr, token, {...gitOptions, resolveDeleted: false})).ok) {
+        && (generatedTry = tryGeneratedMerge(pr)) && generatedTry.ok) {
         // Opt-in generated-paths: a sweep merges the base into the branch (no force-push)
         // when every conflict is in a generated file, instead of skipping the PR.
         message = `Conflicts only in generated files; ${generatedTry.message}`;
@@ -553,4 +571,4 @@ async function run({github, context, core, numbers = '', mode = false, report = 
   }
   if (failed) core.setFailed('One or more PR updates failed; see per-PR summary');
 }
-module.exports = {failingChecks, writeTable, botKind, delegateBotRebase, parseNumbers, details, gitRebase, gitMerge, classifyConflicts, conflictKind, upsertConflictReport, REPORT_MARKER, reportConflicts, behindWhileFailing, behindBy, compare, run};
+module.exports = {statusEntries, failingChecks, writeTable, botKind, delegateBotRebase, parseNumbers, details, gitRebase, gitMerge, classifyConflicts, conflictKind, upsertConflictReport, REPORT_MARKER, reportConflicts, behindWhileFailing, behindBy, compare, run};
