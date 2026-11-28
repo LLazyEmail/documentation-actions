@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.18.2] - 2026-11-28
+
+### Changed
+
+- auto-rebase docs: a green run can still mean open conflicts — that is not a token limitation (content-marketing #163, 28 Nov 2026). The fix is `fail-on-skipped-conflicts: true` (and `conflict-label`). For `report-failing-checks` check names without `AUTO_REBASE_TOKEN`, call the composite action directly and grant `checks: read` and `statuses: read` on `GITHUB_TOKEN`. The reusable workflow cannot request those permissions without breaking existing callers; those callers still need the PAT for names, and everyone still needs it if bot-updated branches should re-run CI.
+
 ## [2.18.1] - 2026-11-27
 
 ### Fixed
@@ -533,6 +539,7 @@ auto-rebase: conflicts are now reported with their type (`deleted-on-main`, `del
 - Reusable JSON API regenerate workflow (`reusable-catalog-api`).
 - Awesome-list checks: entry-format, duplicates, sorted-sections (`actions/awesome-list-checks`).
 
+[2.18.2]: https://github.com/LLazyEmail/documentation-actions/compare/v2.18.1...v2.18.2
 [2.18.1]: https://github.com/LLazyEmail/documentation-actions/compare/v2.18.0...v2.18.1
 [2.18.0]: https://github.com/LLazyEmail/documentation-actions/compare/v2.17.0...v2.18.0
 [2.17.0]: https://github.com/LLazyEmail/documentation-actions/compare/v2.16.0...v2.17.0
