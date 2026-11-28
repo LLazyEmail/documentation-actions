@@ -120,12 +120,12 @@ or manual dispatch). Full guide: [docs/auto-rebase.md](docs/auto-rebase.md).
 | `fail-on-conflict` | `true` | `false` turns unresolvable conflicts into a warning (job stays green); the PR still gets the conflict report |
 | `conflict-label` | empty | Label for PRs with conflicts (e.g. `has-conflicts`, as `reusable-label-conflicts` uses), including PRs a sweep skips; removed after an update or once the PR no longer conflicts |
 | `fail-on-skipped-conflicts` | `false` | Turn the run red when a run leaves a PR with conflicts: skipped by a sweep, or reported with `report-conflicts` (by default that's a warning or a report, and the run stays green) |
-| `report-failing-checks` | `false` | Warn about PRs whose head checks are red, with a "Checks not green" column in the job summary. Check names need a token that can read checks (e.g. `AUTO_REBASE_TOKEN`); otherwise GitHub's `mergeable_state` is used |
+| `report-failing-checks` | `false` | Warn about PRs whose head checks are red, with a "Checks not green" column in the job summary. Check names need `checks: read` and `statuses: read` on the job token. Callers of this composite action can grant those on `GITHUB_TOKEN`. Reusable-workflow callers need `AUTO_REBASE_TOKEN`, or GitHub's `mergeable_state` is used |
 | `failing-checks-label` | empty | With `report-failing-checks`, label PRs whose checks are red (e.g. `checks-failing`); removed once green |
 | `generated-paths` | empty | Globs of generated files (e.g. `docs/pages-index.md`). Conflicts there take `main`'s version. A sweep then merges `main` into a conflicting same-repo PR (merge commit, no force-push) when every conflict is in these files, instead of skipping it. `rebase-conflicts` and `merge-fallback` resolve them too ([details](docs/auto-rebase.md#generated-files-generated-paths)) |
 | `regenerate-command` | empty | With `generated-paths`, a command run in the updated checkout to rebuild those files (e.g. `node ./scripts/generate-docs-index.mjs`); only changed files matching `generated-paths` are committed. No install step, no tokens in its environment, never run for fork PRs |
 | `list-skipped-conflicts` | `true` | Name the conflicting files of PRs a sweep skips, in the log, annotation and summary (found with a local trial merge that pushes nothing) |
-| secret `AUTO_REBASE_TOKEN` | unset | Fine-grained PAT so updated branches re-run CI and failing check names can be read ([permissions](docs/auto-rebase.md#auto_rebase_token-permissions)) |
+| secret `AUTO_REBASE_TOKEN` | unset | Fine-grained PAT so updated branches re-run CI. Also supplies check names for reusable-workflow callers ([permissions](docs/auto-rebase.md#auto_rebase_token-permissions)) |
 
 Every run ends with an **Overview** table in the job summary: one row per PR with its status
 (`updated`, `up to date`, `conflict (skipped)`, `conflict (reported)`, `conflict`, `delegated to bot`,

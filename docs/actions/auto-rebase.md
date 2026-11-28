@@ -20,7 +20,7 @@ Update behind open PR branches (and optionally rebase conflicts).
 - `fail-on-conflict` — `false` makes unresolvable conflicts a warning instead of a red job (default `true`)
 - `conflict-label` — label PRs with conflicts, including ones a sweep skips (e.g. `has-conflicts`); empty disables
 - `fail-on-skipped-conflicts` — opt-in: fail the job when a sweep skips a conflicting PR or `report-conflicts` reports one (default `false`: warning or report only)
-- `report-failing-checks` / `failing-checks-label` — opt-in: warn about (and optionally label) PRs whose head checks are red; adds a column to the summary table. Check names need a token with checks read access, otherwise `mergeable_state` is used. Details: [docs/auto-rebase.md](../auto-rebase.md#why-a-sweep-can-be-green-while-a-pr-still-has-conflicts)
+- `report-failing-checks` / `failing-checks-label` — opt-in: warn about (and optionally label) PRs whose head checks are red; adds a column to the summary table. Check names need `checks: read` and `statuses: read` on the job token (grant those when calling this composite action directly). Reusable-workflow callers need `AUTO_REBASE_TOKEN`, otherwise `mergeable_state` is used. Details: [docs/auto-rebase.md](../auto-rebase.md#why-a-sweep-can-be-green-while-a-pr-still-has-conflicts)
 - secret `AUTO_REBASE_TOKEN` — optional fine-grained PAT so updated branches re-run CI and check names can be read; permissions: [docs/auto-rebase.md](../auto-rebase.md#auto_rebase_token-permissions)
 
 ## Example

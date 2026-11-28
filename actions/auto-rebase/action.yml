@@ -72,8 +72,10 @@ inputs:
   report-failing-checks:
     description: >-
       Opt in. Warn about PRs whose head checks are red and add a "Checks not green" column to
-      the job summary. Needs a token that can read checks for check names; otherwise uses
-      GitHub's mergeable_state (unstable).
+      the job summary. Check names need checks: read and statuses: read on this job's token
+      (possible with GITHUB_TOKEN when this composite action is used directly). The reusable
+      workflow cannot request those permissions, so its callers need AUTO_REBASE_TOKEN, or
+      they fall back to GitHub's mergeable_state (unstable).
     default: 'false'
   failing-checks-label:
     description: >-
