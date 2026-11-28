@@ -1,3 +1,0 @@
-semver: patch
-type: Changed
-auto-rebase docs: a green run can still mean open conflicts — that is not a token limitation (content-marketing #163, 28 Nov 2026). The fix is `fail-on-skipped-conflicts: true` (and `conflict-label`). For `report-failing-checks` check names without `AUTO_REBASE_TOKEN`, call the composite action directly and grant `checks: read` and `statuses: read` on `GITHUB_TOKEN`. The reusable workflow cannot request those permissions without breaking existing callers; those callers still need the PAT for names, and everyone still needs it if bot-updated branches should re-run CI.
