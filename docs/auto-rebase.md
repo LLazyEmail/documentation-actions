@@ -322,10 +322,28 @@ To make it louder, opt in to any of these:
 | A red run while any PR has conflicts | `fail-on-skipped-conflicts: true` (covers skipped PRs and, with `report-conflicts`, reported ones) |
 | A warning, a summary column and an optional label for PRs whose checks are red | `report-failing-checks: true` (+ `failing-checks-label: checks-failing`) |
 
-`report-failing-checks` reads check runs and commit statuses on the PR head. The reusable
-workflow's own `GITHUB_TOKEN` can't (it only has `contents` and `pull-requests`), so pass
-the `AUTO_REBASE_TOKEN` secret for check names. Without it, GitHub's `mergeable_state`
-(`unstable`) is used, which also counts pending checks. Reporting checks never fails the run.
+`report-failing-checks` reads check runs and commit statuses on the PR head.
+
+There is a workaround that does **not** need `AUTO_REBASE_TOKEN` for check names: call the
+composite action `LLazyEmail/documentation-actions/actions/auto-rebase` directly (not the
+reusable workflow) and grant `checks: read` and `statuses: read` on the job, in addition
+to `contents: write` and `pull-requests: write`. The default `GITHUB_TOKEN` can then list
+check names. The reusable workflow cannot request `checks` or `statuses` itself: adding
+those permissions would fail existing callers that don't grant them. Reusable-workflow
+callers still pass `AUTO_REBASE_TOKEN` for names, or fall back to GitHub's
+`mergeable_state` (`unstable`), which also counts pending checks. Reporting checks never
+fails the run.
+
+`AUTO_REBASE_TOKEN` is still required if you want bot-updated branches to re-trigger
+`pull_request` CI; `GITHUB_TOKEN` pushes never do.
+
+A later case of a green run hiding a conflict: LLazyEmail/content-marketing, 28 November
+2026, 02:43 Kyiv time. [PR #163](https://github.com/LLazyEmail/content-marketing/pull/163)
+was `dirty` (conflicts in `LI/published.md` and `LI/images/A -/README.md`). The dispatched
+[run](https://github.com/LLazyEmail/content-marketing/actions/runs/46089431314) saw it,
+listed the files, wrote two warnings, and still ended **success**. The caller had just
+started using the composite action (`@main`) and had not set `fail-on-skipped-conflicts`.
+This was not a token limitation: merge conflicts are visible without one.
 
 ```yaml
 jobs:
@@ -341,6 +359,28 @@ jobs:
 
 These inputs need the DA release that adds them. On an older `@v2` tag, passing them
 fails the caller with an invalid-input error.
+
+Callers of the composite action can pass the same inputs immediately (they follow `@main`
+or a SHA, not a workflow input schema) and can grant check-read permissions:
+
+```yaml
+permissions:
+  contents: write
+  pull-requests: write
+  checks: read
+  statuses: read
+jobs:
+  rebase:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: LLazyEmail/documentation-actions/actions/auto-rebase@main
+        with:
+          conflict-label: has-conflicts
+          fail-on-skipped-conflicts: true
+          report-failing-checks: true
+          failing-checks-label: checks-failing
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+```
 
 ## Renovate and Dependabot PRs: delegate the rebase
 
